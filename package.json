@@ -1,0 +1,47 @@
+{
+  "name": "@cloud-copilot/iam-simulate",
+  "version": "0.1.0",
+  "description": "Simulate evaluation of AWS IAM policies",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cloud-copilot/iam-simulate.git"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "types": "dist/cjs/index.d.ts",
+  "bin": {
+    "iam-expand": "dist/esm/cli.js"
+  },
+  "scripts": {
+    "build": "npx tsc -p tsconfig.cjs.json && npx tsc -p tsconfig.esm.json && ./postbuild.sh",
+    "clean": "rm -rf dist",
+    "test": "npx vitest --run --coverage",
+    "release": "npm run clean && npm run build && npm run test && npm publish"
+  },
+  "keywords": [
+    "AWS",
+    "IAM"
+  ],
+  "author": "David Kerber <dave@cloudcopilot.io>",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/cloud-copilot/iam-simulate/issues"
+  },
+  "homepage": "https://github.com/cloud-copilot/iam-simulate#readme",
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "@vitest/coverage-v8": "^2.0.5",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5"
+  },
+  "dependencies": {
+    "@cloud-copilot/iam-policy": "^0.0.8"
+  }
+}
