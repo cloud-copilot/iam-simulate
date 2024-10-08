@@ -1,10 +1,11 @@
 import { Resource } from "@cloud-copilot/iam-policy";
 import { Request } from "../request/request.js";
+import { convertIamStringToRegex } from "../util.js";
 
-//TODO: Make a check to see if the action is a wildcard only action
+//TODO: Make a check to see if the action is a wildcard only action. This will have to happen outside of these functions.
 
 /**
- * Convert a resource segment to a regular expression.
+ * Convert a resource segment to a regular expression. This is without variables.
  *
  * @param segment the segment to convert to a regular expression
  * @returns a regular that replaces any wildcards in the segment with the appropriate regular expression.
@@ -17,11 +18,24 @@ function convertResourceSegmentToRegex(segment: string): RegExp {
   return new RegExp(pattern, 'i')
 }
 
-
+/**
+ * Check if a request matches a set of resources.
+ *
+ * @param request the request to check
+ * @param policyResources the resources to check against
+ * @returns true if the request matches any of the resources, false otherwise
+ */
 export function requestMatchesResources(request: Request, policyResources: Resource[]): boolean {
   return policyResources.some(policyResource => singleResourceMatchesRequest(request, policyResource))
 }
 
+/**
+ * Check if a single resource matches a request.
+ *
+ * @param request the request to check against
+ * @param policyResource the resource to check against
+ * @returns true if the request matches the resource, false otherwise
+ */
 function singleResourceMatchesRequest(request: Request, policyResource: Resource): boolean {
   if(policyResource.isAllResources()) {
     return true;
@@ -47,20 +61,46 @@ function singleResourceMatchesRequest(request: Request, policyResource: Resource
       return false
     }
 
-    //Interpreting variables
-    //Only the last segement
-    //Only single value keys
-    //Keys are case insensitive
-    //Policy version must be 2012-10-17
-    //https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html#policy-vars-wheretouse
-    //Default Values: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html#policy-vars-default-values
-    //Special Characters: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html#policy-vars-specialchars
-    if(!convertResourceSegmentToRegex(policyResource.resource()).test(resource.resource())) {
+    //Wildcards and variables are not allowed in the product segment https://docs.aws.amazon.com/IAM/latest/UserGuide/reference-arns.html "Incorrect wildcard usage"
+    const [policyProduct, policyResourceId] = getResourceSegments(policyResource.resource())
+
+    if(!resource.resource().startsWith(policyProduct)) {
       return false
     }
+
+    const requestResourceId = resource.resource().slice(policyProduct.length)
+
+    if(!convertIamStringToRegex(policyResourceId, request.context).test(requestResourceId)) {
+      return false
+    }
+
+    return true
   } else {
     throw new Error('Unknown resource type');
   }
+}
 
-  return false;
+/**
+ * Splits a resource into two segments. The first segment is the product segment and the second segment is the resource id segment.
+ * This could be split by a colon or a slash, so it checks for both.
+ *
+ * @param resource The resource to split
+ * @returns a tuple with the first segment being the product segment (including the separator) and the second segment being the resource id.
+ */
+function getResourceSegments(resource: string): [string, string] {
+  const slashIndex = resource.indexOf('/')
+  const colonIndex = resource.indexOf(':')
+
+  let splitIndex = slashIndex
+  if(slashIndex != -1 && colonIndex != -1) {
+    splitIndex = Math.min(slashIndex, colonIndex) + 1
+  } else if (colonIndex == -1) {
+    splitIndex = slashIndex + 1
+  } else if (slashIndex == -1) {
+    splitIndex = colonIndex + 1
+  } else {
+    throw new Error(`Unable to split resource ${resource}`)
+  }
+
+  return [resource.slice(0, splitIndex), resource.slice(splitIndex)]
 }

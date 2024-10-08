@@ -13,7 +13,8 @@ describe('convertIamStringToRegex', () => {
     const result = convertIamStringToRegex(value, requestContext)
 
     //Then the result should be a regex that matches the string
-    expect(result.source).toBe('^arn:aws:s3:::\$$')
+    expect(result.source).toBe('^arn:aws:s3:::\\$$')
+    expect(result.exec('arn:aws:s3:::$')).toBeTruthy()
   })
 
   it('should replace ${?} with a question mark', () => {
@@ -26,7 +27,8 @@ describe('convertIamStringToRegex', () => {
     const result = convertIamStringToRegex(value, requestContext)
 
     //Then the result should be a regex that matches the string
-    expect(result.source).toBe('^arn:aws:s3:::\?$')
+    expect(result.source).toBe('^arn:aws:s3:::\\?$')
+    // expect(result.exec('arn:aws:s3:::?')).toBeTruthy()
   })
 
   it('should replace ${*} with a star', () => {
@@ -39,7 +41,8 @@ describe('convertIamStringToRegex', () => {
     const result = convertIamStringToRegex(value, requestContext)
 
     //Then the result should be a regex that matches the string
-    expect(result.source).toBe('^arn:aws:s3:::\*$')
+    expect(result.source).toBe('^arn:aws:s3:::\\*$')
+    expect(result.exec('arn:aws:s3:::*')).toBeTruthy()
   })
 
   it('should replace ? with a dot', () => {
@@ -53,6 +56,7 @@ describe('convertIamStringToRegex', () => {
 
     //Then the result should be a regex that matches the string
     expect(result.source).toBe('^arn:aws:s3:::.$')
+    expect(result.exec('arn:aws:s3:::a')).toBeTruthy()
   })
 
   it('should replace * with a non greedy period', () => {
@@ -66,6 +70,7 @@ describe('convertIamStringToRegex', () => {
 
     //Then the result should be a regex that matches the string
     expect(result.source).toBe('^arn:aws:s3:::.*?$')
+    expect(result.exec('arn:aws:s3:::abcdefg')).toBeTruthy()
   })
 
   describe('variables', () => {
@@ -95,6 +100,7 @@ describe('convertIamStringToRegex', () => {
 
       //Then the result should be a regex that matches the string
       expect(result.source).toBe('^arn:aws:s3:::123456789012$')
+      expect(result.exec('arn:aws:s3:::123456789012')).toBeTruthy()
     })
 
     it('should not replace a variable with its value if the default is set and a value exists', () => {
@@ -110,6 +116,7 @@ describe('convertIamStringToRegex', () => {
 
       //Then the result should be a regex that matches the string
       expect(result.source).toBe('^arn:aws:s3:::123456789012$')
+      expect(result.exec('arn:aws:s3:::123456789012')).toBeTruthy()
     })
 
     it('should put in undefined if a variable does not exist and no default is set', () => {
@@ -123,6 +130,23 @@ describe('convertIamStringToRegex', () => {
 
       //Then the result should be a regex that matches the string
       expect(result.source).toBe('^arn:aws:s3:::--undefined---$')
+      expect(result.exec('arn:aws:s3:::--undefined---')).toBeTruthy()
+    })
+
+    it('should put in undefined if the variable is a multi value variable', () => {
+      //Given a string with a variable
+      const value = "arn:aws:s3:::${aws:PrincipalAccountId}"
+      //And a request context with that variable
+      const requestContext = new RequestContextImpl({
+        'aws:PrincipalAccountId': ['123456789012', '987654321']
+      })
+
+      //When the string is converted to a regex
+      const result = convertIamStringToRegex(value, requestContext)
+
+      //Then the result should be a regex that matches the string
+      expect(result.source).toBe('^arn:aws:s3:::--undefined---$')
+      expect(result.exec('arn:aws:s3:::--undefined---')).toBeTruthy()
     })
 
     it('should replace variables names with slashes in them', () => {
@@ -137,7 +161,8 @@ describe('convertIamStringToRegex', () => {
       const result = convertIamStringToRegex(value, requestContext)
 
       //Then the result should be a regex that matches the string
-      expect(result.source).toBe('^arn:aws:s3:::bucket\/Bar$')
+      expect(result.source).toBe('^arn:aws:s3:::bucket\\\/Bar$')
+      expect(result.exec('arn:aws:s3:::bucket/Bar')).toBeTruthy()
     })
   })
 })

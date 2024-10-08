@@ -1,20 +1,26 @@
 import { RequestContext } from "./requestContext.js"
 
-
+/**
+ * This will convert a string to a regex that can be used to match against a string.
+ * This will replace any variables in the string with the value of the variable in the request context.
+ *
+ * @param value the string to convert to a regex
+ * @param requestContext the request context to get the variable values from
+ * @returns a regex that can be used to match against a string
+ */
 export function convertIamStringToRegex(value: string, requestContext: RequestContext): RegExp {
 
   const newValue = value.replaceAll(/(\$\{.*?\})|(\*)|(\?)/ig, (match, args) => {
-    console.log(match)
     if(match == "?" ) {
       return '.'
     } else if (match == "*") {
       return ".*?"
     } else if (match == "${*}") {
-      return "\*"
+      return "\\*"
     } else if (match == "${?}") {
-      return "\?"
+      return "\\?"
     } else if (match == "${$}") {
-      return "\$"
+      return "\\$"
     }
     //
     //This means it'a a variable
@@ -30,7 +36,6 @@ export function convertIamStringToRegex(value: string, requestContext: RequestCo
     }
     const variableName = defaultParts.at(0)!.trim()
 
-    console.log(variableName)
     const requestValue = getContextSingleValue(requestContext, variableName)
 
     if(requestValue) {
@@ -52,13 +57,6 @@ export function convertIamStringToRegex(value: string, requestContext: RequestCo
   return new RegExp('^' + newValue + '$')
 }
 
-// const value =  "abcd${$}ef*dkd?39dj${*}fjfrur${aws:PrincipalTag/foo, 'defaultfoo'}adjd${$}ajdjd${aws:ResourceTag}"
-// // let value2 =
-
-// const variables = value.replaceAll(/\$\{.*?\}/g, (match) => {
-//   let defaultValue: string | undefined = undefined
-//   const defaultMatch = match.match(/,\s'(.*)'/)
-// })
 
 /**
  * Get the string value of a context key only if it is a single value key
