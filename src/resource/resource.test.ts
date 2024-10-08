@@ -1,4 +1,4 @@
-import { loadPolicy, ResourceStatement } from "@cloud-copilot/iam-policy"
+import { loadPolicy, NotResourceStatement, ResourceStatement } from "@cloud-copilot/iam-policy"
 import { describe, expect, it } from "vitest"
 import { RequestImpl } from "../request/request.js"
 import { RequestContextImpl } from "../requestContext.js"
@@ -112,6 +112,17 @@ const resourceTests: ResourceTest[] = [
     resourceStatements: ["arn:aws:ec2:us-east-1:123456789012:instance/${aws:PrincipalTag/Foo, 'defaultfoo'}"],
     resource: "arn:aws:ec2:us-east-1:123456789012:instance/defaultfoo",
     expectMatch: true
+  }, {
+    name: 'should match if only one value matches',
+    resourceStatements: [
+      "ars:aws:s3:::government_secrets",
+      "arn:aws:ec2:us-east-1:123456789012:instance/${aws:PrincipalTag/Foo}"
+    ],
+    resource: "arn:aws:ec2:us-east-1:123456789012:instance/bar",
+    expectMatch: true,
+    context: {
+      'aws:PrincipalTag/Foo': 'bar'
+    }
   }
 ]
 
@@ -134,6 +145,41 @@ describe('requestMatchesResources', () => {
 
       //When the request is checked against the resource statement
       const response = requestMatchesResources(request, (policy.statements()[0] as ResourceStatement).resources())
+
+      //Then the request should match the resource statement
+      expect(response).toBe(rt.expectMatch)
+    })
+  }
+})
+
+const notResourceTests: ResourceTest[] = [
+  {
+    name: 'should match a different resource',
+    resourceStatements: ["arn:aws:s3:::my_corporate_bucket"],
+    resource: "arn:aws:s3:::different_bucket",
+    expectMatch: true
+  }
+]
+
+describe('requestMatchesNotResources', () => {
+  for(const rt of resourceTests) {
+    it(rt.name || `should match ${rt.resource}`, () => {
+      //Given a policy
+      const policy = loadPolicy({
+        Statement: {
+          Effect: 'Allow',
+          NotResource: rt.resourceStatements,
+        }
+      })
+
+      //And a request with a resource
+      const request = new RequestImpl('principal',
+                                      rt.resource,
+                                      's3:GetBucket',
+                                      new RequestContextImpl(rt.context || {}))
+
+      //When the request is checked against the resource statement
+      const response = requestMatchesResources(request, (policy.statements()[0] as NotResourceStatement).notResources())
 
       //Then the request should match the resource statement
       expect(response).toBe(rt.expectMatch)

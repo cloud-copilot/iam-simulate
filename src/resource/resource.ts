@@ -29,6 +29,10 @@ export function requestMatchesResources(request: Request, policyResources: Resou
   return policyResources.some(policyResource => singleResourceMatchesRequest(request, policyResource))
 }
 
+export function requestMatchesNotResources(request: Request, policyResources: Resource[]): boolean {
+  return !requestMatchesResources(request, policyResources)
+}
+
 /**
  * Check if a single resource matches a request.
  *
