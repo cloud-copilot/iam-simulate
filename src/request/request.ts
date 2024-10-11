@@ -18,6 +18,10 @@ export interface Request {
    * The resource to be acted upon
    */
   resource?: RequestResource;
+
+  /**
+   * The context of the request
+   */
   context: RequestContext
 }
 
