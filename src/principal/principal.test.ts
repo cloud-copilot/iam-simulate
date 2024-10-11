@@ -1,8 +1,8 @@
-import { loadPolicy, PrincipalStatement } from '@cloud-copilot/iam-policy';
+import { loadPolicy, NotPrincipalStatement, PrincipalStatement } from '@cloud-copilot/iam-policy';
 import { describe, expect, it } from 'vitest';
 import { RequestImpl } from '../request/request.js';
 import { RequestContextImpl } from '../requestContext.js';
-import { isAssumedRoleArn, requestMatchesPrincipalStatement, roleArnFromAssumedRoleArn } from './principal.js';
+import { isAssumedRoleArn, requestMatchesNotPrincipal, requestMatchesPrincipal, requestMatchesPrincipalStatement, roleArnFromAssumedRoleArn } from './principal.js';
 
 describe('isAssumedRoleArn', () => {
   it('should return true for assumed role ARN', () => {
@@ -379,5 +379,146 @@ describe('requestMatchesPrincipalStatement', () => {
       //Then it should return NoMatch
       expect(result).toBe('NoMatch');
     })
+  })
+})
+
+describe('requestMatchesPrincipal', () => {
+  it('return a match for a matching principal', () => {
+    //Given a policy with a matching principal
+    const policy = loadPolicy({
+      Statement: [
+        { Principal: { AWS: 'arn:aws:iam::555555555555:user/Larry' } }
+      ]
+    })
+
+    const principals = (policy.statements()[0] as PrincipalStatement).principals();
+
+    //And a request with a matching principal
+    const request = new RequestImpl('arn:aws:iam::555555555555:user/Larry', undefined, 's3:GetBucket', new RequestContextImpl({}));
+
+    //When we check if the request matches the principal
+    const result = requestMatchesPrincipal(request, principals);
+
+    //Then it should return Match
+    expect(result).toBe('Match');
+  })
+
+  it('returns AccountLevelMatch for a matching account principal', () => {
+    //Given a policy with a matching account principal
+    const policy = loadPolicy({
+      Statement: [
+        { Principal: { AWS: '555555555555' } }
+      ]
+    })
+
+    const principals = (policy.statements()[0] as PrincipalStatement).principals();
+
+    //And a request with a matching principal
+    const request = new RequestImpl('arn:aws:iam::555555555555:user/Larry', undefined, 's3:GetBucket', new RequestContextImpl({}));
+
+    //When we check if the request matches the principal
+    const result = requestMatchesPrincipal(request, principals);
+
+    //Then it should return AccountLevelMatch
+    expect(result).toBe('AccountLevelMatch');
+  })
+
+  it('should return Match if there is a Match and an AccountLevelMatch', () => {
+    //Given a policy with a matching principal
+    const policy = loadPolicy({
+      Statement: [
+        { Principal: { AWS: ['arn:aws:iam::555555555555:user/Larry', '555555555555'] } }
+      ]
+    })
+
+    const principals = (policy.statements()[0] as PrincipalStatement).principals();
+
+    //And a request with a matching principal
+    const request = new RequestImpl('arn:aws:iam::555555555555:user/Larry', undefined, 's3:GetBucket', new RequestContextImpl({}));
+
+    //When we check if the request matches the principal
+    const result = requestMatchesPrincipal(request, principals);
+
+    //Then it should return Match
+    expect(result).toBe('Match');
+  })
+
+  it('returns NoMatch for a non-matching principal', () => {
+    //Given a policy with a non-matching principal
+    const policy = loadPolicy({
+      Statement: [
+        { Principal: { AWS: 'arn:aws:iam::555555555555:user/Larry' } }
+      ]
+    })
+
+    const principals = (policy.statements()[0] as PrincipalStatement).principals();
+
+    //And a request with a non-matching principal
+    const request = new RequestImpl('arn:aws:iam::555555555555:user/Curly', undefined, 's3:GetBucket', new RequestContextImpl({}));
+
+    //When we check if the request matches the principal
+    const result = requestMatchesPrincipal(request, principals);
+
+    //Then it should return NoMatch
+    expect(result).toBe('NoMatch');
+  })
+})
+
+describe('requestMatchesNotPrincipal', () => {
+  it('returns NoMatch for a matching principal', () => {
+    //Given a policy with a matching principal
+    const policy = loadPolicy({
+      Statement: [
+        { NotPrincipal: { AWS: 'arn:aws:iam::555555555555:user/Larry' } }
+      ]
+    })
+
+    const notPrincipals = (policy.statements()[0] as NotPrincipalStatement).notPrincipals();
+
+    //And a request with a matching principal
+    const request = new RequestImpl('arn:aws:iam::555555555555:user/Larry', undefined, 's3:GetBucket', new RequestContextImpl({}));
+
+    //When we check if the request matches the principal
+    const result = requestMatchesNotPrincipal(request, notPrincipals);
+
+    //Then it should return NoMatch
+    expect(result).toBe('NoMatch');
+  })
+
+  it('returns NoMatch for a matching account principal', () => {
+    //Given a policy with a matching account principal
+    const policy = loadPolicy({
+      Statement: [
+        { NotPrincipal: { AWS: '555555555555' } }
+      ]
+    })
+
+    const notPrincipals = (policy.statements()[0] as NotPrincipalStatement).notPrincipals();
+
+    //And a request with a matching principal
+    const request = new RequestImpl('arn:aws:iam::555555555555:user/Larry', undefined, 's3:GetBucket', new RequestContextImpl({}));
+
+    //When we check if the request matches the principal
+    const result = requestMatchesNotPrincipal(request, notPrincipals);
+
+    //Then it should return NoMatch
+    expect(result).toBe('NoMatch');
+  })
+
+  it('returns Match for a non-matching principal', () => {
+    //Given a policy with a non-matching principal
+    const policy = loadPolicy({
+      Statement: [
+        { NotPrincipal: { AWS: "arn:aws:iam::555555555555:user/Larry" } }
+      ]
+    })
+
+    const notPrincipals = (policy.statements()[0] as NotPrincipalStatement).notPrincipals();
+
+    //And a request with a non-matching principal
+    const request = new RequestImpl('arn:aws:iam::555555555555:user/Curly', undefined, 's3:GetBucket', new RequestContextImpl({}));
+
+    //When we check if the request matches the principal
+    const result = requestMatchesNotPrincipal(request, notPrincipals);
   })
 })

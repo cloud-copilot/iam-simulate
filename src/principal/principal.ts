@@ -45,6 +45,59 @@ IAM Identity Center principals // Ignore this for now.
 
 type PrincipalMatchResult = 'Match' | 'NoMatch' | 'AccountLevelMatch'
 
+/**
+ * Check to see if a request matches a Principal element in an IAM policy statement
+ *
+ * @param request the request to check
+ * @param principal the list of principals in the Principal element of the Statement
+ * @returns if the request matches the Principal element, and if so, how it matches
+ */
+export function requestMatchesPrincipal(request: Request, principal: Principal[]): PrincipalMatchResult {
+  const matches = principal.map(principalStatement => requestMatchesPrincipalStatement(request, principalStatement))
+  if(matches.includes('Match')) {
+    return 'Match'
+  }
+
+  if(matches.includes('AccountLevelMatch')) {
+    return 'AccountLevelMatch'
+  }
+
+  return 'NoMatch'
+}
+
+/**
+ * Check to see if a request matches a NotPrincipal element in an IAM policy statement
+ *
+ * @param request the request to check
+ * @param notPrincipal the list of principals in the NotPrincipal element of the Statement
+ * @returns
+ */
+export function requestMatchesNotPrincipal(request: Request, notPrincipal: Principal[]): PrincipalMatchResult {
+  const matches = notPrincipal.map(principalStatement => requestMatchesPrincipalStatement(request, principalStatement))
+  if(matches.includes('Match')) {
+    return 'NoMatch'
+  }
+
+  /**
+   * Need to do research on this. If there is an account level match on a NotPrincipal, does that
+   * mean it tentatively matches the NotPrincipal, or does it mean it does not match the NotPrincipal?
+   *
+   * We need to test this.
+   */
+  if(matches.includes('AccountLevelMatch')) {
+    return 'NoMatch'
+  }
+
+  return 'Match'
+}
+
+/**
+ * Check to see if a request matches a principal statement
+ *
+ * @param request the request to check
+ * @param principalStatement the principal statement to check the request against
+ * @returns if the request matches the principal statement, and if so, how it matches
+ */
 export function requestMatchesPrincipalStatement(request: Request, principalStatement: Principal): PrincipalMatchResult {
   if(principalStatement.isServicePrincipal()) {
     if(principalStatement.service() === request.principal.value()) {
