@@ -1,5 +1,3 @@
-// Need to verify assume role ARN format
-
 import { Principal } from "@cloud-copilot/iam-policy";
 import { Request } from "../request/request.js";
 
@@ -43,10 +41,6 @@ IAM Identity Center principals // Ignore this for now.
 
 //AWS services
 //Look at the service name and see if it matches the string
-
-
-// All principals
-
 */
 
 type PrincipalMatchResult = 'Match' | 'NoMatch' | 'AccountLevelMatch'
@@ -99,19 +93,6 @@ export function requestMatchesPrincipalStatement(request: Request, principalStat
   }
 
   return 'NoMatch'
-
-
-  //If the policy principal is AWS and a wildcard, then it matches all principals
-  //If the policy principal is a service, just check the string
-  //If the policy principal is a canonical user, just check the string
-  //If the policy principal is federated, check the string
-
-  //If the policy principal is AWS and an account, then it matches all principals in the account, check the account and return AccountLevelMatch
-
-  //If the request principal is an assumed role, check against the session ARN and the role ARN
-
-  //I think otherwise we just check against the string matching
-
 }
 
 const assumedRoleArnRegex = /^arn:aws:sts::\d{12}:assumed-role\/.*$/
