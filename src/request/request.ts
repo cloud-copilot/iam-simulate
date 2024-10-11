@@ -1,12 +1,13 @@
 import { RequestContext } from "../requestContext.js";
 import { RequestAction, RequestActionImpl } from "./requestAction.js";
+import { RequestPrincipal, RequestPrincipalImpl } from "./requestPrincipal.js";
 import { RequestResource, ResourceRequestImpl } from "./requestResource.js";
 
 /**
  * A request to be evaluated by the policy engine
  */
 export interface Request {
-  principal: string;
+  principal: RequestPrincipal;
 
   /**
    * The action to be performed
@@ -22,7 +23,7 @@ export interface Request {
 
 export class RequestImpl implements Request {
 
-  constructor(public readonly principal: string,
+  constructor(public readonly principalString: string,
               public readonly resourceString: string | undefined,
               public readonly actionString: string,
               public readonly context: RequestContext) {
@@ -38,5 +39,9 @@ export class RequestImpl implements Request {
       throw new Error('Resource is undefined')
     }
     return new ResourceRequestImpl(this.resourceString);
+  }
+
+  get principal(): RequestPrincipal {
+    return new RequestPrincipalImpl(this.principalString);
   }
 }
