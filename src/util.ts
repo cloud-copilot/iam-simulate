@@ -1,4 +1,6 @@
-import { RequestContext } from "./requestContext.js"
+import { Request } from './request/request.js'
+
+const matchesNothing = new RegExp('a^')
 
 /**
  * This will convert a string to a regex that can be used to match against a string.
@@ -8,8 +10,9 @@ import { RequestContext } from "./requestContext.js"
  * @param requestContext the request context to get the variable values from
  * @returns a regex that can be used to match against a string
  */
-export function convertIamStringToRegex(value: string, requestContext: RequestContext): RegExp {
+export function convertIamStringToRegex(value: string, request: Request): RegExp {
 
+  let invalidVariableFound = false
   const newValue = value.replaceAll(/(\$\{.*?\})|(\*)|(\?)/ig, (match, args) => {
     if(match == "?" ) {
       return '.'
@@ -36,24 +39,29 @@ export function convertIamStringToRegex(value: string, requestContext: RequestCo
     }
     const variableName = defaultParts.at(0)!.trim()
 
-    const requestValue = getContextSingleValue(requestContext, variableName)
+    const requestValue = getContextSingleValue(request, variableName)
 
     if(requestValue) {
       return requestValue
     } else if(defaultValue) {
+      /*
+        TODO: What happens in a request if a multi value context key is used in a string and there
+        is a default value? Will it use the default value or will it fail the condition test?
+      */
       return defaultValue
     } else {
+      invalidVariableFound = true
       /*
-      TODO: Figure out what IAM does if the variables does not exist, will it replace it with an
-      empty string or fail the condition test completely? For instance could try this out with an
-      s3:prefix condition and a principaltag to see if it collapses it to an empty string.
+      https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html#policy-vars-no-value
       */
       return "--undefined---"
     }
 
     throw new Error('This should never happen')
   })
-
+  if(invalidVariableFound) {
+    return matchesNothing
+  }
   return new RegExp('^' + newValue + '$')
 }
 
@@ -65,11 +73,11 @@ export function convertIamStringToRegex(value: string, requestContext: RequestCo
  * @param contextKeyName the name of the context key to get the value of
  * @returns the value of the context key if it is a single value key, undefined otherwise
  */
-function getContextSingleValue(requestContext: RequestContext, contextKeyName: string): string | undefined {
-  if(!requestContext.contextKeyExists(contextKeyName)) {
+function getContextSingleValue(request: Request, contextKeyName: string): string | undefined {
+  if(!request.contextKeyExists(contextKeyName)) {
     return undefined
   }
-  const keyValue = requestContext.contextKeyValue(contextKeyName)
+  const keyValue = request.getContextKeyValue(contextKeyName)
   if(keyValue.isStringValue()) {
     return keyValue.value
   }

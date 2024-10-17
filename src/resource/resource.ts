@@ -74,7 +74,7 @@ function singleResourceMatchesRequest(request: Request, policyResource: Resource
 
     const requestResourceId = resource.resource().slice(policyProduct.length)
 
-    if(!convertIamStringToRegex(policyResourceId, request.context).test(requestResourceId)) {
+    if(!convertIamStringToRegex(policyResourceId, request).test(requestResourceId)) {
       return false
     }
 

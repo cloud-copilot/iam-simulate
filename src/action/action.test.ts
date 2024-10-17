@@ -1,6 +1,7 @@
 import { ActionStatement, loadPolicy, NotActionStatement } from '@cloud-copilot/iam-policy'
 import { describe, expect, it } from 'vitest'
 import { RequestImpl } from '../request/request.js'
+import { MockRequestSupplementalData } from '../request/requestSupplementalData.js'
 import { RequestContextImpl } from '../requestContext.js'
 import { requestMatchesActions, requestMatchesNotActions } from './action.js'
 
@@ -20,7 +21,8 @@ describe('action', () => {
       const request = new RequestImpl('principal',
                                       'resource',
                                       's3:GetBucket',
-                                      new RequestContextImpl({}))
+                                      new RequestContextImpl({}),
+                                      MockRequestSupplementalData)
 
       //When the request is checked against the policy
       const response = requestMatchesActions(request, actions)
@@ -43,7 +45,8 @@ describe('action', () => {
       const request = new RequestImpl('principal',
                                       'resource',
                                       's3:GetBucket',
-                                      new RequestContextImpl({}))
+                                      new RequestContextImpl({}),
+                                      MockRequestSupplementalData)
 
       //When the request is checked against the policy
       const response = requestMatchesActions(request, actions)
@@ -67,7 +70,8 @@ describe('action', () => {
     const request = new RequestImpl('principal',
                                     'resource',
                                     's3:GetBucket',
-                                    new RequestContextImpl({}))
+                                    new RequestContextImpl({}),
+                                    MockRequestSupplementalData)
 
     //When the request is checked against the policy
     const response = requestMatchesActions(request, actions)
@@ -91,7 +95,8 @@ describe('action', () => {
     const request = new RequestImpl('principal',
                                     'resource',
                                     's3:GetBucket',
-                                    new RequestContextImpl({}))
+                                    new RequestContextImpl({}),
+                                    MockRequestSupplementalData)
 
     //When the request is checked against the policy
     const response = requestMatchesActions(request, actions)
@@ -115,7 +120,8 @@ describe('action', () => {
     const request = new RequestImpl('principal',
                                     'resource',
                                     's3:GetBucket',
-                                    new RequestContextImpl({}))
+                                    new RequestContextImpl({}),
+                                    MockRequestSupplementalData)
 
     //When the request is checked against the policy
     const response = requestMatchesActions(request, actions)
@@ -139,7 +145,8 @@ describe('action', () => {
     const request = new RequestImpl('principal',
                                     'resource',
                                     's3:PutBucket',
-                                    new RequestContextImpl({}))
+                                    new RequestContextImpl({}),
+                                    MockRequestSupplementalData)
 
     //When the request is checked against the policy
     const response = requestMatchesActions(request, actions)
@@ -163,7 +170,8 @@ describe('action', () => {
     const request = new RequestImpl('principal',
                                     'resource',
                                     's3:GetBucket',
-                                    new RequestContextImpl({}))
+                                    new RequestContextImpl({}),
+                                    MockRequestSupplementalData)
 
     //When the request is checked against the policy
     const response = requestMatchesActions(request, actions)
@@ -187,7 +195,8 @@ describe('action', () => {
     const request = new RequestImpl('principal',
                                     'resource',
                                     's3:GetBuckets',
-                                    new RequestContextImpl({}))
+                                    new RequestContextImpl({}),
+                                    MockRequestSupplementalData)
 
     //When the request is checked against the policy
     const response = requestMatchesActions(request, actions)
@@ -211,7 +220,8 @@ describe('action', () => {
     const request = new RequestImpl('principal',
                                     'resource',
                                     's3:GetBucket',
-                                    new RequestContextImpl({}))
+                                    new RequestContextImpl({}),
+                                    MockRequestSupplementalData)
 
     //When the request is checked against the policy
     const response = requestMatchesActions(request, actions)
@@ -235,7 +245,8 @@ describe('action', () => {
       const request = new RequestImpl('principal',
                                       'resource',
                                       's3:GetBucket',
-                                      new RequestContextImpl({}))
+                                      new RequestContextImpl({}),
+                                      MockRequestSupplementalData)
 
       //When the request is checked against the policy
       const response = requestMatchesNotActions(request, actions)
@@ -258,7 +269,8 @@ describe('action', () => {
       const request = new RequestImpl('principal',
                                       'resource',
                                       's3:GetBucket',
-                                      new RequestContextImpl({}))
+                                      new RequestContextImpl({}),
+                                      MockRequestSupplementalData)
 
       //When the request is checked against the policy
       const response = requestMatchesNotActions(request, actions)

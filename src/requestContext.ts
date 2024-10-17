@@ -1,3 +1,7 @@
+
+/**
+ * The context metadata available in a request
+ */
 export interface RequestContext {
 
   /**
@@ -16,17 +20,40 @@ export interface RequestContext {
   contextKeyValue: (name: string) => ContextKey;
 }
 
+/**
+ * A context key in a request
+ */
 export interface ContextKey {
+  /**
+   * The name of the context key
+   */
   name: string;
+
+  /**
+   * Check if the context key is a string value
+   */
   isStringValue(): this is StringContextKey;
+
+  /**
+   * Check if the context key is an array value
+   */
   isArrayValue(): this is ArrayContextKey;
 }
 
 export interface StringContextKey extends ContextKey {
+
+  /**
+   * The value of the context key if it is a string
+   */
   value: string;
 }
 
 export interface ArrayContextKey extends ContextKey {
+
+  /**
+   * The array of values of the context key if it is an array
+   */
+
   values: string[];
 }
 
