@@ -173,4 +173,18 @@ describe('convertIamStringToRegex', () => {
       expect(result.exec('arn:aws:s3:::bucket/Bar')).toBeTruthy()
     })
   })
+
+  it('should not replace wildcards if the option is set to false', () => {
+    //Given a string with a wildcard
+    const value = "arn:aws:s3:::*"
+    //And a request
+    const request = testRequestWithContext({})
+
+    //When the string is converted to a regex
+    const result = convertIamStringToRegex(value, request, {replaceWildcards: false})
+
+    //Then the result should be a regex that matches the string
+    expect(result.source).toBe('^arn:aws:s3:::\\*$')
+    expect(result.exec('arn:aws:s3:::*')).toBeTruthy()
+  })
 })
