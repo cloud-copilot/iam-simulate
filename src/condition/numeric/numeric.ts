@@ -11,7 +11,7 @@ export function parseNumber(value: string): number | undefined {
   if(value.includes('.')) {
     number = parseFloat(value)
   } else {
-    number = parseInt(value)
+    number = parseInt(value, 10)
   }
   if(isNotDefined(number) || isNaN(number)) {
     return undefined
