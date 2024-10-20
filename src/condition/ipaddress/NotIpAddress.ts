@@ -2,8 +2,8 @@ import { BaseConditionOperator } from "../BaseConditionOperator.js";
 import { isIpInCidrV4, isValidCidrV4, isValidIpV4 } from "./ipv4.js";
 import { isIpInCidrV6, isValidIpCidrV6 as isValidCidrV6, isValidIpV6 } from "./ipv6.js";
 
-export const IpAddress: BaseConditionOperator = {
-  name: 'IpAddress',
+export const NotIpAddress: BaseConditionOperator = {
+  name: 'NotIpAddress',
   matches: (request, keyValue, policyValues) => {
     if(!isValidIpV4(keyValue) && !isValidIpV6(keyValue)) {
       return false
