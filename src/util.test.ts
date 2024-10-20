@@ -203,6 +203,22 @@ describe('convertIamStringToRegex', () => {
     //Then the result should be a regex that matches the string
     expect(result.source).toBe('^arn:aws:iam::123456789012:user\\/Bob$')
     expect(result.exec('arn:aws:iam::123456789012:user/Bob')).toBeTruthy()
+  })
 
+  it('should escpace special characters in variable values', () => {
+    //Given a string with a variable
+    const value = 'arn:aws:iam::123456789012:user/${aws:username}'
+    //And a request
+    const request = testRequestWithContext({
+      'aws:username': 'Bob*'
+    }, ['aws:username'])
+
+    //When the string is converted to a regex
+    const result = convertIamStringToRegex(value, request)
+
+    //Then the result should be a regex that matches the string
+    expect(result.source).toBe('^arn:aws:iam::123456789012:user\\/Bob\\*$')
+    expect(result.exec('arn:aws:iam::123456789012:user/Bob*')).toBeTruthy()
+    expect(result.exec('arn:aws:iam::123456789012:user/Bob')).toBeFalsy()
   })
 })

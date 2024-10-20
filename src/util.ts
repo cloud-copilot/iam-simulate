@@ -56,13 +56,13 @@ export function convertIamStringToRegex(value: string, request: AwsRequest, repl
     const requestValue = getContextSingleValue(request, variableName)
 
     if(requestValue) {
-      return requestValue
+      return escapeRegexCharacters(requestValue)
     } else if(defaultValue) {
       /*
         TODO: What happens in a request if a multi value context key is used in a string and there
         is a default value? Will it use the default value or will it fail the condition test?
       */
-      return defaultValue
+      return escapeRegexCharacters(defaultValue)
     } else {
       invalidVariableFound = true
       /*
@@ -73,12 +73,22 @@ export function convertIamStringToRegex(value: string, request: AwsRequest, repl
 
     throw new Error('This should never happen')
   })
+
   if(invalidVariableFound) {
     return matchesNothing
   }
   return new RegExp('^' + newValue + '$')
 }
 
+/**
+ * Replace regex characters in a string with their escaped versions
+ *
+ * @param str the string to escape regex characters in
+ * @returns the string with regex characters escaped
+ */
+function escapeRegexCharacters(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 /**
  * Get the string value of a context key only if it is a single value key
