@@ -7,7 +7,7 @@ import { RequestSupplementalData } from "./requestSupplementalData.js";
 /**
  * A request to be evaluated by the policy engine
  */
-export interface Request {
+export interface AwsRequest {
   principal: RequestPrincipal;
 
   /**
@@ -43,7 +43,7 @@ export interface Request {
   getContextKeyValue(key: string): ContextKey;
 }
 
-export class RequestImpl implements Request {
+export class AwsRequestImpl implements AwsRequest {
 
   constructor(public readonly principalString: string,
               public readonly resourceString: string | undefined,

@@ -1,6 +1,6 @@
 import { ActionStatement, loadPolicy, NotActionStatement } from '@cloud-copilot/iam-policy'
 import { describe, expect, it } from 'vitest'
-import { RequestImpl } from '../request/request.js'
+import { AwsRequestImpl } from '../request/request.js'
 import { MockRequestSupplementalData } from '../request/requestSupplementalData.js'
 import { RequestContextImpl } from '../requestContext.js'
 import { requestMatchesActions, requestMatchesNotActions } from './action.js'
@@ -18,7 +18,7 @@ describe('action', () => {
       const statement = policy.statements()[0]
       const actions = (statement as ActionStatement).actions()
       //And a request with an action
-      const request = new RequestImpl('principal',
+      const request = new AwsRequestImpl('principal',
                                       'resource',
                                       's3:GetBucket',
                                       new RequestContextImpl({}),
@@ -42,7 +42,7 @@ describe('action', () => {
       const statement = policy.statements()[0]
       const actions = (statement as ActionStatement).actions()
       //And a request with the s3:GetBucket action
-      const request = new RequestImpl('principal',
+      const request = new AwsRequestImpl('principal',
                                       'resource',
                                       's3:GetBucket',
                                       new RequestContextImpl({}),
@@ -67,7 +67,7 @@ describe('action', () => {
     const statement = policy.statements()[0]
     const actions = (statement as ActionStatement).actions()
     //And a request with the s3:GetBucket action
-    const request = new RequestImpl('principal',
+    const request = new AwsRequestImpl('principal',
                                     'resource',
                                     's3:GetBucket',
                                     new RequestContextImpl({}),
@@ -92,7 +92,7 @@ describe('action', () => {
     const actions = (statement as ActionStatement).actions()
 
     //And a request with the s3:GetBucket action
-    const request = new RequestImpl('principal',
+    const request = new AwsRequestImpl('principal',
                                     'resource',
                                     's3:GetBucket',
                                     new RequestContextImpl({}),
@@ -117,7 +117,7 @@ describe('action', () => {
     const actions = (statement as ActionStatement).actions()
 
     //And a request with the s3:GetBucket action
-    const request = new RequestImpl('principal',
+    const request = new AwsRequestImpl('principal',
                                     'resource',
                                     's3:GetBucket',
                                     new RequestContextImpl({}),
@@ -142,7 +142,7 @@ describe('action', () => {
     const actions = (statement as ActionStatement).actions()
 
     //And a request with the s3:GetBucket action
-    const request = new RequestImpl('principal',
+    const request = new AwsRequestImpl('principal',
                                     'resource',
                                     's3:PutBucket',
                                     new RequestContextImpl({}),
@@ -167,7 +167,7 @@ describe('action', () => {
     const actions = (statement as ActionStatement).actions()
 
     //And a request with the s3:GetBucket action
-    const request = new RequestImpl('principal',
+    const request = new AwsRequestImpl('principal',
                                     'resource',
                                     's3:GetBucket',
                                     new RequestContextImpl({}),
@@ -192,7 +192,7 @@ describe('action', () => {
     const actions = (statement as ActionStatement).actions()
 
     //And a request with the s3:GetBucket action
-    const request = new RequestImpl('principal',
+    const request = new AwsRequestImpl('principal',
                                     'resource',
                                     's3:GetBuckets',
                                     new RequestContextImpl({}),
@@ -217,7 +217,7 @@ describe('action', () => {
     const actions = (statement as ActionStatement).actions()
 
     //And a request with the s3:GetBucket action
-    const request = new RequestImpl('principal',
+    const request = new AwsRequestImpl('principal',
                                     'resource',
                                     's3:GetBucket',
                                     new RequestContextImpl({}),
@@ -242,7 +242,7 @@ describe('action', () => {
       const statement = policy.statements()[0]
       const actions = (statement as NotActionStatement).notActions()
       //And a request with an action
-      const request = new RequestImpl('principal',
+      const request = new AwsRequestImpl('principal',
                                       'resource',
                                       's3:GetBucket',
                                       new RequestContextImpl({}),
@@ -266,7 +266,7 @@ describe('action', () => {
       const statement = policy.statements()[0]
       const actions = (statement as NotActionStatement).notActions()
       //And a request with the s3:GetBucket action
-      const request = new RequestImpl('principal',
+      const request = new AwsRequestImpl('principal',
                                       'resource',
                                       's3:GetBucket',
                                       new RequestContextImpl({}),

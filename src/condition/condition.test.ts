@@ -1,21 +1,21 @@
 import { loadPolicy } from "@cloud-copilot/iam-policy";
 import { describe, expect, it } from "vitest";
-import { Request, RequestImpl } from "../request/request.js";
+import { AwsRequest, AwsRequestImpl } from "../request/request.js";
 import { MockRequestSupplementalData, RequestSupplementalDataImpl } from "../request/requestSupplementalData.js";
 import { RequestContextImpl } from "../requestContext.js";
 import { singleConditionMatchesRequest } from "./condition.js";
 
-function testRequestWithContext(context: any, validContextVariables?: string[]): Request {
+function testRequestWithContext(context: any, validContextVariables?: string[]): AwsRequest {
   validContextVariables = validContextVariables || []
   //For now we assume that all values passed into the context are valid
-  return new RequestImpl('', '', '', new RequestContextImpl(context), new RequestSupplementalDataImpl(validContextVariables, [], []))
+  return new AwsRequestImpl('', '', '', new RequestContextImpl(context), new RequestSupplementalDataImpl(validContextVariables, [], []))
 }
 
 
 describe('singleConditionMatchesRequest', () => {
   it('should return Unknown if the base operation is not found', () => {
     //Given a request
-    const request = new RequestImpl('', '', '', new RequestContextImpl({'aws:username': 'test'}), MockRequestSupplementalData)
+    const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:username': 'test'}), MockRequestSupplementalData)
     //And a condition that test for an operation that does not exist
     const policy = loadPolicy({
       Version: '2012-10-17',
@@ -40,7 +40,7 @@ describe('singleConditionMatchesRequest', () => {
 
   it('should return Match if the base operation is negative and the key does not exist', () => {
     //Given a request
-    const request = new RequestImpl('', '', '', new RequestContextImpl({}), MockRequestSupplementalData)
+    const request = new AwsRequestImpl('', '', '', new RequestContextImpl({}), MockRequestSupplementalData)
     //And a condition that test for an operation that does not exist
     const policy = loadPolicy({
       Version: '2012-10-17',
@@ -65,7 +65,7 @@ describe('singleConditionMatchesRequest', () => {
 
   it('should return NoMatch if the operation is single value but the key is an array', () => {
     //Given a request
-    const request = new RequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['test', 'test2']}), MockRequestSupplementalData)
+    const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['test', 'test2']}), MockRequestSupplementalData)
     //And a single valued condition test for that key
     const policy = loadPolicy({
       Version: '2012-10-17',
@@ -92,7 +92,7 @@ describe('singleConditionMatchesRequest', () => {
 
   it('should return Match if the operation is a single value, the key is a single value, and they match', () => {
     //Given a request
-    const request = new RequestImpl('', '', '', new RequestContextImpl({'aws:PrincipalOrgId': 'o-123456'}), MockRequestSupplementalData)
+    const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:PrincipalOrgId': 'o-123456'}), MockRequestSupplementalData)
     //And a single valued condition test for that key
     const policy = loadPolicy({
       Version: '2012-10-17',
@@ -119,7 +119,7 @@ describe('singleConditionMatchesRequest', () => {
 
   it('should return NoMatch if the operation is a single value, the key is a single value, and they do not match', () => {
     //Given a request
-    const request = new RequestImpl('', '', '', new RequestContextImpl({'aws:PrincipalOrgId': 'o-123456'}), MockRequestSupplementalData)
+    const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:PrincipalOrgId': 'o-123456'}), MockRequestSupplementalData)
     //And a single valued condition test for that key
     const policy = loadPolicy({
       Version: '2012-10-17',
@@ -147,7 +147,7 @@ describe('singleConditionMatchesRequest', () => {
   describe('ForAnyValue', () => {
     it('should return NoMatch if the value does not exist', () => {
       //Given a request
-      const request = new RequestImpl('', '', '', new RequestContextImpl({}), MockRequestSupplementalData)
+      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({}), MockRequestSupplementalData)
       //And a condition that test for an operation that does not exist
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -172,7 +172,7 @@ describe('singleConditionMatchesRequest', () => {
 
     it('should return NoMatch if none of the values match', () => {
       //Given a request
-      const request = new RequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['Z', 'X']}), MockRequestSupplementalData)
+      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['Z', 'X']}), MockRequestSupplementalData)
       //And a condition that test for an operation that does not exist
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -197,7 +197,7 @@ describe('singleConditionMatchesRequest', () => {
 
     it('should return Match if any of the values match', () => {
       //Given a request
-      const request = new RequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['Z', 'X', 'A']}), MockRequestSupplementalData)
+      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['Z', 'X', 'A']}), MockRequestSupplementalData)
       //And a condition that test for an operation that does not exist
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -222,7 +222,7 @@ describe('singleConditionMatchesRequest', () => {
 
     it('should return Match if all of the values match', () => {
       //Given a request
-      const request = new RequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['B', 'A']}), MockRequestSupplementalData)
+      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['B', 'A']}), MockRequestSupplementalData)
       //And a condition that test for an operation that does not exist
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -247,7 +247,7 @@ describe('singleConditionMatchesRequest', () => {
 
     it('should return unknown if the base operation is not found', () => {
       //Given a request
-      const request = new RequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['B', 'A']}), MockRequestSupplementalData)
+      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['B', 'A']}), MockRequestSupplementalData)
       //And a condition that test for an operation that does not exist
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -274,7 +274,7 @@ describe('singleConditionMatchesRequest', () => {
   describe('ForAllValues', () => {
     it('should return Match if the key does not exist', () => {
       //Given a request
-      const request = new RequestImpl('', '', '', new RequestContextImpl({}), MockRequestSupplementalData)
+      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({}), MockRequestSupplementalData)
       //And a condition that test for an operation that does not exist
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -299,7 +299,7 @@ describe('singleConditionMatchesRequest', () => {
 
     it('should return no match if none of the values match', () => {
       //Given a request
-      const request = new RequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['Z', 'X']}), MockRequestSupplementalData)
+      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['Z', 'X']}), MockRequestSupplementalData)
       //And a condition that test for an operation that does not exist
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -324,7 +324,7 @@ describe('singleConditionMatchesRequest', () => {
 
     it('should return no match if some of the values match but not all', () => {
       //Given a request
-      const request = new RequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['A', 'X']}), MockRequestSupplementalData)
+      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['A', 'X']}), MockRequestSupplementalData)
       //And a condition that test for an operation that does not exist
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -349,7 +349,7 @@ describe('singleConditionMatchesRequest', () => {
 
     it('should return Match if all of the values match', () => {
       //Given a request
-      const request = new RequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['A', 'B']}), MockRequestSupplementalData)
+      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['A', 'B']}), MockRequestSupplementalData)
       //And a condition that test for an operation that does not exist
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -374,7 +374,7 @@ describe('singleConditionMatchesRequest', () => {
 
     it('should return no match if the value is not an array', () => {
       //Given a request
-      const request = new RequestImpl('', '', '', new RequestContextImpl({'aws:PrincipalOrgId': 'o-12345'}), MockRequestSupplementalData)
+      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:PrincipalOrgId': 'o-12345'}), MockRequestSupplementalData)
       //And a condition that test for an operation that does not exist
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -399,7 +399,7 @@ describe('singleConditionMatchesRequest', () => {
 
     it('should return unknown if the base operation is not found', () => {
       //Given a request
-      const request = new RequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['B', 'A']}), MockRequestSupplementalData)
+      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['B', 'A']}), MockRequestSupplementalData)
       //And a condition that test for an operation that does not exist
       const policy = loadPolicy({
         Version: '2012-10-17',

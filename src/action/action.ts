@@ -1,5 +1,5 @@
 import { Action } from "@cloud-copilot/iam-policy";
-import { Request } from "../request/request.js";
+import { AwsRequest } from "../request/request.js";
 
 /**
  * Convert an action action (the part after the colon) to a regular expression.
@@ -23,7 +23,7 @@ function convertActionToRegex(action: string): RegExp {
  * @param actions the actions to check against
  * @returns true if the request matches any of the actions, false otherwise
  */
-export function requestMatchesActions(request: Request, actions: Action[]): boolean {
+export function requestMatchesActions(request: AwsRequest, actions: Action[]): boolean {
   for(const action of actions) {
     if (action.isWildcardAction()) {
       return true;
@@ -49,6 +49,6 @@ export function requestMatchesActions(request: Request, actions: Action[]): bool
  * @param actions the actions to check against
  * @returns true if the request does not match any of the actions, false if the request matches any of the actions
  */
-export function requestMatchesNotActions(request: Request, actions: Action[]): boolean {
+export function requestMatchesNotActions(request: AwsRequest, actions: Action[]): boolean {
   return !requestMatchesActions(request, actions);
 }

@@ -1,26 +1,31 @@
 import { Condition } from '@cloud-copilot/iam-policy';
-import { Request } from '../request/request';
-import { convertIamStringToRegex } from '../util.js';
+import { AwsRequest } from '../request/request';
+import { ArnEquals } from './arn/ArnEquals.js';
+import { ArnLike } from './arn/ArnLike.js';
+import { ArnNotEquals } from './arn/ArnNotEquals.js';
+import { ArnNotLike } from './arn/ArnNotLike.js';
+import { BaseConditionOperator } from './BaseConditionOperator.js';
+import { StringEquals } from './string/StringEquals.js';
+import { StringNotEquals } from './string/StringNotEquals.js';
 
 export type ConditionMatchResult = 'Match' | 'NoMatch' | 'Unknown'
 
-type operation = (request: Request, keyValue: string, policyValues: string[]) => boolean
+type operation = (request: AwsRequest, keyValue: string, policyValues: string[]) => boolean
 
-const baseOperations: { [key: string]: operation } = {
-  'stringequals': (request, keyValue, policyValues): boolean => {
-    const patterns = policyValues.map(value => convertIamStringToRegex(value, request, {replaceWildcards: false}))
-    return patterns.some(pattern => pattern.test(keyValue))
-  },
-  'stringnotequals': (request, keyValue, policyValues): boolean => {
-    const patterns = policyValues.map(value => convertIamStringToRegex(value, request, {replaceWildcards: false}))
-    return !patterns.some(pattern => pattern.test(keyValue))
-  }
+const allOperators = [
+  StringEquals, StringNotEquals,
+  ArnLike, ArnEquals, ArnNotLike, ArnNotEquals
+]
+
+const baseOperations: { [key: string]: BaseConditionOperator } = {}
+for(const operator of allOperators) {
+  baseOperations[operator.name.toLowerCase()] = operator
 }
 
-export function singleConditionMatchesRequest(request: Request, condition: Condition): ConditionMatchResult {
+export function singleConditionMatchesRequest(request: AwsRequest, condition: Condition): ConditionMatchResult {
   const key = condition.conditionKey()
   const policyValues = condition.conditionValues()
-  const baseOperation = baseOperations[condition.operation().baseOperator().toLowerCase()]
+  const baseOperation = baseOperations[condition.operation().baseOperator().toLowerCase()]?.matches
   const keyExists = request.contextKeyExists(key)
   const keyValue = keyExists ? request.getContextKeyValue(key) : undefined
 

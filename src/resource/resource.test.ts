@@ -1,6 +1,6 @@
 import { loadPolicy, NotResourceStatement, ResourceStatement } from "@cloud-copilot/iam-policy"
 import { describe, expect, it } from "vitest"
-import { RequestImpl } from "../request/request.js"
+import { AwsRequestImpl } from "../request/request.js"
 import { MockRequestSupplementalData } from "../request/requestSupplementalData.js"
 import { RequestContextImpl } from "../requestContext.js"
 import { requestMatchesResources } from "./resource.js"
@@ -139,7 +139,7 @@ describe('requestMatchesResources', () => {
       })
 
       //And a request with a resource
-      const request = new RequestImpl('principal',
+      const request = new AwsRequestImpl('principal',
                                       rt.resource,
                                       's3:GetBucket',
                                       new RequestContextImpl(rt.context || {}),
@@ -175,7 +175,7 @@ describe('requestMatchesNotResources', () => {
       })
 
       //And a request with a resource
-      const request = new RequestImpl('principal',
+      const request = new AwsRequestImpl('principal',
                                       rt.resource,
                                       's3:GetBucket',
                                       new RequestContextImpl(rt.context || {}),

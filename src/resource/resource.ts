@@ -1,6 +1,6 @@
 import { Resource } from "@cloud-copilot/iam-policy";
-import { Request } from "../request/request.js";
-import { convertIamStringToRegex } from "../util.js";
+import { AwsRequest } from "../request/request.js";
+import { convertIamStringToRegex, getResourceSegments } from "../util.js";
 
 //TODO: Make a check to see if the action is a wildcard only action. This will have to happen outside of these functions.
 
@@ -25,11 +25,11 @@ function convertResourceSegmentToRegex(segment: string): RegExp {
  * @param policyResources the resources to check against
  * @returns true if the request matches any of the resources, false otherwise
  */
-export function requestMatchesResources(request: Request, policyResources: Resource[]): boolean {
+export function requestMatchesResources(request: AwsRequest, policyResources: Resource[]): boolean {
   return policyResources.some(policyResource => singleResourceMatchesRequest(request, policyResource))
 }
 
-export function requestMatchesNotResources(request: Request, policyResources: Resource[]): boolean {
+export function requestMatchesNotResources(request: AwsRequest, policyResources: Resource[]): boolean {
   return !requestMatchesResources(request, policyResources)
 }
 
@@ -40,7 +40,7 @@ export function requestMatchesNotResources(request: Request, policyResources: Re
  * @param policyResource the resource to check against
  * @returns true if the request matches the resource, false otherwise
  */
-function singleResourceMatchesRequest(request: Request, policyResource: Resource): boolean {
+function singleResourceMatchesRequest(request: AwsRequest, policyResource: Resource): boolean {
   if(policyResource.isAllResources()) {
     return true;
   } else if(policyResource.isArnResource()) {
@@ -84,27 +84,3 @@ function singleResourceMatchesRequest(request: Request, policyResource: Resource
   }
 }
 
-/**
- * Splits a resource into two segments. The first segment is the product segment and the second segment is the resource id segment.
- * This could be split by a colon or a slash, so it checks for both.
- *
- * @param resource The resource to split
- * @returns a tuple with the first segment being the product segment (including the separator) and the second segment being the resource id.
- */
-function getResourceSegments(resource: string): [string, string] {
-  const slashIndex = resource.indexOf('/')
-  const colonIndex = resource.indexOf(':')
-
-  let splitIndex = slashIndex
-  if(slashIndex != -1 && colonIndex != -1) {
-    splitIndex = Math.min(slashIndex, colonIndex) + 1
-  } else if (colonIndex == -1) {
-    splitIndex = slashIndex + 1
-  } else if (slashIndex == -1) {
-    splitIndex = colonIndex + 1
-  } else {
-    throw new Error(`Unable to split resource ${resource}`)
-  }
-
-  return [resource.slice(0, splitIndex), resource.slice(splitIndex)]
-}

@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { Request, RequestImpl } from './request/request.js'
+import { AwsRequest, AwsRequestImpl } from './request/request.js'
 import { RequestSupplementalDataImpl } from './request/requestSupplementalData.js'
 import { RequestContextImpl } from './requestContext.js'
 import { convertIamStringToRegex } from './util.js'
 
-function testRequestWithContext(context: any, validContextVariables?: string[]): Request {
+function testRequestWithContext(context: any, validContextVariables?: string[]): AwsRequest {
   validContextVariables = validContextVariables || []
   //For now we assume that all values passed into the context are valid
-  return new RequestImpl('', '', '', new RequestContextImpl(context), new RequestSupplementalDataImpl(validContextVariables, [], []))
+  return new AwsRequestImpl('', '', '', new RequestContextImpl(context), new RequestSupplementalDataImpl(validContextVariables, [], []))
 }
 
 describe('convertIamStringToRegex', () => {
@@ -186,5 +186,23 @@ describe('convertIamStringToRegex', () => {
     //Then the result should be a regex that matches the string
     expect(result.source).toBe('^arn:aws:s3:::\\*$')
     expect(result.exec('arn:aws:s3:::*')).toBeTruthy()
+  })
+
+  it('should replace forward slashes with escaped forward slashes', () => {
+    //Given an arn with a forward slash
+    const value = 'arn:aws:iam::123456789012:user/${aws:username}'
+
+    //And a request
+    const request = testRequestWithContext({
+      'aws:username': 'Bob'
+    }, ['aws:username'])
+
+    //When the string is converted to a regex
+    const result = convertIamStringToRegex(value, request)
+
+    //Then the result should be a regex that matches the string
+    expect(result.source).toBe('^arn:aws:iam::123456789012:user\\/Bob$')
+    expect(result.exec('arn:aws:iam::123456789012:user/Bob')).toBeTruthy()
+
   })
 })

@@ -1,5 +1,5 @@
 import { Principal } from "@cloud-copilot/iam-policy";
-import { Request } from "../request/request.js";
+import { AwsRequest } from "../request/request.js";
 
 //Wildcards are not allowed in the principal element https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html
 // The only exception is the "*" wildcard, which you can use to match all principals, including anonymous principals.
@@ -52,7 +52,7 @@ type PrincipalMatchResult = 'Match' | 'NoMatch' | 'AccountLevelMatch'
  * @param principal the list of principals in the Principal element of the Statement
  * @returns if the request matches the Principal element, and if so, how it matches
  */
-export function requestMatchesPrincipal(request: Request, principal: Principal[]): PrincipalMatchResult {
+export function requestMatchesPrincipal(request: AwsRequest, principal: Principal[]): PrincipalMatchResult {
   const matches = principal.map(principalStatement => requestMatchesPrincipalStatement(request, principalStatement))
   if(matches.includes('Match')) {
     return 'Match'
@@ -72,7 +72,7 @@ export function requestMatchesPrincipal(request: Request, principal: Principal[]
  * @param notPrincipal the list of principals in the NotPrincipal element of the Statement
  * @returns
  */
-export function requestMatchesNotPrincipal(request: Request, notPrincipal: Principal[]): PrincipalMatchResult {
+export function requestMatchesNotPrincipal(request: AwsRequest, notPrincipal: Principal[]): PrincipalMatchResult {
   const matches = notPrincipal.map(principalStatement => requestMatchesPrincipalStatement(request, principalStatement))
   if(matches.includes('Match')) {
     return 'NoMatch'
@@ -98,7 +98,7 @@ export function requestMatchesNotPrincipal(request: Request, notPrincipal: Princ
  * @param principalStatement the principal statement to check the request against
  * @returns if the request matches the principal statement, and if so, how it matches
  */
-export function requestMatchesPrincipalStatement(request: Request, principalStatement: Principal): PrincipalMatchResult {
+export function requestMatchesPrincipalStatement(request: AwsRequest, principalStatement: Principal): PrincipalMatchResult {
   if(principalStatement.isServicePrincipal()) {
     if(principalStatement.service() === request.principal.value()) {
       return 'Match'
