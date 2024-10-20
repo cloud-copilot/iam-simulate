@@ -5,6 +5,11 @@ import { ArnLike } from './arn/ArnLike.js';
 import { ArnNotEquals } from './arn/ArnNotEquals.js';
 import { ArnNotLike } from './arn/ArnNotLike.js';
 import { BaseConditionOperator } from './BaseConditionOperator.js';
+import { NumericEquals } from './numeric/NumericEquals.js';
+import { NumericGreaterThan } from './numeric/NumericGreaterThan.js';
+import { NumericGreaterThanEquals } from './numeric/NumericGreaterThanEquals.js';
+import { NumericLessThan } from './numeric/NumericLessThan.js';
+import { NumericNotEquals } from './numeric/NumericNotEquals.js';
 import { StringEquals } from './string/StringEquals.js';
 import { StringEqualsIgnoreCase } from './string/StringEqualsIgnoreCase.js';
 import { StringLike } from './string/StringLike.js';
@@ -16,6 +21,7 @@ export type ConditionMatchResult = 'Match' | 'NoMatch' | 'Unknown'
 
 const allOperators = [
   StringEquals, StringNotEquals, StringEqualsIgnoreCase, StringNotEqualsIgnoreCase, StringLike, StringNotLike,
+  NumericEquals, NumericNotEquals, NumericLessThan, NumericNotEquals, NumericGreaterThan, NumericGreaterThanEquals,
   ArnLike, ArnEquals, ArnNotLike, ArnNotEquals
 ]
 

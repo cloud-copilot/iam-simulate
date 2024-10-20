@@ -6,7 +6,7 @@ import { BaseConditionOperator } from "./BaseConditionOperator.js"
 
 export interface BaseOperatorTest {
   name: string
-  requestContext: { [key: string]: string }
+  requestContext?: { [key: string]: string }
   policyValues: string[]
   testValue: string
   expected: boolean
@@ -17,7 +17,7 @@ export function testOperator(name: string, tests: BaseOperatorTest[], operator: 
     for(const test of tests) {
       it(test.name, () => {
         //Given the request
-        const request = new AwsRequestImpl('', '', '', new RequestContextImpl(test.requestContext), MockRequestSupplementalData)
+        const request = new AwsRequestImpl('', '', '', new RequestContextImpl(test.requestContext || {}), MockRequestSupplementalData)
         //When the condition is evaluated
         const result = operator.matches(request, test.testValue, test.policyValues)
 
