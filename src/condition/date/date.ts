@@ -14,7 +14,7 @@ export function parseDate(value: string): number | undefined {
   }
 
   // Or a unix epoch date
-  const epochDate = parseInt(value)
+  const epochDate = parseInt(value, 10)
   if(isDefined(epochDate) && !isNaN(epochDate)) {
     return epochDate
   }
