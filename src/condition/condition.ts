@@ -6,14 +6,16 @@ import { ArnNotEquals } from './arn/ArnNotEquals.js';
 import { ArnNotLike } from './arn/ArnNotLike.js';
 import { BaseConditionOperator } from './BaseConditionOperator.js';
 import { StringEquals } from './string/StringEquals.js';
+import { StringEqualsIgnoreCase } from './string/StringEqualsIgnoreCase.js';
+import { StringLike } from './string/StringLike.js';
 import { StringNotEquals } from './string/StringNotEquals.js';
+import { StringNotEqualsIgnoreCase } from './string/StringNotEqualsIgnoreCase.js';
+import { StringNotLike } from './string/StringNotLike.js';
 
 export type ConditionMatchResult = 'Match' | 'NoMatch' | 'Unknown'
 
-type operation = (request: AwsRequest, keyValue: string, policyValues: string[]) => boolean
-
 const allOperators = [
-  StringEquals, StringNotEquals,
+  StringEquals, StringNotEquals, StringEqualsIgnoreCase, StringNotEqualsIgnoreCase, StringLike, StringNotLike,
   ArnLike, ArnEquals, ArnNotLike, ArnNotEquals
 ]
 
