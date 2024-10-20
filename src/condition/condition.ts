@@ -5,6 +5,7 @@ import { ArnLike } from './arn/ArnLike.js';
 import { ArnNotEquals } from './arn/ArnNotEquals.js';
 import { ArnNotLike } from './arn/ArnNotLike.js';
 import { BaseConditionOperator } from './BaseConditionOperator.js';
+import { Bool } from './boolean/Bool.js';
 import { DateEquals } from './date/DateEquals.js';
 import { DateGreaterThan } from './date/DateGreaterThan.js';
 import { DateGreaterThanEquals } from './date/DateGreaterThanEquals.js';
@@ -29,6 +30,7 @@ const allOperators = [
   StringEquals, StringNotEquals, StringEqualsIgnoreCase, StringNotEqualsIgnoreCase, StringLike, StringNotLike,
   NumericEquals, NumericNotEquals, NumericLessThan, NumericNotEquals, NumericGreaterThan, NumericGreaterThanEquals,
   DateEquals, DateNotEquals, DateLessThan, DateLessThanEquals, DateGreaterThan, DateGreaterThanEquals,
+  Bool,
   ArnLike, ArnEquals, ArnNotLike, ArnNotEquals
 ]
 
