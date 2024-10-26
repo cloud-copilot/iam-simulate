@@ -422,4 +422,156 @@ describe('singleConditionMatchesRequest', () => {
       expect(response).toEqual('Unknown')
     })
   })
+
+  describe('Null checks', () => {
+    it('should return Match if the key does not exist and the policy has true', () => {
+      //Given a request with no context key
+      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({}), MockRequestSupplementalData)
+      //And a condition that tests for null
+      const policy = loadPolicy({
+        Version: '2012-10-17',
+        Statement: [{
+          Effect: 'Allow',
+          Action: '*',
+          Resource: '*',
+          Condition: {
+            'Null': {
+              'aws:CalledVia': "true"
+            }
+          }
+        }]
+      })
+      const condition = policy.statements()[0].conditions()[0]
+      //When the request is checked against the condition
+      const response = singleConditionMatchesRequest(request, condition)
+
+      //Then the result should be 'Match'
+      expect(response).toEqual('Match')
+    })
+
+    it('should return NoMatch if the key exists and the policy has true', () => {
+      //Given a request with context key
+      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': 'test'}), MockRequestSupplementalData)
+      //And a condition that tests for null
+      const policy = loadPolicy({
+        Version: '2012-10-17',
+        Statement: [{
+          Effect: 'Allow',
+          Action: '*',
+          Resource: '*',
+          Condition: {
+            'Null': {
+              'aws:CalledVia': "true"
+            }
+          }
+        }]
+      })
+      const condition = policy.statements()[0].conditions()[0]
+      //When the request is checked against the condition
+      const response = singleConditionMatchesRequest(request, condition)
+
+      //Then the result should be 'NoMatch'
+      expect(response).toEqual('NoMatch')
+    })
+
+    it('should return NoMatch if the key does not exist and the policy has false', () => {
+      //Given a request with no context key
+      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({}), MockRequestSupplementalData)
+      //And a condition that tests for null
+      const policy = loadPolicy({
+        Version: '2012-10-17',
+        Statement: [{
+          Effect: 'Allow',
+          Action: '*',
+          Resource: '*',
+          Condition: {
+            'Null': {
+              'aws:CalledVia': "false"
+            }
+          }
+        }]
+      })
+      const condition = policy.statements()[0].conditions()[0]
+      //When the request is checked against the condition
+      const response = singleConditionMatchesRequest(request, condition)
+
+      //Then the result should be 'Match'
+      expect(response).toEqual('NoMatch')
+    })
+
+    it('should return Match if the key exists and the policy has false', () => {
+      //Given a request with context key
+      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': 'test'}), MockRequestSupplementalData)
+      //And a condition that tests for null
+      const policy = loadPolicy({
+        Version: '2012-10-17',
+        Statement: [{
+          Effect: 'Allow',
+          Action: '*',
+          Resource: '*',
+          Condition: {
+            'Null': {
+              'aws:CalledVia': "false"
+            }
+          }
+        }]
+      })
+      const condition = policy.statements()[0].conditions()[0]
+      //When the request is checked against the condition
+      const response = singleConditionMatchesRequest(request, condition)
+
+      //Then the result should be 'Match'
+      expect(response).toEqual('Match')
+    })
+
+    it('should treat treat ForAllValues:Null the same as Null', () => {
+      //Given a request with no context key
+      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({}), MockRequestSupplementalData)
+      //And a condition that tests for null
+      const policy = loadPolicy({
+        Version: '2012-10-17',
+        Statement: [{
+          Effect: 'Allow',
+          Action: '*',
+          Resource: '*',
+          Condition: {
+            'ForAllValues:Null': {
+              'aws:CalledVia': "true"
+            }
+          }
+        }]
+      })
+      const condition = policy.statements()[0].conditions()[0]
+      //When the request is checked against the condition
+      const response = singleConditionMatchesRequest(request, condition)
+
+      //Then the result should be 'Match'
+      expect(response).toEqual('Match')
+    })
+
+    it('should treat ForAnyValue:Null the same as Null', () => {
+      //Given a request with no context key
+      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({}), MockRequestSupplementalData)
+      //And a condition that tests for null
+      const policy = loadPolicy({
+        Version: '2012-10-17',
+        Statement: [{
+          Effect: 'Allow',
+          Action: '*',
+          Resource: '*',
+          Condition: {
+            'ForAnyValue:Null': {
+              'aws:CalledVia': "true"
+            }
+          }
+        }]
+      })
+      const condition = policy.statements()[0].conditions()[0]
+      //When the request is checked against the condition
+      const response = singleConditionMatchesRequest(request, condition)
+
+      //Then the result should be 'Match'
+      expect(response).toEqual('Match')
+    })
+  })
 })

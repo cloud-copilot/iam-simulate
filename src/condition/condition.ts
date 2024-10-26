@@ -51,6 +51,10 @@ export function singleConditionMatchesRequest(request: AwsRequest, condition: Co
   const keyExists = request.contextKeyExists(key)
   const keyValue = keyExists ? request.getContextKeyValue(key) : undefined
 
+  if(condition.operation().value().toLowerCase() == 'null' || condition.operation().baseOperator()?.toLowerCase() == 'null') {
+    return testNull(condition, keyExists)
+  }
+
   if(condition.operation().setOperator()) {
     const setOperator = condition.operation().setOperator()
     if(setOperator === 'ForAnyValue') {
@@ -105,4 +109,13 @@ export function singleConditionMatchesRequest(request: AwsRequest, condition: Co
   }
   const matches = baseOperation(request, keyValue.value, policyValues)
   return matches ? 'Match' : 'NoMatch'
+}
+
+function testNull(condition: Condition, keyExists: boolean): ConditionMatchResult {
+  const lowerCaseValues = condition.conditionValues().map(value => value.toLowerCase())
+  if(keyExists) {
+    return lowerCaseValues.includes('false') ? 'Match' : 'NoMatch'
+  }
+
+  return lowerCaseValues.includes('true') ? 'Match' : 'NoMatch'
 }
