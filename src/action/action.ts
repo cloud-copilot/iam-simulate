@@ -1,5 +1,22 @@
-import { Action } from "@cloud-copilot/iam-policy";
+import { Action, Statement } from "@cloud-copilot/iam-policy";
 import { AwsRequest } from "../request/request.js";
+
+
+/**
+ * Check if a request matches the Action or NotAction elements of a statement.
+ *
+ * @param request the request to check
+ * @param statement the statement to check against
+ * @returns true if the request matches the Action or NotAction in the statement, false otherwise
+ */
+export function requestMatchesStatementActions(request: AwsRequest, statement: Statement): boolean {
+  if(statement.isActionStatement()) {
+    return requestMatchesActions(request, statement.actions());
+  } else if (statement.isNotActionStatement()) {
+    return requestMatchesNotActions(request, statement.notActions());
+  }
+  throw new Error('Statement has neither Actions nor NotActions');
+}
 
 /**
  * Convert an action action (the part after the colon) to a regular expression.

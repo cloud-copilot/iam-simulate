@@ -43,7 +43,7 @@ IAM Identity Center principals // Ignore this for now.
 //Look at the service name and see if it matches the string
 */
 
-type PrincipalMatchResult = 'Match' | 'NoMatch' | 'AccountLevelMatch'
+export type PrincipalMatchResult = 'Match' | 'NoMatch' | 'AccountLevelMatch'
 
 /**
  * Check to see if a request matches a Principal element in an IAM policy statement

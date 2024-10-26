@@ -1,7 +1,6 @@
 import { ActionStatement, loadPolicy, NotActionStatement } from '@cloud-copilot/iam-policy'
 import { describe, expect, it } from 'vitest'
 import { AwsRequestImpl } from '../request/request.js'
-import { MockRequestSupplementalData } from '../request/requestSupplementalData.js'
 import { RequestContextImpl } from '../requestContext.js'
 import { requestMatchesActions, requestMatchesNotActions } from './action.js'
 
@@ -21,8 +20,7 @@ describe('action', () => {
       const request = new AwsRequestImpl('principal',
                                       'resource',
                                       's3:GetBucket',
-                                      new RequestContextImpl({}),
-                                      MockRequestSupplementalData)
+                                      new RequestContextImpl({}))
 
       //When the request is checked against the policy
       const response = requestMatchesActions(request, actions)
@@ -45,8 +43,7 @@ describe('action', () => {
       const request = new AwsRequestImpl('principal',
                                       'resource',
                                       's3:GetBucket',
-                                      new RequestContextImpl({}),
-                                      MockRequestSupplementalData)
+                                      new RequestContextImpl({}))
 
       //When the request is checked against the policy
       const response = requestMatchesActions(request, actions)
@@ -70,8 +67,7 @@ describe('action', () => {
     const request = new AwsRequestImpl('principal',
                                     'resource',
                                     's3:GetBucket',
-                                    new RequestContextImpl({}),
-                                    MockRequestSupplementalData)
+                                    new RequestContextImpl({}))
 
     //When the request is checked against the policy
     const response = requestMatchesActions(request, actions)
@@ -95,8 +91,7 @@ describe('action', () => {
     const request = new AwsRequestImpl('principal',
                                     'resource',
                                     's3:GetBucket',
-                                    new RequestContextImpl({}),
-                                    MockRequestSupplementalData)
+                                    new RequestContextImpl({}))
 
     //When the request is checked against the policy
     const response = requestMatchesActions(request, actions)
@@ -120,8 +115,7 @@ describe('action', () => {
     const request = new AwsRequestImpl('principal',
                                     'resource',
                                     's3:GetBucket',
-                                    new RequestContextImpl({}),
-                                    MockRequestSupplementalData)
+                                    new RequestContextImpl({}))
 
     //When the request is checked against the policy
     const response = requestMatchesActions(request, actions)
@@ -145,8 +139,7 @@ describe('action', () => {
     const request = new AwsRequestImpl('principal',
                                     'resource',
                                     's3:PutBucket',
-                                    new RequestContextImpl({}),
-                                    MockRequestSupplementalData)
+                                    new RequestContextImpl({}))
 
     //When the request is checked against the policy
     const response = requestMatchesActions(request, actions)
@@ -170,8 +163,7 @@ describe('action', () => {
     const request = new AwsRequestImpl('principal',
                                     'resource',
                                     's3:GetBucket',
-                                    new RequestContextImpl({}),
-                                    MockRequestSupplementalData)
+                                    new RequestContextImpl({}))
 
     //When the request is checked against the policy
     const response = requestMatchesActions(request, actions)
@@ -195,8 +187,7 @@ describe('action', () => {
     const request = new AwsRequestImpl('principal',
                                     'resource',
                                     's3:GetBuckets',
-                                    new RequestContextImpl({}),
-                                    MockRequestSupplementalData)
+                                    new RequestContextImpl({}))
 
     //When the request is checked against the policy
     const response = requestMatchesActions(request, actions)
@@ -220,8 +211,7 @@ describe('action', () => {
     const request = new AwsRequestImpl('principal',
                                     'resource',
                                     's3:GetBucket',
-                                    new RequestContextImpl({}),
-                                    MockRequestSupplementalData)
+                                    new RequestContextImpl({}))
 
     //When the request is checked against the policy
     const response = requestMatchesActions(request, actions)
@@ -245,8 +235,7 @@ describe('action', () => {
       const request = new AwsRequestImpl('principal',
                                       'resource',
                                       's3:GetBucket',
-                                      new RequestContextImpl({}),
-                                      MockRequestSupplementalData)
+                                      new RequestContextImpl({}))
 
       //When the request is checked against the policy
       const response = requestMatchesNotActions(request, actions)
@@ -269,8 +258,7 @@ describe('action', () => {
       const request = new AwsRequestImpl('principal',
                                       'resource',
                                       's3:GetBucket',
-                                      new RequestContextImpl({}),
-                                      MockRequestSupplementalData)
+                                      new RequestContextImpl({}))
 
       //When the request is checked against the policy
       const response = requestMatchesNotActions(request, actions)

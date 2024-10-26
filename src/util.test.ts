@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { AwsRequest, AwsRequestImpl } from './request/request.js'
-import { RequestSupplementalDataImpl } from './request/requestSupplementalData.js'
 import { RequestContextImpl } from './requestContext.js'
 import { convertIamStringToRegex } from './util.js'
 
 function testRequestWithContext(context: any, validContextVariables?: string[]): AwsRequest {
   validContextVariables = validContextVariables || []
   //For now we assume that all values passed into the context are valid
-  return new AwsRequestImpl('', '', '', new RequestContextImpl(context), new RequestSupplementalDataImpl(validContextVariables, [], []))
+  return new AwsRequestImpl('', '', '', new RequestContextImpl(context))
 }
 
 describe('convertIamStringToRegex', () => {

@@ -2,7 +2,6 @@ import { ContextKey, RequestContext } from "../requestContext.js";
 import { RequestAction, RequestActionImpl } from "./requestAction.js";
 import { RequestPrincipal, RequestPrincipalImpl } from "./requestPrincipal.js";
 import { RequestResource, ResourceRequestImpl } from "./requestResource.js";
-import { RequestSupplementalData } from "./requestSupplementalData.js";
 
 /**
  * A request to be evaluated by the policy engine
@@ -48,8 +47,7 @@ export class AwsRequestImpl implements AwsRequest {
   constructor(public readonly principalString: string,
               public readonly resourceString: string | undefined,
               public readonly actionString: string,
-              public readonly context: RequestContext,
-              public readonly supplementalData: RequestSupplementalData) {
+              public readonly context: RequestContext) {
 
   }
 
@@ -70,7 +68,7 @@ export class AwsRequestImpl implements AwsRequest {
 
 
   public contextKeyExists(key: string): boolean {
-    return this.supplementalData.contextKeyValidForRequest(key) && this.context.contextKeyExists(key);
+    return this.context.contextKeyExists(key);
   }
 
 

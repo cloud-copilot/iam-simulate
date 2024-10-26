@@ -51,7 +51,7 @@ export function requestMatchesConditions(request: AwsRequest, conditions: Condit
     return 'Unknown'
   }
   const noMatches = results.filter(result => result === 'NoMatch')
-  if(noMatches.length >0 ) {
+  if(noMatches.length > 0 ) {
     return 'NoMatch'
   }
   return 'Match'

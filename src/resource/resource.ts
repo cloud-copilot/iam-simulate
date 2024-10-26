@@ -1,4 +1,4 @@
-import { Resource } from "@cloud-copilot/iam-policy";
+import { Resource, Statement } from "@cloud-copilot/iam-policy";
 import { AwsRequest } from "../request/request.js";
 import { convertIamStringToRegex, getResourceSegments } from "../util.js";
 
@@ -17,6 +17,23 @@ function convertResourceSegmentToRegex(segment: string): RegExp {
   const pattern = "^" + segment.replace(/\?/g, '.').replace(/\*/g, '.*?') + "$"
   return new RegExp(pattern, 'i')
 }
+
+/**
+ * Check if a request matches the Resource or NotResource elements of a statement.
+ *
+ * @param request the request to check
+ * @param statement the statement to check against
+ * @returns true if the request matches the resources in the statement, false otherwise
+ */
+export function requestMatchesStatementResources(request: AwsRequest, statement: Statement): boolean {
+  if(statement.isResourceStatement()) {
+    return requestMatchesResources(request, statement.resources());
+  } else if(statement.isNotResourceStatement()) {
+    return requestMatchesNotResources(request, statement.notResources());
+  }
+  return true;
+}
+
 
 /**
  * Check if a request matches a set of resources.

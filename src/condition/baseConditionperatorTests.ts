@@ -1,6 +1,5 @@
 import { describe, expect } from "vitest"
 import { AwsRequestImpl } from "../request/request.js"
-import { MockRequestSupplementalData } from "../request/requestSupplementalData.js"
 import { RequestContextImpl } from "../requestContext.js"
 import { BaseConditionOperator } from "./BaseConditionOperator.js"
 
@@ -17,7 +16,7 @@ export function testOperator(name: string, tests: BaseOperatorTest[], operator: 
     for(const test of tests) {
       it(test.name, () => {
         //Given the request
-        const request = new AwsRequestImpl('', '', '', new RequestContextImpl(test.requestContext || {}), MockRequestSupplementalData)
+        const request = new AwsRequestImpl('', '', '', new RequestContextImpl(test.requestContext || {}))
         //When the condition is evaluated
         const result = operator.matches(request, test.testValue, test.policyValues)
 

@@ -1,3 +1,3 @@
-export type EvaluationResult = 'Allowed' | 'Denied' | 'AllowedWithConditions' | 'ImplicitlyDenied';
+export type EvaluationResult = 'Allowed' | 'ExplicitlyDenied' | 'AllowedWithConditions' | 'ImplicitlyDenied' | 'Unknown';
 
 
