@@ -5,6 +5,7 @@ import { ArnLike } from './arn/ArnLike.js';
 import { ArnNotEquals } from './arn/ArnNotEquals.js';
 import { ArnNotLike } from './arn/ArnNotLike.js';
 import { BaseConditionOperator } from './BaseConditionOperator.js';
+import { BinaryEquals } from './binary/BinaryEquals.js';
 import { Bool } from './boolean/Bool.js';
 import { DateEquals } from './date/DateEquals.js';
 import { DateGreaterThan } from './date/DateGreaterThan.js';
@@ -33,6 +34,7 @@ const allOperators = [
   NumericEquals, NumericNotEquals, NumericLessThan, NumericNotEquals, NumericGreaterThan, NumericGreaterThanEquals,
   DateEquals, DateNotEquals, DateLessThan, DateLessThanEquals, DateGreaterThan, DateGreaterThanEquals,
   Bool,
+  BinaryEquals,
   IpAddress, NotIpAddress,
   ArnLike, ArnEquals, ArnNotLike, ArnNotEquals
 ]
