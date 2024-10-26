@@ -48,17 +48,3 @@ const stringEqualsTests: BaseOperatorTest[] = [
 ]
 
 testOperator('StringEquals', stringEqualsTests, StringEquals)
-
-// describe('StringEquals', it => {
-//   for(const test of stringEqualsTests) {
-//     it(test.name, () => {
-//       //Given the request
-//       const request = new AwsRequestImpl('', '', '', new RequestContextImpl(test.requestContext), MockRequestSupplementalData)
-//       //When the condition is evaluated
-//       const result = StringEquals.matches(request, test.testValue, test.policyValues)
-
-//       //Then the result should be as expected
-//       expect(result).toBe(test.expected)
-//     })
-//   }
-// })
