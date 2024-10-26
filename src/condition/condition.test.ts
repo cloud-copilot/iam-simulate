@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { AwsRequest, AwsRequestImpl } from "../request/request.js";
 import { MockRequestSupplementalData, RequestSupplementalDataImpl } from "../request/requestSupplementalData.js";
 import { RequestContextImpl } from "../requestContext.js";
-import { singleConditionMatchesRequest } from "./condition.js";
+import { requestMatchesConditions, singleConditionMatchesRequest } from "./condition.js";
 
 function testRequestWithContext(context: any, validContextVariables?: string[]): AwsRequest {
   validContextVariables = validContextVariables || []
@@ -573,5 +573,92 @@ describe('singleConditionMatchesRequest', () => {
       //Then the result should be 'Match'
       expect(response).toEqual('Match')
     })
+  })
+})
+
+describe('requestMatchesConditions', () => {
+  it('should return Unknown if any condition returns Unknown', () => {
+    // Given a request
+    const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:username': 'test'}), MockRequestSupplementalData)
+    // And a condition that returns Unknown
+    const policy = loadPolicy({
+      Version: '2012-10-17',
+      Statement: [{
+        Effect: 'Allow',
+        Action: '*',
+        Resource: '*',
+        Condition: {
+          FakeConditionOperator: {
+            'aws:username': 'test'
+          },
+          StringEquals: {
+            'aws:username': 'test'
+          }
+        }
+      }]
+    })
+
+    const conditions = policy.statements()[0].conditions()
+    // When the request is checked against the conditions
+    const response = requestMatchesConditions(request, conditions)
+
+    // Then the result should be 'Unknown'
+    expect(response).toEqual('Unknown')
+  })
+  it('should return NoMatch if any condition returns NoMatch', () => {
+    // Given a request
+    const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:username': 'test'}), MockRequestSupplementalData)
+    // And a condition that returns Unknown
+    const policy = loadPolicy({
+      Version: '2012-10-17',
+      Statement: [{
+        Effect: 'Allow',
+        Action: '*',
+        Resource: '*',
+        Condition: {
+          Null: {
+            'aws:username': 'true'
+          },
+          StringEquals: {
+            'aws:username': 'test'
+          }
+        }
+      }]
+    })
+
+    const conditions = policy.statements()[0].conditions()
+    // When the request is checked against the conditions
+    const response = requestMatchesConditions(request, conditions)
+
+    // Then the result should be 'Unknown'
+    expect(response).toEqual('NoMatch')
+  })
+  it('should return Match if all conditions return Match', () => {
+    // Given a request
+    const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:username': 'test'}), MockRequestSupplementalData)
+    // And a condition that returns Unknown
+    const policy = loadPolicy({
+      Version: '2012-10-17',
+      Statement: [{
+        Effect: 'Allow',
+        Action: '*',
+        Resource: '*',
+        Condition: {
+          Null: {
+            'aws:username': 'false'
+          },
+          StringEquals: {
+            'aws:username': 'test'
+          }
+        }
+      }]
+    })
+
+    const conditions = policy.statements()[0].conditions()
+    // When the request is checked against the conditions
+    const response = requestMatchesConditions(request, conditions)
+
+    // Then the result should be 'Unknown'
+    expect(response).toEqual('Match')
   })
 })

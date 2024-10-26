@@ -44,6 +44,19 @@ for(const operator of allOperators) {
   baseOperations[operator.name.toLowerCase()] = operator
 }
 
+export function requestMatchesConditions(request: AwsRequest, conditions: Condition[]): ConditionMatchResult {
+  const results = conditions.map(condition => singleConditionMatchesRequest(request, condition))
+  const unknowns = results.filter(result => result === 'Unknown')
+  if(unknowns.length > 0) {
+    return 'Unknown'
+  }
+  const noMatches = results.filter(result => result === 'NoMatch')
+  if(noMatches.length >0 ) {
+    return 'NoMatch'
+  }
+  return 'Match'
+}
+
 export function singleConditionMatchesRequest(request: AwsRequest, condition: Condition): ConditionMatchResult {
   const key = condition.conditionKey()
   const policyValues = condition.conditionValues()

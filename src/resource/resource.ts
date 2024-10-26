@@ -29,6 +29,13 @@ export function requestMatchesResources(request: AwsRequest, policyResources: Re
   return policyResources.some(policyResource => singleResourceMatchesRequest(request, policyResource))
 }
 
+/**
+ * Check if a request matches a NotResource element in a policy.
+ *
+ * @param request the request to check
+ * @param policyResources the resources to check against
+ * @returns true if the request does not match any of the resources, false otherwise
+ */
 export function requestMatchesNotResources(request: AwsRequest, policyResources: Resource[]): boolean {
   return !requestMatchesResources(request, policyResources)
 }
