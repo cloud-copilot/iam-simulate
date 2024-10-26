@@ -13,6 +13,7 @@ import { DateLessThan } from './date/DateLessThan.js';
 import { DateLessThanEquals } from './date/DateLessThanEquals.js';
 import { DateNotEquals } from './date/DateNotEquals.js';
 import { IpAddress } from './ipaddress/IpAddress.js';
+import { NotIpAddress } from './ipaddress/NotIpAddress.js';
 import { NumericEquals } from './numeric/NumericEquals.js';
 import { NumericGreaterThan } from './numeric/NumericGreaterThan.js';
 import { NumericGreaterThanEquals } from './numeric/NumericGreaterThanEquals.js';
@@ -32,7 +33,7 @@ const allOperators = [
   NumericEquals, NumericNotEquals, NumericLessThan, NumericNotEquals, NumericGreaterThan, NumericGreaterThanEquals,
   DateEquals, DateNotEquals, DateLessThan, DateLessThanEquals, DateGreaterThan, DateGreaterThanEquals,
   Bool,
-  IpAddress,
+  IpAddress, NotIpAddress,
   ArnLike, ArnEquals, ArnNotLike, ArnNotEquals
 ]
 
