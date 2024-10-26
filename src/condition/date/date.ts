@@ -7,17 +7,20 @@ import { isDefined, isNotDefined } from "../../util.js"
  * @returns the number or undefined if it cannot be parsed
  */
 export function parseDate(value: string): number | undefined {
+  // An Integer such as 2024 will be interpreted as a unix epoch date
+  // A unix epoch date
+  const epochDate = parseInt(value, 10)
+  if(isDefined(epochDate) && !isNaN(epochDate) && epochDate.toString() === value) {
+    return epochDate
+  }
+
   // Date Values can be a date string: https://www.w3.org/TR/NOTE-datetime
   const dateNumber = Date.parse(value)
   if(isDefined(dateNumber) && !isNaN(dateNumber)) {
     return dateNumber
   }
 
-  // Or a unix epoch date
-  const epochDate = parseInt(value, 10)
-  if(isDefined(epochDate) && !isNaN(epochDate)) {
-    return epochDate
-  }
+
 
   return undefined
 }

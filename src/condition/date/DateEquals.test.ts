@@ -40,7 +40,7 @@ const dateEqualsTests: BaseOperatorTest[] = [
   },
   {
     name: 'should not match if both values are not dates',
-    policyValues: ['2024'],
+    policyValues: ['bad value'],
     testValue: 'not a date',
     expected: false
   }
