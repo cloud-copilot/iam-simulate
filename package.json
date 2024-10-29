@@ -16,9 +16,6 @@
     "dist/**/*"
   ],
   "types": "dist/cjs/index.d.ts",
-  "bin": {
-    "iam-expand": "dist/esm/cli.js"
-  },
   "scripts": {
     "build": "npx tsc -p tsconfig.cjs.json && npx tsc -p tsconfig.esm.json && ./postbuild.sh",
     "clean": "rm -rf dist",
