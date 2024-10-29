@@ -51,7 +51,10 @@ export function authorize(request: AuthorizationRequest): EvaluationResult {
  */
 export function getServiceAuthorizer(request: AuthorizationRequest): ServiceAuthorizer {
   const serviceName = request.request.action.service().toLowerCase();
-  return new serviceEngines[serviceName] || new DefaultServiceAuthorizer;
+  if(serviceEngines[serviceName]) {
+    return new serviceEngines[serviceName]();
+  }
+  return new DefaultServiceAuthorizer;
 }
 
 /**
@@ -65,7 +68,6 @@ export function analyzeIdentityPolicies(identityPolicies: Policy[], request: Aws
   const analysis: StatementAnalysis[] = [];
   for(const policy of identityPolicies) {
     for(const statement of policy.statements()) {
-
       analysis.push({
         statement,
         resourceMatch: requestMatchesStatementResources(request, statement),

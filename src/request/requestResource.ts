@@ -29,11 +29,16 @@ export interface RequestResource {
    * The resource of the ARN
    */
   resource(): string
+
+  /**
+   * The account ID of the resource, independent of what is in the ARN
+   */
+  accountId(): string
 }
 
 
 export class ResourceRequestImpl implements RequestResource {
-  constructor(private readonly rawValue: string) {}
+  constructor(private readonly rawValue: string, private readonly accountIdString: string ) {}
 
   partition(): string {
     return this.value().split(":").at(1)!
@@ -57,5 +62,9 @@ export class ResourceRequestImpl implements RequestResource {
 
   value(): string {
     return this.rawValue;
+  }
+
+  accountId(): string {
+    return this.accountIdString
   }
 }

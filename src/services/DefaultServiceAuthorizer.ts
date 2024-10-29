@@ -2,13 +2,11 @@ import { EvaluationResult } from "../evaluate.js";
 import { StatementAnalysis } from "../StatementAnalysis.js";
 import { ServiceAuthorizationRequest, ServiceAuthorizer } from "./ServiceAuthorizer.js";
 
-
-
 export class DefaultServiceAuthorizer implements ServiceAuthorizer {
   public authorize(request: ServiceAuthorizationRequest): EvaluationResult {
     const identityStatementResult = this.identityStatementResult(request);
-    const principalAccount = request.request.principalAccountId
-    const resourceAccount = request.request.resourceAccountId
+    const principalAccount = request.request.principal.accountId()
+    const resourceAccount = request.request.resource?.accountId()
     /**
      * Add checks for:
      * * resource policies

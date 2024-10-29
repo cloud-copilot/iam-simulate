@@ -17,7 +17,7 @@ export interface AwsRequest {
   /**
    * The resource to be acted upon
    */
-  resource?: RequestResource;
+  resource: RequestResource;
 
   /**
    * The context of the request
@@ -45,7 +45,7 @@ export interface AwsRequest {
 export class AwsRequestImpl implements AwsRequest {
 
   constructor(public readonly principalString: string,
-              public readonly resourceString: string | undefined,
+              public readonly resourceIdentifier: {resource: string, accountId: string},
               public readonly actionString: string,
               public readonly context: RequestContext) {
 
@@ -56,10 +56,7 @@ export class AwsRequestImpl implements AwsRequest {
   }
 
   get resource(): RequestResource {
-    if(this.resourceString === undefined) {
-      throw new Error('Resource is undefined')
-    }
-    return new ResourceRequestImpl(this.resourceString);
+    return new ResourceRequestImpl(this.resourceIdentifier.resource, this.resourceIdentifier.accountId);
   }
 
   get principal(): RequestPrincipal {
@@ -78,4 +75,5 @@ export class AwsRequestImpl implements AwsRequest {
     }
     return this.context.contextKeyValue(key);
   }
+
 }
