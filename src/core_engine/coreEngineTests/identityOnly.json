@@ -67,6 +67,226 @@
     "expected": {
       "response": "Allowed"
     }
+  },
+  {
+    "name": "allow with a wildcard resource",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user"
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Deny with explicit deny policy",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user"
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Deny",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::my-bucket"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied"
+    }
+  },
+  {
+    "name": "Deny with an allow and a deny policy",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user"
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::my-bucket"
+          },
+          {
+            "Effect": "Deny",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::my-bucket"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied"
+    }
+  },
+  {
+    "name": "Implicit deny when allowed for a different resource",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::another-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user"
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::my-bucket"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "allow when conditions match",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "contextParams": {
+        "s3:prefix": "allowed-prefix/"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::my-bucket",
+            "Condition": {
+              "StringEquals": {
+                "s3:prefix": "allowed-prefix/"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Matches Not Action",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user"
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "NotAction": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::my-bucket"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "should match a not resource",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user"
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "NotResource": "arn:aws:s3:::a-different-bucket"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "cross account requests are implicitly denied",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket",
+        "accountId": "987654321098"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user"
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::my-bucket"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
   }
-
 ]

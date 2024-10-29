@@ -28,7 +28,7 @@ function getAllFiles(dir: string, allFiles: string[] = []): string[] {
 describe('coreSimulatorEngine', () => {
   const testFolderPath = resolve(join(__dirname, 'coreEngineTests'))
   const allFiles = getAllFiles(testFolderPath);
-  const pickTest: string | undefined = "allow with identity matching policy";
+  const pickTest: string | undefined = undefined
 
   for(const testFile of allFiles) {
     const relativePath = testFile.replace(testFolderPath, '').slice(1);
