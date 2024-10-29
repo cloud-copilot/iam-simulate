@@ -42,6 +42,7 @@
     "vitest": "^2.0.5"
   },
   "dependencies": {
-    "@cloud-copilot/iam-policy": "^0.0.9"
+    "@cloud-copilot/iam-data": ">=0.8.0 <1.0.0",
+    "@cloud-copilot/iam-policy": "0.0.9"
   }
 }
