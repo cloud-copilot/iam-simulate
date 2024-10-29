@@ -16,7 +16,7 @@ export function testOperator(name: string, tests: BaseOperatorTest[], operator: 
     for(const test of tests) {
       it(test.name, () => {
         //Given the request
-        const request = new AwsRequestImpl('', '', '', new RequestContextImpl(test.requestContext || {}))
+        const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl(test.requestContext || {}))
         //When the condition is evaluated
         const result = operator.matches(request, test.testValue, test.policyValues)
 
