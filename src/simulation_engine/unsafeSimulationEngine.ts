@@ -14,7 +14,7 @@ import { SimulationOptions } from "./simulationOptions.js";
  * @param simulationOptions Options for the simulation.
  * @returns The result of the simulation.
  */
-export function runUnsafeSimulation(simulation: Simulation, simulationOptions: SimulationOptions): EvaluationResult {
+export function runUnsafeSimulation(simulation: Simulation, simulationOptions: Partial<SimulationOptions>): EvaluationResult {
     // Implementation goes here
   const identityPolicies = Object.values(simulation.identityPolicies).map(p => loadPolicy(p));
   const requestContext = new RequestContextImpl(simulation.request.contextVariables)

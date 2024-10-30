@@ -12,7 +12,7 @@ export interface SimulationResult {
 
 }
 
-export async function runSimulation(simulation: Simulation, simulationOptions: SimulationOptions): Promise<SimulationResult> {
+export async function runSimulation(simulation: Simulation, simulationOptions: Partial<SimulationOptions>): Promise<SimulationResult> {
   const identityPolicyErrors = Object.keys(simulation.identityPolicies).reduce((acc, key: string) => {
     acc[key] == validatePolicySyntax(simulation.identityPolicies[key as any]);
     return acc
