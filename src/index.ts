@@ -1,5 +1,7 @@
-export { authorize, type AuthorizationRequest } from './core_engine/coreSimulatorEngine.js';
 export { type EvaluationResult } from './evaluate.js';
-export { AwsRequestImpl, type AwsRequest } from './request/request.js';
-export { RequestContextImpl, type RequestContext } from './requestContext.js';
+export { type Simulation } from './simulation_engine/simulation.js';
+export { runSimulation } from './simulation_engine/simulationEngine.js';
+export { type SimulationOptions } from './simulation_engine/simulationOptions.js';
+export { runUnsafeSimulation } from './simulation_engine/unsafeSimulationEngine.js';
+
 

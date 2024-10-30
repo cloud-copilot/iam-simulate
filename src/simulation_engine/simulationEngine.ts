@@ -1,23 +1,7 @@
 import { iamActionExists, iamServiceExists } from "@cloud-copilot/iam-data";
 import { validatePolicySyntax, ValidationError } from "@cloud-copilot/iam-policy";
-
-interface SimulationOptions {
-  assumeSecureTransport: boolean
-}
-
-interface Simulation {
-  request: {
-    principal: string;
-    action: string;
-    resource: {
-      resource: string,
-      accountId: string
-    }
-    contextVariables: Record<string, any>;
-  }
-
-  identityPolicies: Record<string, any>[];
-}
+import { Simulation } from "./simulation.js";
+import { SimulationOptions } from "./simulationOptions.js";
 
 export interface SimulationErrors {
   identityPolicyErrors?: Record<string, ValidationError[]>;
@@ -63,5 +47,4 @@ export async function runSimulation(simulation: Simulation, simulationOptions: S
 
   // Implementation goes here
   return {} as SimulationResult;
-
 }
