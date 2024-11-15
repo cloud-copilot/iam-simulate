@@ -9,8 +9,18 @@ import { DefaultServiceAuthorizer } from "../services/DefaultServiceAuthorizer.j
 import { ServiceAuthorizer } from "../services/ServiceAuthorizer.js";
 import { StatementAnalysis } from "../StatementAnalysis.js";
 
+/**
+ * A set of service control policies for each level of an organization tree
+ */
 export interface ServiceControlPolicies {
+  /**
+   * The organization identifier for the organizational unit these policies apply to.
+   */
   orgIdentifier: string;
+
+  /**
+   * The policies that apply to this organizational unit.
+   */
   policies: Policy[];
 }
 
@@ -95,6 +105,13 @@ export function analyzeIdentityPolicies(identityPolicies: Policy[], request: Aws
   return analysis;
 }
 
+/**
+ * Analyzes a set of service control policies and the statements within them.
+ *
+ * @param serviceControlPolicies the service control policies to analyze
+ * @param request the request to analyze against
+ * @returns an array of SCP analysis results
+ */
 export function analyzeServiceControlPolicies(serviceControlPolicies: ServiceControlPolicies[], request: AwsRequest): SCPAnalysis[] {
   const analysis: SCPAnalysis[] = [];
   for(const controlPolicy of serviceControlPolicies) {
