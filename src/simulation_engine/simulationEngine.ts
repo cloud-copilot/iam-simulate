@@ -1,5 +1,6 @@
 import { iamActionExists, iamServiceExists } from "@cloud-copilot/iam-data";
 import { validatePolicySyntax, ValidationError } from "@cloud-copilot/iam-policy";
+import { allowedContextKeysForRequest } from "./contextKeys.js";
 import { Simulation } from "./simulation.js";
 import { SimulationOptions } from "./simulationOptions.js";
 
@@ -42,6 +43,19 @@ export async function runSimulation(simulation: Simulation, simulationOptions: P
   if(!validAction) {
     return {
       message: 'invalid.action'
+    }
+  }
+
+  const resourceArn = simulation.request.resource.resource;
+  //TODO: Look up the resource types for the action and validate that the resource matches one of them. This will catch if the user asks for an action/resource combination that doesn't make any sense
+
+  const contextVariablesForAction = new Set(await allowedContextKeysForRequest(service, action, resourceArn))
+
+  // We need to get the types of the context variables and set a string or array of strings based on that.
+  const allowedContextKeys: Record<string, string | string[]> = {};
+  for (const key of Object.keys(simulation.request.contextVariables)) {
+    if (contextVariablesForAction.has(key)) {
+      allowedContextKeys[key] = simulation.request.contextVariables[key];
     }
   }
 

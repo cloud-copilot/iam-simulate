@@ -1,4 +1,4 @@
-import { Principal } from "@cloud-copilot/iam-policy";
+import { Principal, Statement } from "@cloud-copilot/iam-policy";
 import { AwsRequest } from "../request/request.js";
 
 //Wildcards are not allowed in the principal element https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html
@@ -159,4 +159,20 @@ export function roleArnFromAssumedRoleArn(assumedRoleArn: string): string {
   const resourceParts = stsParts.at(-1)!.split('/')
   const rolePathAndName = resourceParts.slice(1, -1).join('/')
   return `arn:aws:iam::${stsParts[4]}:role/${rolePathAndName}`
+}
+
+/**
+ * Check if a request matches the Resource or NotResource elements of a statement.
+ *
+ * @param request the request to check
+ * @param statement the statement to check against
+ * @returns true if the request matches the resources in the statement, false otherwise
+ */
+export function requestMatchesStatementPrincipals(request: AwsRequest, statement: Statement): PrincipalMatchResult {
+  if(statement.isPrincipalStatement()) {
+    return requestMatchesPrincipal(request, statement.principals())
+  } else if(statement.isNotPrincipalStatement()) {
+    return requestMatchesNotPrincipal(request, statement.notPrincipals());
+  }
+  throw new Error('Statement should have Principal or NotPrincipal')
 }

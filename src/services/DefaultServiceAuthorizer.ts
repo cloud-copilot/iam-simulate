@@ -4,13 +4,18 @@ import { ServiceAuthorizationRequest, ServiceAuthorizer } from "./ServiceAuthori
 
 export class DefaultServiceAuthorizer implements ServiceAuthorizer {
   public authorize(request: ServiceAuthorizationRequest): EvaluationResult {
+    const scpResult = this.servieControlPolicyResult(request);
     const identityStatementResult = this.identityStatementResult(request);
     const principalAccount = request.request.principal.accountId()
     const resourceAccount = request.request.resource?.accountId()
+
+    if(scpResult !== 'Allowed') {
+      return scpResult
+    }
+
     /**
      * Add checks for:
      * * resource policies
-     * * service control policies
      * * boundary policies
      * * vpc endpoint policies
      * * session policies (maybe these are just part of identity policies?)
@@ -22,6 +27,30 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
       return 'ImplicitlyDenied'
     }
     return identityStatementResult;
+  }
+
+  public servieControlPolicyResult(request: ServiceAuthorizationRequest): EvaluationResult {
+    const orgAllows = request.scpAnalysis.map((scpAnalysis) => {
+      return scpAnalysis.statementAnalysis.some((statement) => {
+        return this.identityStatementAllows(statement)
+      })
+    })
+
+    if(orgAllows.includes(false)) {
+      return 'ImplicitlyDenied'
+    }
+
+    const anyScpDeny = request.scpAnalysis.some((scpAnalysis) => {
+      return scpAnalysis.statementAnalysis.some((statement) => {
+        return this.identityStatementExplicitDeny(statement)
+      })
+    })
+
+    if(anyScpDeny) {
+      return 'ExplicitlyDenied'
+    }
+
+    return 'Allowed'
   }
 
   public identityStatementResult(request: ServiceAuthorizationRequest): EvaluationResult {
@@ -48,7 +77,8 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     if(statement.resourceMatch &&
       statement.actionMatch &&
       statement.conditionMatch === 'Match' &&
-      statement.statement.effect() === 'Allow') {
+      statement.statement.effect() === 'Allow' &&
+      statement.principalMatch === 'Match') {
         return true;
     }
     return false;
@@ -58,7 +88,8 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     if(statement.resourceMatch &&
       statement.actionMatch &&
       statement.conditionMatch === 'Unknown' &&
-      statement.statement.effect() === 'Allow') {
+      statement.statement.effect() === 'Allow' &&
+      statement.principalMatch === 'Match') {
         return true;
     }
     return false
@@ -68,7 +99,8 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     if(statement.resourceMatch &&
       statement.actionMatch &&
       statement.conditionMatch === 'Unknown' &&
-      statement.statement.effect() === 'Deny') {
+      statement.statement.effect() === 'Deny' &&
+      statement.principalMatch === 'Match') {
         return true;
     }
     return false
@@ -78,7 +110,8 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     if(statement.resourceMatch &&
       statement.actionMatch &&
       statement.conditionMatch === 'Match' &&
-      statement.statement.effect() === 'Deny') {
+      statement.statement.effect() === 'Deny' &&
+      statement.principalMatch === 'Match') {
         return true;
     }
     return false;

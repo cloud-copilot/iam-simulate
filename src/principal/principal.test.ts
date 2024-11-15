@@ -2,7 +2,7 @@ import { loadPolicy, NotPrincipalStatement, PrincipalStatement } from '@cloud-co
 import { describe, expect, it } from 'vitest';
 import { AwsRequestImpl } from '../request/request.js';
 import { RequestContextImpl } from '../requestContext.js';
-import { isAssumedRoleArn, requestMatchesNotPrincipal, requestMatchesPrincipal, requestMatchesPrincipalStatement, roleArnFromAssumedRoleArn } from './principal.js';
+import { isAssumedRoleArn, requestMatchesNotPrincipal, requestMatchesPrincipal, requestMatchesPrincipalStatement, requestMatchesStatementPrincipals, roleArnFromAssumedRoleArn } from './principal.js';
 
 describe('isAssumedRoleArn', () => {
   it('should return true for assumed role ARN', () => {
@@ -520,5 +520,104 @@ describe('requestMatchesNotPrincipal', () => {
 
     //When we check if the request matches the principal
     const result = requestMatchesNotPrincipal(request, notPrincipals);
+  })
+})
+
+describe('requestMatchesStatementPrincipals', () => {
+  it('should return a match if the principal matches', () => {
+    //Given a statement with a principal
+    const policy = loadPolicy({
+      Statement: [
+        { Principal: { AWS: 'arn:aws:iam::555555555555:user/Larry' } }
+      ]
+    })
+
+    const statement = policy.statements()[0];
+
+    //And a request with a matching principal
+    const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/Larry', {accountId: '', resource: ''}, 's3:GetBucket', new RequestContextImpl({}));
+
+    //When we check if the request matches the principal
+    const result = requestMatchesStatementPrincipals(request, statement);
+
+    //Then it should return Match
+    expect(result).toBe('Match');
+  })
+
+  it('should return no match if the principal does not match', () => {
+    //Given a statement with a principal
+    const policy = loadPolicy({
+      Statement: [
+        { Principal: { AWS: 'arn:aws:iam::555555555555:user/Larry' } }
+      ]
+    })
+
+    const statement = policy.statements()[0];
+
+    //And a request with a non-matching principal
+    const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/Curly', {accountId: '', resource: ''}, 's3:GetBucket', new RequestContextImpl({}));
+
+    //When we check if the request matches the principal
+    const result = requestMatchesStatementPrincipals(request, statement);
+
+    //Then it should return NoMatch
+    expect(result).toBe('NoMatch');
+  })
+
+  it('should return Match if the NotPrincipal does not match', () => {
+    //Given a statement with a NotPrincipal
+    const policy = loadPolicy({
+      Statement: [
+        { NotPrincipal: { AWS: 'arn:aws:iam::555555555555:user/Larry' } }
+      ]
+    })
+
+    const statement = policy.statements()[0];
+
+    //And a request with a non-matching principal
+    const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/Curly', {accountId: '', resource: ''}, 's3:GetBucket', new RequestContextImpl({}));
+
+    //When we check if the request matches the principal
+    const result = requestMatchesStatementPrincipals(request, statement);
+
+    //Then it should return Match
+    expect(result).toBe('Match');
+  })
+
+  it('should return NoMatch if the NotPrincipal matches', () => {
+    //Given a statement with a NotPrincipal
+    const policy = loadPolicy({
+      Statement: [
+        { NotPrincipal: { AWS: 'arn:aws:iam::555555555555:user/Larry' } }
+      ]
+    })
+
+    const statement = policy.statements()[0];
+
+    //And a request with a non-matching principal
+    const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/Larry', {accountId: '', resource: ''}, 's3:GetBucket', new RequestContextImpl({}));
+
+    //When we check if the request matches the principal
+    const result = requestMatchesStatementPrincipals(request, statement);
+
+    //Then it should return Match
+    expect(result).toBe('NoMatch');
+  })
+
+  it('should throw an error if the statement has neither Principal nor NotPrincipal', () => {
+    //Given a statement without Principal or NotPrincipal
+    const policy = loadPolicy({
+      Statement: [
+        { Effect: 'Allow' }
+      ]
+    })
+
+    const statement = policy.statements()[0];
+
+    //And a request with a principal
+    const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/Larry', {accountId: '', resource: ''}, 's3:GetBucket', new RequestContextImpl({}));
+
+    //When we check if the request matches the principal
+    expect(() => requestMatchesStatementPrincipals(request, statement)).toThrow('Statement should have Principal or NotPrincipal');
   })
 })

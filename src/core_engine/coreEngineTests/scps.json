@@ -1,0 +1,341 @@
+[
+  {
+    "name": "generic SCP test",
+    "request": {
+      "action": "s3:ListAllMyBuckets",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-123456789012",
+        "policies": []
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Implicitly denied by SCP when allowed by Identity but no SCPs exist",
+    "request": {
+      "action": "s3:ListAllMyBuckets",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-123456789012",
+        "policies": []
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Implicitly denied by SCP when allowed by Identity but not by all org level SCPs",
+    "request": {
+      "action": "s3:ListAllMyBuckets",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-1",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "orgIdentifier": "ou-1a",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": []
+          }
+        ]
+      },
+      {
+        "orgIdentifier": "ou-1a-1",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Allowed when allowed by all SCPs and Identity Policy",
+    "request": {
+      "action": "s3:ListAllMyBuckets",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-1",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "orgIdentifier": "ou-1a",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "orgIdentifier": "ou-1a-1",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Implictly Denied when allowed by all SCPs But not Identity Policy",
+    "request": {
+      "action": "s3:ListAllMyBuckets",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-1",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "orgIdentifier": "ou-1a",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "orgIdentifier": "ou-1a-1",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Denied when denied by an SCPs and Allowed By Identity Policy",
+    "request": {
+      "action": "s3:ListAllMyBuckets",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-1",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "orgIdentifier": "ou-1a",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              },
+              {
+                "Effect": "Deny",
+                "Action": "s3:ListAllMyBuckets",
+                "Resource": "*"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "orgIdentifier": "ou-1a-1",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied"
+    }
+  }
+]

@@ -49,10 +49,17 @@ describe('coreSimulatorEngine', () => {
           const request = new AwsRequestImpl(principal, resource, action, new RequestContextImpl(contextParams));
           // And Policies
           const identityPolicies = testCase.identityPolicies.map((p: any) => loadPolicy(p));
+          const serviceControlPolicies = (testCase.serviceControlPolicies || []).map((scp: any) => {
+            return {
+              orgIdentifier: scp.orgIdentifier,
+              policies: scp.policies.map((p: any) => loadPolicy(p))
+            }
+          })
           //In an authorization request
           const authorizationRequest: AuthorizationRequest = {
             request,
             identityPolicies,
+            serviceControlPolicies
           };
 
           // When the request is authorized
