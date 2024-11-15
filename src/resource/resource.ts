@@ -31,7 +31,7 @@ export function requestMatchesStatementResources(request: AwsRequest, statement:
   } else if(statement.isNotResourceStatement()) {
     return requestMatchesNotResources(request, statement.notResources());
   }
-  return false;
+  return true;
 }
 
 
