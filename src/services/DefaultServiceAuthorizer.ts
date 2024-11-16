@@ -48,6 +48,7 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
      * Add checks for:
      * * root user
      * * service linked roles
+     * * resource control policies
      * * boundary policies
      * * vpc endpoint policies
      * * session policies (maybe these are just part of identity policies?)
