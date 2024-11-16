@@ -1,4 +1,4 @@
-import { EvaluationResult } from "../evaluate.js";
+import { EvaluationResult, ResourceEvaluationResult } from "../evaluate.js";
 import { StatementAnalysis } from "../StatementAnalysis.js";
 import { ServiceAuthorizationRequest, ServiceAuthorizer } from "./ServiceAuthorizer.js";
 
@@ -9,6 +9,8 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
   public authorize(request: ServiceAuthorizationRequest): EvaluationResult {
     const scpResult = this.serviceControlPolicyResult(request);
     const identityStatementResult = this.identityStatementResult(request);
+    const resourcePolicyResult = this.resourcePolicyResult(request);
+
     const principalAccount = request.request.principal.accountId()
     const resourceAccount = request.request.resource?.accountId()
 
@@ -16,9 +18,36 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
       return scpResult
     }
 
+    if(resourcePolicyResult === 'ExplicitlyDenied' || resourcePolicyResult === 'DeniedForAccount') {
+      return 'ExplicitlyDenied'
+    }
+
+    if(identityStatementResult === 'ExplicitlyDenied') {
+      return 'ExplicitlyDenied'
+    }
+
+    //Same Account
+    if(principalAccount === resourceAccount) {
+      if(resourcePolicyResult === 'Allowed' || resourcePolicyResult === 'AllowedForAccount' || identityStatementResult === 'Allowed') {
+        return 'Allowed'
+      }
+      return 'ImplicitlyDenied'
+    }
+
+    //Cross Account
+    if(resourcePolicyResult === 'Allowed' || resourcePolicyResult === 'AllowedForAccount') {
+      if(identityStatementResult === 'Allowed') {
+        return 'Allowed'
+      }
+      return 'ImplicitlyDenied'
+    }
+
+    return 'ImplicitlyDenied'
+
     /**
      * Add checks for:
-     * * resource policies
+     * * root user
+     * * service linked roles
      * * boundary policies
      * * vpc endpoint policies
      * * session policies (maybe these are just part of identity policies?)
@@ -89,6 +118,37 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
   }
 
   /**
+   * Evaluate the resource policy to determine the result.
+   *
+   * @param request the request to authorize
+   * @returns the result of the resource policy analysis
+   */
+  public resourcePolicyResult(request: ServiceAuthorizationRequest): ResourceEvaluationResult {
+    if(!request.resourceAnalysis) {
+      return 'NotApplicable'
+    }
+
+    const denyStatements = request.resourceAnalysis.filter(s => this.identityStatementExplicitDeny(s));
+    if(denyStatements.some(s => s.principalMatch === 'Match')) {
+      return 'ExplicitlyDenied'
+    }
+    if(denyStatements.some(s => s.principalMatch === 'AccountLevelMatch')) {
+      return 'DeniedForAccount'
+    }
+
+    const allowStatements = request.resourceAnalysis.filter(s => this.identityStatementAllows(s));
+    if(allowStatements.some(s => s.principalMatch === 'Match')) {
+      return 'Allowed'
+    }
+    if(allowStatements.some(s => s.principalMatch === 'AccountLevelMatch')) {
+      return 'AllowedForAccount'
+    }
+
+    return 'ImplicityDenied'
+
+  }
+
+  /**
    * Checks if a statement is an identity statement that allows the request.
    *
    * @param statement The statement to check.
@@ -98,8 +158,7 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     if(statement.resourceMatch &&
       statement.actionMatch &&
       statement.conditionMatch === 'Match' &&
-      statement.statement.effect() === 'Allow' &&
-      statement.principalMatch === 'Match') {
+      statement.statement.effect() === 'Allow') {
         return true;
     }
     return false;
@@ -109,8 +168,7 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     if(statement.resourceMatch &&
       statement.actionMatch &&
       statement.conditionMatch === 'Unknown' &&
-      statement.statement.effect() === 'Allow' &&
-      statement.principalMatch === 'Match') {
+      statement.statement.effect() === 'Allow') {
         return true;
     }
     return false
@@ -120,8 +178,7 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     if(statement.resourceMatch &&
       statement.actionMatch &&
       statement.conditionMatch === 'Unknown' &&
-      statement.statement.effect() === 'Deny' &&
-      statement.principalMatch === 'Match') {
+      statement.statement.effect() === 'Deny') {
         return true;
     }
     return false
@@ -131,8 +188,7 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     if(statement.resourceMatch &&
       statement.actionMatch &&
       statement.conditionMatch === 'Match' &&
-      statement.statement.effect() === 'Deny' &&
-      statement.principalMatch === 'Match') {
+      statement.statement.effect() === 'Deny') {
         return true;
     }
     return false;

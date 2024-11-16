@@ -55,11 +55,13 @@ describe('coreSimulatorEngine', () => {
               policies: scp.policies.map((p: any) => loadPolicy(p))
             }
           })
+          const resourcePolicy = testCase.resourcePolicy ? loadPolicy(testCase.resourcePolicy) : undefined;
           //In an authorization request
           const authorizationRequest: AuthorizationRequest = {
             request,
             identityPolicies,
-            serviceControlPolicies
+            serviceControlPolicies,
+            resourcePolicy
           };
 
           // When the request is authorized

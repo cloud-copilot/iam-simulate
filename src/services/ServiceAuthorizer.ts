@@ -6,7 +6,8 @@ import { StatementAnalysis } from "../StatementAnalysis.js";
 export interface ServiceAuthorizationRequest {
   request: AwsRequest;
   identityStatements: StatementAnalysis[];
-  scpAnalysis: SCPAnalysis[]
+  scpAnalysis: SCPAnalysis[];
+  resourceAnalysis: StatementAnalysis[];
 }
 
 export interface ServiceAuthorizer {

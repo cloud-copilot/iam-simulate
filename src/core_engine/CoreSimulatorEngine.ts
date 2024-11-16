@@ -2,6 +2,7 @@ import { Policy } from "@cloud-copilot/iam-policy";
 import { requestMatchesStatementActions } from "../action/action.js";
 import { requestMatchesConditions } from "../condition/condition.js";
 import { EvaluationResult } from "../evaluate.js";
+import { requestMatchesStatementPrincipals } from "../principal/principal.js";
 import { AwsRequest } from "../request/request.js";
 import { requestMatchesStatementResources } from "../resource/resource.js";
 import { SCPAnalysis } from "../SCPAnalysis.js";
@@ -43,6 +44,11 @@ export interface AuthorizationRequest {
    * order of the orgnaization hierarchy. So the root ou SCPS should be first.
    */
   serviceControlPolicies: ServiceControlPolicies[]
+
+  /**
+   * The resource policy that applies to the resource being accessed.
+   */
+  resourcePolicy: Policy | undefined;
 }
 
 const serviceEngines: Record<string, new () => ServiceAuthorizer> = {};
@@ -59,10 +65,13 @@ export function authorize(request: AuthorizationRequest): EvaluationResult {
   const identityAnalysis = analyzeIdentityPolicies(request.identityPolicies, request.request);
   const scpAnalysis = analyzeServiceControlPolicies(request.serviceControlPolicies, request.request);
   const serviceAuthorizer = getServiceAuthorizer(request);
+  const resourceAnalysis = request.resourcePolicy ? analyzeResourcePolicy(request.resourcePolicy, request.request) : [];
+
   return serviceAuthorizer.authorize({
     request: request.request,
     identityStatements: identityAnalysis,
     scpAnalysis,
+    resourceAnalysis
   });
 }
 
@@ -131,6 +140,28 @@ export function analyzeServiceControlPolicies(serviceControlPolicies: ServiceCon
       }
     }
     analysis.push(ouAnalysis);
+  }
+
+  return analysis;
+}
+
+/**
+ * Analyze a resource policy and return the results
+ *
+ * @param resourcePolicy the resource policy to analyze
+ * @param request the request to analyze against
+ * @returns an array of statement analysis results
+ */
+export function analyzeResourcePolicy(resourcePolicy: Policy, request: AwsRequest): StatementAnalysis[] {
+  const analysis: StatementAnalysis[] = [];
+  for(const statement of resourcePolicy.statements()) {
+    analysis.push({
+      statement,
+      resourceMatch: requestMatchesStatementResources(request, statement),
+      actionMatch: requestMatchesStatementActions(request, statement),
+      conditionMatch: requestMatchesConditions(request, statement.conditions()),
+      principalMatch: requestMatchesStatementPrincipals(request, statement),
+    });
   }
 
   return analysis;
