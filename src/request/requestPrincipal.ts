@@ -26,4 +26,6 @@ export class RequestPrincipalImpl implements RequestPrincipal {
   public value(): string {
     return this.rawValue;
   }
+
+  //TODO: A principal is a Service Linked Role if it is an ARN and has the path arn:aws:iam::111111111111:role/aws-service-role/...
 }
