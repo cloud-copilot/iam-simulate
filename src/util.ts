@@ -1,3 +1,4 @@
+import { iamActionDetails, iamResourceTypeDetails, ResourceType } from '@cloud-copilot/iam-data'
 import { AwsRequest } from './request/request.js'
 
 const matchesNothing = new RegExp('a^')
@@ -126,6 +127,12 @@ export interface ArnParts {
   resourcePath: string | undefined
 }
 
+/**
+ * Split an ARN into its parts
+ *
+ * @param arn the arn to split
+ * @returns the parts of the ARN
+ */
 export function splitArnParts(arn: string): ArnParts {
   const parts = arn.split(':')
   const partition = parts.at(1)
@@ -196,4 +203,64 @@ export function isDefined<T>(value: T | undefined): value is T {
  */
 export function isNotDefined<T>(value: T | undefined): value is undefined {
   return !isDefined(value)
+}
+
+/**
+ * Checks if an action is a wildcard only action
+ *
+ * @param service the service the action belongs to
+ * @param action the action to check if it is a wildcard only action
+ * @returns if the action is a wildcard only action
+ * @throws an error if the service or action does not exist
+ */
+export async function isWildcardOnlyAction(service: string, action: string): Promise<boolean> {
+  const actionDetails = await iamActionDetails(service, action)
+  return actionDetails.resourceTypes.length === 0
+}
+
+/**
+ * Get the reource type for an action
+ *
+ * @param service the service the action belongs to
+ * @param action the action to get the resource type for
+ * @param resource the resource type matching the action, if any
+ * @throws an error if the service or action does not exist
+ */
+export async function getResourceTypeForAction(service: string, action: string, resource: string): Promise<ResourceType | undefined> {
+  const actionDetails = await iamActionDetails(service, action)
+  if(actionDetails.resourceTypes.length === 0) {
+    return undefined
+  }
+
+  const matchingResourceTypes: ResourceType[] = [];
+  for(const rt of actionDetails.resourceTypes) {
+    const resourceType = await iamResourceTypeDetails(service, rt.name);
+    const pattern = convertResourcePatternToRegex(resourceType.arn);
+    const match = resource.match(new RegExp(pattern));
+    if(match) {
+      matchingResourceTypes.push(resourceType);
+    }
+  }
+
+  if(matchingResourceTypes.length != 1) {
+    const matchNames = matchingResourceTypes.map(rt => rt.key).join(", ");
+    throw new Error(`found ${matchingResourceTypes.length} matching resource types for ${resource}: ${matchNames}`);
+  }
+
+  return matchingResourceTypes[0]
+}
+
+/**
+ * Convert a resource pattern from iam-data to a regex pattern
+ *
+ * @param pattern the pattern to convert to a regex
+ * @returns the regex pattern
+ */
+export function convertResourcePatternToRegex(pattern: string): string {
+  const regex = pattern.replace(/\$\{.*?\}/g, (match) => {
+    const name = match.substring(2, match.length - 1)
+    const camelName = name.at(0)?.toLowerCase() + name.substring(1)
+    return `(?<${camelName}>(.*?))`
+  })
+  return `^${regex}$`
 }

@@ -10,4 +10,6 @@ export interface Simulation {
   }
 
   identityPolicies: Record<string, any>[];
+  serviceControlPolicies?: Record<string, Record<string, any>[]>[];
+  resourcePolicy?: any;
 }
