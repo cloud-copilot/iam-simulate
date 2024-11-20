@@ -53,13 +53,6 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
      * * vpc endpoint policies
      * * session policies (maybe these are just part of identity policies?)
      */
-    if(identityStatementResult === 'Allowed') {
-      if(principalAccount === resourceAccount) {
-        return identityStatementResult
-      }
-      return 'ImplicitlyDenied'
-    }
-    return identityStatementResult;
   }
 
   /**
