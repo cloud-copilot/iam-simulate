@@ -1,59 +1,63 @@
-import { ConditionKey, iamActionDetails, iamConditionKeyDetails, iamResourceTypeDetails } from "@cloud-copilot/iam-data";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ConditionKey, iamActionDetails, iamConditionKeyDetails, iamConditionKeyExists, iamResourceTypeDetails } from "@cloud-copilot/iam-data";
+import { describe, expect, it, vi } from "vitest";
 import { Simulation } from "./simulation.js";
 import { normalizeSimulationParameters } from "./simulationEngine.js";
 
 vi.mock('@cloud-copilot/iam-data')
 
-beforeEach(() => {
-  vi.resetAllMocks()
+const mockKeyDetails: Record<string, ConditionKey> = {
+  "s3:requestobjecttagkeys": { description: "", key: "s3:RequestObjectTagKeys", type: "ArrayOfString"},
+  "s3:resourceaccount": { description: "", key: "s3:ResourceAccount", type: "String"},
+  "s3:accessgrantsinstancearn": { description: "", key: "s3:AccessGrantsInstanceArn", type: "String"},
+  "s3:dataaccesspointaccount": { description: "", key: "s3:DataAccessPointAccount", type: "String"},
+  "s3:accesspointnetworkorigin": { description: "", key: "s3:AccessPointNetworkOrigin", type: "String"},
+}
+
+// beforeEach(() => {
+//   vi.resetAllMocks()
+// })
+
+vi.mocked(iamResourceTypeDetails).mockResolvedValue({
+  arn: "arn:${Partition}:s3:::${BucketName}/${ObjectName}",
+  conditionKeys: [],
+  key: "object"
 })
 
-const mockKeyDetails: Record<string, ConditionKey> = {
-  "s3:RequestObjectTagKeys": { description: "", key: "s3:RequestObjectTagKeys", type: "ArrayOfString"},
-  "s3:ResourceAccount": { description: "", key: "s3:ResourceAccount", type: "String"},
-  "s3:AccessGrantsInstanceArn": { description: "", key: "s3:AccessGrantsInstanceArn", type: "String"},
-  "s3:DataAccessPointAccount": { description: "", key: "s3:DataAccessPointAccount", type: "String"},
-  "s3:AccessPointNetworkOrigin": { description: "", key: "s3:AccessPointNetworkOrigin", type: "String"},
-}
+vi.mocked(iamConditionKeyDetails).mockImplementation(async (service, key) => {
+  return mockKeyDetails[`s3:${key.toLowerCase()}`]
+})
+
+vi.mocked(iamConditionKeyExists).mockImplementation(async (service, key) => {
+  return mockKeyDetails[`s3:${key.toLowerCase()}`] !== undefined
+})
+
+vi.mocked(iamActionDetails).mockResolvedValue({
+  accessLevel: "Read",
+  conditionKeys: ["s3:RequestObjectTagKeys", "s3:ResourceAccount"],
+  description: "Grants permission to retrieve objects from Amazon S3 buckets",
+  name: "GetObject",
+  resourceTypes: [
+    {
+     name: "object",
+     required: true,
+     dependentActions: [],
+     conditionKeys: [
+      "s3:AccessGrantsInstanceArn",
+      "s3:DataAccessPointAccount",
+      "s3:AccessPointNetworkOrigin",
+      "aws:ResourceTag/${TagKey}"
+     ]
+    }
+  ],
+  dependentActions: []
+})
+
+
 
 
 describe("normalizeSimulationParameters", () => {
   it('should only return the parameters allowed for the action', async () => {
-    //Given the action exists s3:GetObject
-    vi.mocked(iamActionDetails).mockResolvedValue({
-      accessLevel: "Read",
-      conditionKeys: ["s3:RequestObjectTagKeys", "s3:ResourceAccount"],
-      description: "Grants permission to retrieve objects from Amazon S3 buckets",
-      name: "GetObject",
-      resourceTypes: [
-        {
-         name: "object",
-         required: true,
-         dependentActions: [],
-         conditionKeys: [
-          "s3:AccessGrantsInstanceArn",
-          "s3:DataAccessPointAccount",
-          "s3:AccessPointNetworkOrigin"
-         ]
-        }
-      ],
-      dependentActions: []
-    })
-
-    //And the resource type exists
-    vi.mocked(iamResourceTypeDetails).mockResolvedValue({
-      arn: "arn:${Partition}:s3:::${BucketName}/${ObjectName}",
-      conditionKeys: [],
-      key: "object"
-    })
-
-    vi.mocked(iamConditionKeyDetails).mockImplementation(async (service, key) => {
-      console.log("mocked iamConditionKeyDetails", service, key)
-      return mockKeyDetails[`s3:${key}`]
-    })
-
-    //And the simulation is for the action s3:GetObject
+    //Given the simulation is for the action s3:GetObject
     const simulation: Simulation = {
       identityPolicies: [],
       request: {

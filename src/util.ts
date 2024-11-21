@@ -264,3 +264,14 @@ export function convertResourcePatternToRegex(pattern: string): string {
   })
   return `^${regex}$`
 }
+
+
+/**
+ * Lowercase all strings in an array
+ *
+ * @param strings the strings to lowercase
+ * @returns the lowercased strings
+ */
+export function lowerCaseAll(strings: string[]): string[] {
+  return strings.map(s => s.toLowerCase())
+}
