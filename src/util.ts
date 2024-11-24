@@ -1,4 +1,6 @@
-import { iamActionDetails, iamResourceTypeDetails, ResourceType } from '@cloud-copilot/iam-data'
+import { iamActionDetails, iamConditionKeyDetails, iamConditionKeyExists, iamResourceTypeDetails, iamServiceExists, ResourceType } from '@cloud-copilot/iam-data'
+import { ConditionKeyType } from './ConditionKeys.js'
+import { getGlobalConditionKey, globalConditionKeyExists } from './global_conditions/globalConditionKeys.js'
 import { AwsRequest } from './request/request.js'
 
 const matchesNothing = new RegExp('a^')
@@ -110,6 +112,14 @@ function getContextSingleValue(request: AwsRequest, contextKeyName: string): str
   return undefined
 }
 
+/**
+ * Get the replacement value for a string
+ *
+ * @param rawString the string to replace the value in
+ * @param wildcard the value to replace the wildcard with
+ * @param replaceWildcards if the wildcard or raw string should be used
+ * @returns
+ */
 function replacementValue(rawString: string, wildcard: string, replaceWildcards: boolean): string {
   if(replaceWildcards) {
     return wildcard
@@ -265,7 +275,6 @@ export function convertResourcePatternToRegex(pattern: string): string {
   return `^${regex}$`
 }
 
-
 /**
  * Lowercase all strings in an array
  *
@@ -274,4 +283,95 @@ export function convertResourcePatternToRegex(pattern: string): string {
  */
 export function lowerCaseAll(strings: string[]): string[] {
   return strings.map(s => s.toLowerCase())
+}
+
+/**
+ * Check the capitalization of a context key and return the correct capitalization
+ *
+ * @param contextKey the condition key to check
+ * @returns if the condition key is an array type
+ */
+export async function normalizeContextKeyCase(contextKey: string): Promise<string> {
+  const [service, key] = contextKey.split(":");
+  const serviceExists = await iamServiceExists(service);
+  if(serviceExists) {
+    const serviceKeyExists = await iamConditionKeyExists(service, contextKey);
+    if(serviceKeyExists) {
+      const keyDetails = await iamConditionKeyDetails(service, contextKey);
+      return keyDetails.key;
+    }
+  }
+  const globalConditionKey = getGlobalConditionKey(contextKey);
+  if(globalConditionKey) {
+    return globalConditionKey.key;
+  }
+
+  throw new Error(`Context key ${contextKey} not found`);
+}
+
+/**
+ * Get the type of a context key
+ *
+ * @param contextKey - The string condition key to get the type for
+ * @returns The type of the condition key
+ * @throws an error if the condition key is not found
+ */
+export async function typeForContextKey(contextKey: string): Promise<ConditionKeyType> {
+  const [service, key] = contextKey.split(":");
+  const serviceKeyExists = await iamConditionKeyExists(service, contextKey);
+  if(serviceKeyExists) {
+    const keyDetails = await iamConditionKeyDetails(service, contextKey);
+    return keyDetails.type as ConditionKeyType;
+  }
+  const globalConditionKey = getGlobalConditionKey(contextKey);
+  if(globalConditionKey) {
+    return globalConditionKey.dataType as ConditionKeyType;
+  }
+
+  throw new Error(`Condition key ${contextKey} not found`);
+}
+
+/**
+ * Gets the IAM variables from a string
+ *
+ * @param value the string to get the variables from
+ * @returns the variables in the string, if any
+ */
+export function getVariablesFromString(value: string): string[] {
+  const matches = value.match(/\$\{.*?\}/g)
+  if(matches) {
+    return matches.map((m) => {
+      const inBrackets = m.slice(2, -1)
+      if(inBrackets.includes(',')) {
+        return inBrackets.split(',')[0].trim()
+      }
+      return inBrackets
+    })
+  }
+  return []
+}
+
+/**
+ * Check if a context key actually exists
+ *
+ * @param key The context key to check
+ * @returns true if the context key is valid, false otherwise
+ */
+export async function isActualContextKey(key: string): Promise<boolean> {
+  if(globalConditionKeyExists(key)) {
+    return true;
+  }
+  const parts = key.split(":");
+  if(parts.length !== 2) {
+    return false;
+  }
+  const [service, action] = parts;
+  const serviceExists = await iamServiceExists(service);
+
+  if(!serviceExists) {
+    return false;
+  }
+
+  const actionExists = await iamConditionKeyExists(service, key);
+  return actionExists;
 }

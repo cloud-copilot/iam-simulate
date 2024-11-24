@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { AwsRequest, AwsRequestImpl } from './request/request.js'
 import { RequestContextImpl } from './requestContext.js'
-import { convertIamStringToRegex } from './util.js'
+import { convertIamStringToRegex, getVariablesFromString, isActualContextKey } from './util.js'
 
 function testRequestWithContext(context: any, validContextVariables?: string[]): AwsRequest {
   validContextVariables = validContextVariables || []
   //For now we assume that all values passed into the context are valid
-  return new AwsRequestImpl('', '', '', new RequestContextImpl(context))
+  return new AwsRequestImpl('', {accountId: '', resource: ''}, '', new RequestContextImpl(context))
 }
 
 describe('convertIamStringToRegex', () => {
@@ -219,5 +219,97 @@ describe('convertIamStringToRegex', () => {
     expect(result.source).toBe('^arn:aws:iam::123456789012:user\\/Bob\\*$')
     expect(result.exec('arn:aws:iam::123456789012:user/Bob*')).toBeTruthy()
     expect(result.exec('arn:aws:iam::123456789012:user/Bob')).toBeFalsy()
+  })
+})
+
+describe('getVariablesFromString', () => {
+  it('should return an empty array if there are no variables', () => {
+    //Given a string without any variables
+    const value = 'arn:aws:s3:::bucket'
+
+    //When the variables are extracted
+    const result = getVariablesFromString(value)
+
+    //Then the result should be an empty array
+    expect(result).toEqual([])
+  })
+
+  it('should return an array of variables', () => {
+    //Given a string with variables
+    const value = 'arn:aws:s3:::${aws:username}/${aws:PrincipalAccountId}'
+
+    //When the variables are extracted
+    const result = getVariablesFromString(value)
+
+    //Then the result should be an array of variables
+    expect(result).toEqual(['aws:username', 'aws:PrincipalAccountId'])
+  })
+
+  it('should return an array of variables if there are default values', () => {
+    //Given a string with variables
+    const value = 'arn:aws:s3:::${aws:username, "Bob"}/${aws:PrincipalAccountId, "123456789012"}'
+
+    //When the variables are extracted
+    const result = getVariablesFromString(value)
+
+    //Then the result should be an array of variables
+    expect(result).toEqual(['aws:username', 'aws:PrincipalAccountId'])
+  })
+})
+
+describe('isActualContextKey', () => {
+  it('should return true for a global context key', async () => {
+    //Given a global context key
+    const key = 'aws:username'
+
+    //When the key is checked
+    const result = await isActualContextKey(key)
+
+    //Then the result should be true
+    expect(result).toBeTruthy()
+  })
+
+  it('should return true for a service context key', async () => {
+    //Given a service context key
+    const key = 's3:DataAccessPointArn'
+
+    //When the key is checked
+    const result = await isActualContextKey(key)
+
+    //Then the result should be true
+    expect(result).toBeTruthy()
+  })
+
+  it('should return false if the service does not exist', async () => {
+    //Given a context key with a service that does not exist
+    const key = 'foo:bar'
+
+    //When the key is checked
+    const result = await isActualContextKey(key)
+
+    //Then the result should be false
+    expect(result).toBeFalsy()
+  })
+
+  it('should return false if the key does not exist', async () => {
+    //Given a context key that does not exist
+    const key = 'aws:foo'
+
+    //When the key is checked
+    const result = await isActualContextKey(key)
+
+    //Then the result should be false
+    expect(result).toBeFalsy()
+  })
+
+  it('should return false if the key does not have the correct format', async () => {
+    //Given a context key that does not have the correct format
+    const key = 'aws:foo:bar'
+
+    //When the key is checked
+    const result = await isActualContextKey(key)
+
+    //Then the result should be false
+    expect(result).toBeFalsy()
   })
 })

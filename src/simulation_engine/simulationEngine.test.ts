@@ -56,9 +56,6 @@ vi.mocked(iamActionDetails).mockResolvedValue({
   dependentActions: []
 })
 
-
-
-
 describe("normalizeSimulationParameters", () => {
   it('should only return the parameters allowed for the action', async () => {
     //Given the simulation is for the action s3:GetObject
