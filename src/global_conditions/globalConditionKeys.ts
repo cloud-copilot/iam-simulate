@@ -252,6 +252,11 @@ const globalConditionKeys: GlobalConditionKey[] = [
     dataType: "String",
   },
   {
+    key: "aws:SourceOwner",
+    category: "request",
+    dataType: "String",
+  },
+  {
     key: "aws:SourceOrgPaths",
     category: "request",
     dataType: "ArrayOfString",
@@ -282,6 +287,10 @@ const keysByCategory = globalConditionKeys.reduce((acc, key) => {
 
 export function getGlobalConditionKey(key: string): GlobalConditionKey | undefined {
   return keysByName[key.toLowerCase()];
+}
+
+export function globalConditionKeyExists(key: string): boolean {
+  return !!getGlobalConditionKey(key);
 }
 
 export function getGlobalConditionKeysByCategory(category: string): GlobalConditionKey[] {
