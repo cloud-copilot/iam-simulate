@@ -1,4 +1,4 @@
-import { ConditionKey, iamActionDetails, iamConditionKeyDetails, iamConditionKeyExists, iamResourceTypeDetails } from "@cloud-copilot/iam-data";
+import { ConditionKey, iamActionDetails, iamConditionKeyDetails, iamConditionKeyExists, iamResourceTypeDetails, iamServiceExists } from "@cloud-copilot/iam-data";
 import { describe, expect, it, vi } from "vitest";
 import { Simulation } from "./simulation.js";
 import { normalizeSimulationParameters } from "./simulationEngine.js";
@@ -23,12 +23,16 @@ vi.mocked(iamResourceTypeDetails).mockResolvedValue({
   key: "object"
 })
 
+vi.mocked(iamServiceExists).mockImplementation(async (service) => {
+  return service !== 'aws'
+})
+
 vi.mocked(iamConditionKeyDetails).mockImplementation(async (service, key) => {
-  return mockKeyDetails[`s3:${key.toLowerCase()}`]
+  return mockKeyDetails[key.toLowerCase()]
 })
 
 vi.mocked(iamConditionKeyExists).mockImplementation(async (service, key) => {
-  return mockKeyDetails[`s3:${key.toLowerCase()}`] !== undefined
+  return mockKeyDetails[key.toLowerCase()] !== undefined
 })
 
 vi.mocked(iamActionDetails).mockResolvedValue({
@@ -85,4 +89,8 @@ describe("normalizeSimulationParameters", () => {
     })
   })
 
+  it.todo('should correct incorrect capitalization')
+  it.todo('should put single values in an array if the condition key is an array')
+  it.todo('should pull the first value from an array if the condition key is a single value')
+  it.todo('')
 })

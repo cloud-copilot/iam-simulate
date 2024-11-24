@@ -1,7 +1,7 @@
-import { iamActionExists, iamConditionKeyDetails, iamConditionKeyExists, iamServiceExists } from "@cloud-copilot/iam-data";
+import { iamActionExists, iamServiceExists } from "@cloud-copilot/iam-data";
 import { validatePolicySyntax, ValidationError } from "@cloud-copilot/iam-policy";
-import { ConditionKeyType, isConditionKeyArray } from "../ConditionKeys.js";
-import { getGlobalConditionKey } from "../global_conditions/globalConditionKeys.js";
+import { isConditionKeyArray } from "../ConditionKeys.js";
+import { normalizeContextKeyCase, typeForContextKey } from "../util.js";
 import { allowedContextKeysForRequest } from "./contextKeys.js";
 import { Simulation } from "./simulation.js";
 import { SimulationOptions } from "./simulationOptions.js";
@@ -75,9 +75,8 @@ export async function normalizeSimulationParameters(simulation: Simulation): Pro
     const lowerCaseKey = key.toLowerCase();
     if (contextVariablesForAction.has(lowerCaseKey)) {
 
-      const conditionType = await typeForConditionKey(lowerCaseKey);
-      const normalizedKey = await normalizeConditionKeyCase(lowerCaseKey);
-      console.log("conditionType", conditionType)
+      const conditionType = await typeForContextKey(lowerCaseKey);
+      const normalizedKey = await normalizeContextKeyCase(lowerCaseKey);
 
       if(isConditionKeyArray(conditionType)) {
         allowedContextKeys[normalizedKey] = [value].flat();
@@ -92,39 +91,5 @@ export async function normalizeSimulationParameters(simulation: Simulation): Pro
   return allowedContextKeys
 }
 
-/**
- * Get the type of a condition key
- *
- * @param conditionKey - The string condition key to get the type for
- * @returns The type of the condition key
- * @throws an error if the condition key is not found
- */
-export async function typeForConditionKey(conditionKey: string): Promise<ConditionKeyType> {
-  const [service, key] = conditionKey.split(":");
-  const serviceKeyExists = await iamConditionKeyExists(service, key);
-  if(serviceKeyExists) {
-    const keyDetails = await iamConditionKeyDetails(service, key);
-    return keyDetails.type as ConditionKeyType;
-  }
-  const globalConditionKey = getGlobalConditionKey(conditionKey);
-  if(globalConditionKey) {
-    return globalConditionKey.dataType as ConditionKeyType;
-  }
 
-  throw new Error(`Condition key ${conditionKey} not found`);
-}
 
-export async function normalizeConditionKeyCase(conditionKey: string): Promise<string> {
-  const [service, key] = conditionKey.split(":");
-  const serviceKeyExists = await iamConditionKeyExists(service, key);
-  if(serviceKeyExists) {
-    const keyDetails = await iamConditionKeyDetails(service, key);
-    return keyDetails.key;
-  }
-  const globalConditionKey = getGlobalConditionKey(conditionKey);
-  if(globalConditionKey) {
-    return globalConditionKey.key;
-  }
-
-  throw new Error(`Condition key ${conditionKey} not found`);
-}
