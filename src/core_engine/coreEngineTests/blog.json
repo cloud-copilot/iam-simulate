@@ -1,0 +1,150 @@
+[
+  {
+    "name": "explicit deny without context key",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": {
+          "Effect": "Allow",
+          "Action": "s3:*",
+          "Resource": "*"
+        }
+      },
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Sid": "DenyAccessToSensitiveData",
+            "Effect": "Deny",
+            "Principal": "*",
+            "Action": "s3:*",
+            "Resource": "*",
+            "Condition": {
+              "StringEqualsIfExists": {
+                "aws:ResourceTag/classification": "sensitive"
+              },
+              "StringNotEqualsIfExists": {
+                "aws:SourceOrgID": "my-org-id"
+              },
+              "BoolIfExists": {
+                "aws:PrincipalIsAWSService": "false"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied"
+    }
+  },
+  {
+    "name": "explicit deny with sensitive value in context key",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:ResourceTag/classification": "sensitive"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": {
+          "Effect": "Allow",
+          "Action": "s3:*",
+          "Resource": "*"
+        }
+      },
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Sid": "DenyAccessToSensitiveData",
+            "Effect": "Deny",
+            "Principal": "*",
+            "Action": "s3:*",
+            "Resource": "*",
+            "Condition": {
+              "StringEqualsIfExists": {
+                "aws:ResourceTag/classification": "sensitive"
+              },
+              "StringNotEqualsIfExists": {
+                "aws:SourceOrgID": "my-org-id"
+              },
+              "BoolIfExists": {
+                "aws:PrincipalIsAWSService": "false"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied"
+    }
+  },
+  {
+    "name": "Allowed when context key present",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:ResourceTag/classification": "not-sensitive"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": {
+          "Effect": "Allow",
+          "Action": "s3:*",
+          "Resource": "*"
+        }
+      },
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Sid": "DenyAccessToSensitiveData",
+            "Effect": "Deny",
+            "Principal": "*",
+            "Action": "s3:*",
+            "Resource": "*",
+            "Condition": {
+              "StringEqualsIfExists": {
+                "aws:ResourceTag/classification": "sensitive"
+              },
+              "StringNotEqualsIfExists": {
+                "aws:SourceOrgID": "my-org-id"
+              },
+              "BoolIfExists": {
+                "aws:PrincipalIsAWSService": "false"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  }
+]

@@ -45,8 +45,8 @@ describe('coreSimulatorEngine', () => {
         testFunc(testCase.name, () => {
 
           //Given the request
-          const {principal, resource, action, contextParams} = testCase.request;
-          const request = new AwsRequestImpl(principal, resource, action, new RequestContextImpl(contextParams));
+          const {principal, resource, action, context} = testCase.request;
+          const request = new AwsRequestImpl(principal, resource, action, new RequestContextImpl(context));
           // And Policies
           const identityPolicies = testCase.identityPolicies.map((p: any) => loadPolicy(p));
           const serviceControlPolicies = (testCase.serviceControlPolicies || []).map((scp: any) => {

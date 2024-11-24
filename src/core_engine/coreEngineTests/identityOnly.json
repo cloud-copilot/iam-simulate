@@ -186,7 +186,7 @@
         "accountId": "123456789012"
       },
       "principal": "arn:aws:iam::123456789012:user/test-user",
-      "contextParams": {
+      "context": {
         "s3:prefix": "allowed-prefix/"
       }
     },
