@@ -1,6 +1,6 @@
 import { iamActionDetails } from "@cloud-copilot/iam-data";
 import { allGlobalConditionKeys } from "../global_conditions/globalConditionKeys.js";
-import { getResourceTypeForAction, isWildcardOnlyAction, lowerCaseAll } from "../util.js";
+import { getResourceTypesForAction, isWildcardOnlyAction, lowerCaseAll } from "../util.js";
 
 /**
  * Get the allowed context keys for a request.
@@ -19,8 +19,13 @@ export async function allowedContextKeysForRequest(service: string, action: stri
     return actionConditionKeys
   }
 
-  const resourceType = await getResourceTypeForAction(service, action, resource);
-  const resourceTypeConditions = actionDetails.resourceTypes.find(rt => rt.name === resourceType!.key)!.conditionKeys
+  const resourceTypes = await getResourceTypesForAction(service, action, resource);
+  if(resourceTypes.length === 0) {
+    throw new Error(`No resource types found for action ${action} on service ${service}`)
+  } else if (resourceTypes.length > 1) {
+    throw new Error(`Multiple resource types found for action ${action} on service ${service}`)
+  }
+  const resourceTypeConditions = actionDetails.resourceTypes.find(rt => rt.name === resourceTypes[0].key)!.conditionKeys
 
   return [
     ...lowerCaseAll(resourceTypeConditions),

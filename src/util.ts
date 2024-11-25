@@ -229,17 +229,17 @@ export async function isWildcardOnlyAction(service: string, action: string): Pro
 }
 
 /**
- * Get the reource type for an action
+ * Get the the possible reource types for an action and resource
  *
  * @param service the service the action belongs to
  * @param action the action to get the resource type for
  * @param resource the resource type matching the action, if any
- * @throws an error if the service or action does not exist
+ * @throws an error if the service or action does not exist, or if the action is a wildcard only action
  */
-export async function getResourceTypeForAction(service: string, action: string, resource: string): Promise<ResourceType | undefined> {
+export async function getResourceTypesForAction(service: string, action: string, resource: string): Promise<ResourceType[]> {
   const actionDetails = await iamActionDetails(service, action)
   if(actionDetails.resourceTypes.length === 0) {
-    return undefined
+    throw new Error(`${service}:${action} does not have any resource types`)
   }
 
   const matchingResourceTypes: ResourceType[] = [];
@@ -252,12 +252,7 @@ export async function getResourceTypeForAction(service: string, action: string, 
     }
   }
 
-  if(matchingResourceTypes.length != 1) {
-    const matchNames = matchingResourceTypes.map(rt => rt.key).join(", ");
-    throw new Error(`found ${matchingResourceTypes.length} matching resource types for ${resource}: ${matchNames}`);
-  }
-
-  return matchingResourceTypes[0]
+  return matchingResourceTypes
 }
 
 /**

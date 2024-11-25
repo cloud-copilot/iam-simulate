@@ -10,6 +10,9 @@ export interface Simulation {
   }
 
   identityPolicies: Record<string, any>[];
-  serviceControlPolicies?: Record<string, Record<string, any>[]>[];
+  serviceControlPolicies: {
+    orgIdentifier: string,
+    policies: Record<string, any>[]
+  }[];
   resourcePolicy?: any;
 }
