@@ -61,6 +61,8 @@ describe("normalizeSimulationParameters", () => {
     //Given the simulation is for the action s3:GetObject
     const simulation: Simulation = {
       identityPolicies: [],
+      serviceControlPolicies: [],
+      resourcePolicy: undefined,
       request: {
         action: "s3:GetObject",
         resource: {
@@ -86,8 +88,101 @@ describe("normalizeSimulationParameters", () => {
     })
   })
 
-  it.todo('should correct incorrect capitalization')
-  it.todo('should put single values in an array if the condition key is an array')
-  it.todo('should pull the first value from an array if the condition key is a single value')
-  it.todo('')
+  it('should correct incorrect capitalization', async () => {
+    //Given the simulation is for the action s3:GetObject
+    const simulation: Simulation = {
+      identityPolicies: [],
+      serviceControlPolicies: [],
+      resourcePolicy: undefined,
+      request: {
+        action: "s3:GetObject",
+        resource: {
+          resource: "arn:aws:s3:::examplebucket/1234",
+          accountId: "123456789012"
+        },
+        contextVariables: {
+          "s3:requestobjecttagkeys": ["tag1", "tag2"],
+          "s3:rESOURCEaCCOUNT": "123456789012"
+        },
+        principal: "arn:aws:iam::123456789012:user/Alice",
+      }
+    }
+
+    //When we normalize the simulation parameters
+    const normalizedSimulation = await normalizeSimulationParameters(simulation)
+
+    //Then the result correct the capitalization of the keys
+    expect(Object.keys(normalizedSimulation).sort()).toEqual([
+      "s3:RequestObjectTagKeys",
+      "s3:ResourceAccount"
+    ])
+  })
+
+  it('should put single values in an array if the condition key is an array', async () => {
+    //Given a request with a single value for request object tag keys
+    const simulation: Simulation = {
+      identityPolicies: [],
+      serviceControlPolicies: [],
+      resourcePolicy: undefined,
+      request: {
+        action: "s3:GetObject",
+        resource: {
+          resource: "arn:aws:s3:::examplebucket/1234",
+          accountId: "123456789012"
+        },
+        contextVariables: {
+          "s3:RequestObjectTagKeys": "tag1"
+        },
+        principal: "arn:aws:iam::123456789012:user/Alice",
+      }
+    }
+
+    //When we normalize the simulation parameters
+    const normalizedSimulation = await normalizeSimulationParameters(simulation)
+
+    //Then the result should put the single value in an array
+    expect(normalizedSimulation).toEqual({
+      "s3:RequestObjectTagKeys": ["tag1"]
+    })
+  })
+
+  it('should pull the first value from an array if the condition key is a single value', async () => {
+    //Given a request with an array value for resource account
+    const simulation: Simulation = {
+      identityPolicies: [],
+      serviceControlPolicies: [],
+      resourcePolicy: undefined,
+      request: {
+        action: "s3:GetObject",
+        resource: {
+          resource: "arn:aws:s3:::examplebucket/1234",
+          accountId: "123456789012"
+        },
+        contextVariables: {
+          "s3:ResourceAccount": ["123456789012", "987654321098"]
+        },
+        principal: "arn:aws:iam::123456789012:user/Alice",
+      }
+    }
+
+    //When we normalize the simulation parameters
+    const normalizedSimulation = await normalizeSimulationParameters(simulation)
+
+    //Then the result should only contain the first value
+    expect(normalizedSimulation).toEqual({
+      "s3:ResourceAccount": "123456789012"
+    })
+  })
+})
+
+describe('runSimulation', () => {
+  it.todo('should return service control policy errors')
+  it.todo('should return resource policy errors')
+  it.todo('should return identity policy errors')
+  it.todo('should return an error for a mal formatted action')
+  it.todo('should return an error for a non existent service')
+  it.todo('should return an error for a non existent action')
+  it.todo('should return an error if a wildcard only action is not a wildcard')
+  it.todo('should return an error if the resource does not mantch an resource type')
+  it.todo('should return an error if the resource matches multiple resource types')
 })
