@@ -17,7 +17,10 @@ export async function allowedContextKeysForRequest(service: string, action: stri
 
   const isWildCardOnly = await isWildcardOnlyAction(service, action);
   if(isWildCardOnly) {
-    return actionConditionKeys
+    return [
+      ...actionConditionKeys,
+      ...allGlobalConditionKeys()
+    ]
   }
 
   const resourceTypes = await getResourceTypesForAction(service, action, resource);
