@@ -7,7 +7,7 @@ import { Simulation } from "./simulation.js";
 import { SimulationOptions } from "./simulationOptions.js";
 
 /**
- * Runs a simulation without input validation or context error verification.
+ * Runs a simulation without input validation or context variable verification.
  * Use this if you know what you're doing.
  *
  * @param simulation The simulation to run.
