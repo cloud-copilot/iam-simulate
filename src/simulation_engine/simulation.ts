@@ -12,7 +12,7 @@ export interface Simulation {
   identityPolicies: Record<string, any>[];
   serviceControlPolicies: {
     orgIdentifier: string,
-    policies: Record<string, any>[]
+    policies: {name: string, policy: any}[]
   }[];
   resourcePolicy?: any;
 }

@@ -47,21 +47,21 @@ export async function runSimulation(simulation: Simulation, simulationOptions: P
   const seviceControlPolicyErrors: Record<string, ValidationError[]> = {};
   const serviceControlPolicies: ServiceControlPolicies[] = simulation.serviceControlPolicies.map((scp) => {
     const ouId = scp.orgIdentifier;
+    const validPolicies: Policy[] = [];
 
-    const policies = Object.keys(scp.policies).reduce((acc, key) => {
-      const rawPolicy = scp.policies[key as any];
-      const validationErrors = validateServiceControlPolicy(rawPolicy);
-      if(validationErrors.length == 0) {
-        acc[key] = loadPolicy(rawPolicy);
+    scp.policies.forEach((value) => {
+      const {name, policy} = value;
+      const validationErrors = validateServiceControlPolicy(policy);
+      if(validationErrors.length > 0) {
+        seviceControlPolicyErrors[name] = validationErrors;
       } else {
-        seviceControlPolicyErrors[key] = validationErrors;
+        validPolicies.push(policy);
       }
-      return acc;
-    }, {} as Record<string, Policy>);
+    })
 
     return {
       orgIdentifier: ouId,
-      policies: Object.values(policies)
+      policies: validPolicies
     }
   })
 
@@ -110,26 +110,28 @@ export async function runSimulation(simulation: Simulation, simulationOptions: P
 
   const resourceArn = simulation.request.resource.resource;
   const isWildCardOnlyAction = await isWildcardOnlyAction(service, action);
-  if(isWildCardOnlyAction && resourceArn !== "*") {
-    return {
-      errors: {
-        message: 'must.use.wildcard'
+  if(isWildCardOnlyAction) {
+    if(resourceArn !== "*") {
+      return {
+        errors: {
+          message: 'must.use.wildcard'
+        }
       }
     }
-  }
+  } else {
+    const resourceTypes = await getResourceTypesForAction(service, action, resourceArn);
+    if(resourceTypes.length === 0) {
+      return {
+        errors: {
+          message: 'no.resource.types'
+        }
 
-  const resourceTypes = await getResourceTypesForAction(service, action, resourceArn);
-  if(resourceTypes.length === 0) {
-    return {
-      errors: {
-        message: 'no.resource.types'
       }
-
-    }
-  } else if (resourceTypes.length > 1) {
-    return {
-      errors: {
-        message: 'multiple.resource.types'
+    } else if (resourceTypes.length > 1) {
+      return {
+        errors: {
+          message: 'multiple.resource.types'
+        }
       }
     }
   }

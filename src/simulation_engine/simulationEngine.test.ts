@@ -1,7 +1,7 @@
 import { ConditionKey, iamActionDetails, iamConditionKeyDetails, iamConditionKeyExists, iamResourceTypeDetails, iamServiceExists } from "@cloud-copilot/iam-data";
 import { describe, expect, it, vi } from "vitest";
 import { Simulation } from "./simulation.js";
-import { normalizeSimulationParameters } from "./simulationEngine.js";
+import { normalizeSimulationParameters, runSimulation } from "./simulationEngine.js";
 
 vi.mock('@cloud-copilot/iam-data')
 
@@ -176,8 +176,75 @@ describe("normalizeSimulationParameters", () => {
 })
 
 describe('runSimulation', () => {
-  it.todo('should return service control policy errors')
-  it.todo('should return resource policy errors')
+  it.only('should return service control policy errors', async () => {
+    //Given a simulation with an error in a service control policy
+    const simulation: Simulation = {
+      identityPolicies: [],
+      serviceControlPolicies: [{
+        orgIdentifier: "o-123456",
+        policies: [{
+          name: 'Gandalf',
+          policy: {
+            Statement:{
+              Effect: "SHALL NOT PASS",
+              Action: "s3:GetObject",
+              Resource: "arn:aws:s3:::examplebucket/1234"
+            }
+          }
+        }]
+      }],
+      resourcePolicy: undefined,
+      request: {
+        action: "s3:GetObject",
+        resource: {
+          resource: "arn:aws:s3:::examplebucket/1234",
+          accountId: "123456789012"
+        },
+        principal: "arn:aws:iam::123456789012:user/Alice",
+        contextVariables: {},
+      }
+    }
+
+    //When the simulation is run
+    const result = await runSimulation(simulation, {})
+
+    //Then the result should contain an error
+    expect(result.errors!.message).toEqual('policy.errors')
+    expect(result.errors!.seviceControlPolicyErrors!["Gandalf"].length).toEqual(1)
+
+  })
+
+  it('should return resource policy errors', async () => {
+    //Given a simulation with an error in a resource policy
+    const simulation: Simulation = {
+      identityPolicies: [],
+      serviceControlPolicies: [],
+      resourcePolicy: {
+        Statement: {
+          Effect: "Invisible",
+          Action: "oneRing:PutOn",
+          NotPrincipal: "Sauron"
+        }
+      },
+      request: {
+        action: "s3:GetObject",
+        resource: {
+          resource: "arn:aws:s3:::examplebucket/1234",
+          accountId: "123456789012"
+        },
+        principal: "arn:aws:iam::123456789012:user/Alice",
+        contextVariables: {},
+      }
+    }
+
+    //When the simulation is run
+    const result = await runSimulation(simulation, {})
+
+    //Then the result should contain an error
+    expect(result.errors!.message).toEqual('policy.errors')
+    expect(result.errors!.resourcePolicyErrors!.length).toEqual(1)
+  })
+
   it.todo('should return identity policy errors')
   it.todo('should return an error for a mal formatted action')
   it.todo('should return an error for a non existent service')

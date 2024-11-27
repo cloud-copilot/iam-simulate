@@ -1,4 +1,4 @@
-import { loadPolicy, Policy } from "@cloud-copilot/iam-policy";
+import { loadPolicy } from "@cloud-copilot/iam-policy";
 import { authorize, ServiceControlPolicies } from "../core_engine/coreSimulatorEngine.js";
 import { type EvaluationResult } from "../evaluate.js";
 import { AwsRequestImpl } from "../request/request.js";
@@ -19,16 +19,11 @@ export function runUnsafeSimulation(simulation: Simulation, simulationOptions: P
   const identityPolicies = Object.values(simulation.identityPolicies).map(p => loadPolicy(p));
   const serviceControlPolicies: ServiceControlPolicies[] = simulation.serviceControlPolicies.map((scp) => {
     const ouId = scp.orgIdentifier;
-
-    const policies = Object.keys(scp.policies).reduce((acc, key) => {
-      const rawPolicy = scp.policies[key as any];
-      acc[key] = loadPolicy(rawPolicy);
-      return acc;
-    }, {} as Record<string, Policy>);
+    const policies = scp.policies.map(val => loadPolicy(val.policy));
 
     return {
       orgIdentifier: ouId,
-      policies: Object.values(policies)
+      policies: policies
     }
   })
   const requestContext = new RequestContextImpl(simulation.request.contextVariables)
