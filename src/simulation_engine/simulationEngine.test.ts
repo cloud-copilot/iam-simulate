@@ -1,4 +1,4 @@
-import { ConditionKey, iamActionDetails, iamConditionKeyDetails, iamConditionKeyExists, iamResourceTypeDetails, iamServiceExists } from "@cloud-copilot/iam-data";
+import { ConditionKey, iamActionDetails, iamActionExists, iamConditionKeyDetails, iamConditionKeyExists, iamResourceTypeDetails, iamServiceExists } from "@cloud-copilot/iam-data";
 import { describe, expect, it, vi } from "vitest";
 import { Simulation } from "./simulation.js";
 import { normalizeSimulationParameters, runSimulation } from "./simulationEngine.js";
@@ -13,10 +13,6 @@ const mockKeyDetails: Record<string, ConditionKey> = {
   "s3:accesspointnetworkorigin": { description: "", key: "s3:AccessPointNetworkOrigin", type: "String"},
 }
 
-// beforeEach(() => {
-//   vi.resetAllMocks()
-// })
-
 vi.mocked(iamResourceTypeDetails).mockResolvedValue({
   arn: "arn:${Partition}:s3:::${BucketName}/${ObjectName}",
   conditionKeys: [],
@@ -24,7 +20,7 @@ vi.mocked(iamResourceTypeDetails).mockResolvedValue({
 })
 
 vi.mocked(iamServiceExists).mockImplementation(async (service) => {
-  return service !== 'aws'
+  return ['s3'].includes(service)
 })
 
 vi.mocked(iamConditionKeyDetails).mockImplementation(async (service, key) => {
@@ -35,25 +31,68 @@ vi.mocked(iamConditionKeyExists).mockImplementation(async (service, key) => {
   return mockKeyDetails[key.toLowerCase()] !== undefined
 })
 
-vi.mocked(iamActionDetails).mockResolvedValue({
-  accessLevel: "Read",
-  conditionKeys: ["s3:RequestObjectTagKeys", "s3:ResourceAccount"],
-  description: "Grants permission to retrieve objects from Amazon S3 buckets",
-  name: "GetObject",
-  resourceTypes: [
-    {
-     name: "object",
-     required: true,
-     dependentActions: [],
-     conditionKeys: [
-      "s3:AccessGrantsInstanceArn",
-      "s3:DataAccessPointAccount",
-      "s3:AccessPointNetworkOrigin",
-      "aws:ResourceTag/${TagKey}"
-     ]
+vi.mocked(iamActionExists).mockImplementation(async (service, action) => {
+  return service === 's3' && ['GetObjects', 'GetObject', 'ListAllMyBuckets'].includes(action)
+})
+
+vi.mocked(iamActionDetails).mockImplementation(async (service, actionKey) => {
+  if(actionKey === 'GetObject') {
+    return {
+      accessLevel: "Read",
+      conditionKeys: ["s3:RequestObjectTagKeys", "s3:ResourceAccount"],
+      description: "Grants permission to retrieve objects from Amazon S3 buckets",
+      name: "GetObject",
+      resourceTypes: [
+        {
+        name: "object",
+        required: true,
+        dependentActions: [],
+        conditionKeys: [
+          "s3:AccessGrantsInstanceArn",
+          "s3:DataAccessPointAccount",
+          "s3:AccessPointNetworkOrigin",
+          "aws:ResourceTag/${TagKey}"
+        ]
+        }
+      ],
+      dependentActions: []
     }
-  ],
-  dependentActions: []
+  } else if(actionKey === 'ListAllMyBuckets') {
+  } else if(actionKey === 'GetObjects') {
+    //This is a fake action used in the multiple matching resources test
+    return {
+      accessLevel: "Read",
+      conditionKeys: ["s3:RequestObjectTagKeys", "s3:ResourceAccount"],
+      description: "Grants permission to retrieve objects from Amazon S3 buckets",
+      name: "GetObject",
+      resourceTypes: [
+        {
+          name: "object",
+          required: true,
+          dependentActions: [],
+          conditionKeys: [
+            "s3:AccessGrantsInstanceArn",
+            "s3:DataAccessPointAccount",
+            "s3:AccessPointNetworkOrigin",
+            "aws:ResourceTag/${TagKey}"
+          ]
+        },
+        {
+          name: "object",
+          required: true,
+          dependentActions: [],
+          conditionKeys: [
+            "s3:AccessGrantsInstanceArn",
+            "s3:DataAccessPointAccount",
+            "s3:AccessPointNetworkOrigin",
+            "aws:ResourceTag/${TagKey}"
+          ]
+        }
+      ],
+      dependentActions: []
+    }
+  }
+  throw new Error('Action not found in mock')
 })
 
 describe("normalizeSimulationParameters", () => {
@@ -176,7 +215,7 @@ describe("normalizeSimulationParameters", () => {
 })
 
 describe('runSimulation', () => {
-  it.only('should return service control policy errors', async () => {
+  it('should return service control policy errors', async () => {
     //Given a simulation with an error in a service control policy
     const simulation: Simulation = {
       identityPolicies: [],
@@ -223,7 +262,8 @@ describe('runSimulation', () => {
         Statement: {
           Effect: "Invisible",
           Action: "oneRing:PutOn",
-          NotPrincipal: "Sauron"
+          NotPrincipal: "Sauron",
+          Resource: "arn:aws:s3:::ring/theone"
         }
       },
       request: {
@@ -245,11 +285,252 @@ describe('runSimulation', () => {
     expect(result.errors!.resourcePolicyErrors!.length).toEqual(1)
   })
 
-  it.todo('should return identity policy errors')
-  it.todo('should return an error for a mal formatted action')
-  it.todo('should return an error for a non existent service')
-  it.todo('should return an error for a non existent action')
-  it.todo('should return an error if a wildcard only action is not a wildcard')
-  it.todo('should return an error if the resource does not mantch an resource type')
-  it.todo('should return an error if the resource matches multiple resource types')
+  it('should return identity policy errors', async () => {
+    //Given a simulation with an error in an identity policy
+    const simulation: Simulation = {
+      identityPolicies: [{
+        name: 'sauron',
+        policy: {
+          Statement: {
+            Effect: "Domination",
+            Action: "oneRing:PutOn",
+            Resource: "arn:aws:s3:::ring/theone"
+          }
+        }
+      }],
+      serviceControlPolicies: [],
+      resourcePolicy: undefined,
+      request: {
+        action: "s3:GetObject",
+        resource: {
+          resource: "arn:aws:s3:::examplebucket/1234",
+          accountId: "123456789012"
+        },
+        principal: "arn:aws:iam::123456789012:user/Alice",
+        contextVariables: {},
+      }
+    }
+
+    //When the simulation is run
+    const result = await runSimulation(simulation, {})
+
+    //Then the result should contain an error
+    expect(result.errors!.message).toEqual('policy.errors')
+    expect(result.errors!.identityPolicyErrors!["sauron"].length).toEqual(1)
+  })
+
+  it('should return an error for a mal formatted action', async () => {
+    //Given a simulation with a mal formatted action
+    const simulation: Simulation = {
+      identityPolicies: [],
+      serviceControlPolicies: [],
+      resourcePolicy: undefined,
+      request: {
+        action: "oneRing:PutOn:finger",
+        resource: {
+          resource: "arn:aws:s3:::examplebucket/1234",
+          accountId: "123456789012"
+        },
+        principal: "arn:aws:iam::123456789012:user/Alice",
+        contextVariables: {},
+      }
+    }
+
+    //When the simulation is run
+    const result = await runSimulation(simulation, {})
+
+    //Then the result should contain an error
+    expect(result.errors!.message).toEqual('invalid.action')
+  })
+
+  it('should return an error for a non existent service', async () => {
+    //Given a simulation with a non existent service
+    const simulation: Simulation = {
+      identityPolicies: [],
+      serviceControlPolicies: [],
+      resourcePolicy: undefined,
+      request: {
+        action: "hobbit:EatBreakfast",
+        resource: {
+          resource: "arn:aws:s3:::examplebucket/1234",
+          accountId: "123456789012"
+        },
+        principal: "arn:aws:iam::123456789012:user/Alice",
+        contextVariables: {},
+      }
+    }
+
+    //When the simulation is run
+    const result = await runSimulation(simulation, {})
+
+    //Then the result should contain an error
+    expect(result.errors!.message).toEqual('invalid.service')
+  })
+
+  it('should return an error for a non existent action', async () => {
+    //Given a simulation with a non existent action
+    const simulation: Simulation = {
+      identityPolicies: [],
+      serviceControlPolicies: [],
+      resourcePolicy: undefined,
+      request: {
+        action: "s3:SaveMoneyOnEgress",
+        resource: {
+          resource: "arn:aws:s3:::examplebucket/1234",
+          accountId: "123456789012"
+        },
+        principal: "arn:aws:iam::123456789012:user/Alice",
+        contextVariables: {},
+      }
+    }
+
+    //When the simulation is run
+    const result = await runSimulation(simulation, {})
+
+    //Then the result should contain an error
+    expect(result.errors!.message).toEqual('invalid.action')
+  })
+
+  it('should return an error if a wildcard only action is not a wildcard', async () => {
+    //Given a request for a wildcard only action with a specific request listed
+    const simulation: Simulation = {
+      identityPolicies: [],
+      serviceControlPolicies: [],
+      resourcePolicy: undefined,
+      request: {
+        action: "s3:ListAllMyBuckets",
+        resource: {
+          resource: "arn:aws:s3:::examplebucket/1234",
+          accountId: "123456789012"
+        },
+        principal: "arn:aws:iam::123456789012:user/Alice",
+        contextVariables: {},
+      }
+    }
+
+    vi.mocked(iamActionDetails).mockResolvedValueOnce({
+      accessLevel: "List",
+      conditionKeys: [],
+      description: "Grants permission to list all S3 buckets",
+      name: "ListAllMyBuckets",
+      resourceTypes: [],
+      dependentActions: []
+    })
+
+    //When the simulation is run
+    const result = await runSimulation(simulation, {})
+
+    //Then the result should contain an error
+    expect(result.errors!.message).toEqual('must.use.wildcard')
+  })
+
+  it('should return an error if the resource does not mantch an resource type', async () => {
+    //Given a request with a resource that does not match any resource types
+    const simulation: Simulation = {
+      identityPolicies: [],
+      serviceControlPolicies: [],
+      resourcePolicy: undefined,
+      request: {
+        action: "s3:GetObject",
+        resource: {
+          resource: "arn:aws:s3:::examplebucket",
+          accountId: "123456789012"
+        },
+        principal: "arn:aws:iam::123456789012:user/Alice",
+        contextVariables: {},
+      }
+    }
+
+    //When the simulation is run
+    const result = await runSimulation(simulation, {})
+
+    //Then the result should contain an error
+    expect(result.errors!.message).toEqual('no.resource.types')
+  })
+
+  it('should return an error if the resource matches multiple resource types', async () => {
+    //Given a request with a resource that matches multiple resource types
+    const simulation: Simulation = {
+      identityPolicies: [],
+      serviceControlPolicies: [],
+      resourcePolicy: undefined,
+      request: {
+        action: "s3:GetObjects",
+        resource: {
+          resource: "arn:aws:s3:::examplebucket/1234",
+          accountId: "123456789012"
+        },
+        principal: "arn:aws:iam::123456789012:user/Alice",
+        contextVariables: {},
+      }
+    }
+
+    //When the simulation is run
+    const result = await runSimulation(simulation, {})
+
+    //Then the result should contain an error
+    expect(result.errors!.message).toEqual('multiple.resource.types')
+  })
+
+  it('should run a valid simulation', async () => {
+    //Given a valid simulation
+    const simulation: Simulation = {
+      identityPolicies: [
+        {
+          name: 'readbuckets',
+          policy: {
+            Statement: {
+              Effect: 'Allow',
+              Action: 's3:GetObject',
+              Resource: 'arn:aws:s3:::examplebucket/*'
+            }
+          }
+        }
+      ],
+      serviceControlPolicies: [
+        {
+          orgIdentifier: 'ou-123456',
+          policies: [
+            {
+              name: 'allowall',
+              policy: {
+                Statement: {
+                  Effect: 'Allow',
+                  Action: '*',
+                  Resource: '*'
+                }
+              }
+            }
+          ]
+        }
+      ],
+      resourcePolicy: {
+        Statement: {
+          Effect: 'Allow',
+          Action: 's3:GetObject',
+          Resource: 'arn:aws:s3:::examplebucket/*',
+          Principal: "arn:aws:iam::123456789012:user/Alice"
+        }
+      },
+      request: {
+        action: "s3:GetObject",
+        resource: {
+          resource: "arn:aws:s3:::examplebucket/1234",
+          accountId: "123456789012"
+        },
+        principal: "arn:aws:iam::123456789012:user/Alice",
+        contextVariables: {
+          "s3:RequestObjectTagKeys": ["tag1", "tag2"],
+          "s3:ResourceAccount": "123456789012"
+        },
+      }
+    }
+
+    //When the simulation is run
+    const result = await runSimulation(simulation, {})
+
+    //Then there should be no errors
+    expect(result.errors).toBeUndefined()
+    expect(result.result?.evaluationResult).toEqual('Allowed')
+  })
 })

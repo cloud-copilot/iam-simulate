@@ -15,8 +15,7 @@ import { SimulationOptions } from "./simulationOptions.js";
  * @returns The result of the simulation.
  */
 export function runUnsafeSimulation(simulation: Simulation, simulationOptions: Partial<SimulationOptions>): EvaluationResult {
-    // Implementation goes here
-  const identityPolicies = Object.values(simulation.identityPolicies).map(p => loadPolicy(p));
+  const identityPolicies = Object.values(simulation.identityPolicies).map(p => loadPolicy(p.policy));
   const serviceControlPolicies: ServiceControlPolicies[] = simulation.serviceControlPolicies.map((scp) => {
     const ouId = scp.orgIdentifier;
     const policies = scp.policies.map(val => loadPolicy(val.policy));

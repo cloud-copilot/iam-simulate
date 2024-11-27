@@ -9,6 +9,7 @@ import { getResourceTypesForAction, isWildcardOnlyAction, lowerCaseAll } from ".
  * @param action The action to get the allowed context keys for
  * @param resource The resource the action is being performed on
  * @returns The allowed context keys for the request as lower case strings
+ * @throws error if the service or action does not exist
  */
 export async function allowedContextKeysForRequest(service: string, action: string, resource: string): Promise<string[]> {
   const actionDetails = await iamActionDetails(service, action);

@@ -33,16 +33,16 @@ export interface SimulationResult {
  */
 export async function runSimulation(simulation: Simulation, simulationOptions: Partial<SimulationOptions>): Promise<SimulationResult> {
   const identityPolicyErrors: Record<string, ValidationError[]> = {};
-  const identityPolicies = Object.keys(simulation.identityPolicies).reduce((acc, key) => {
-    const rawPolicy = simulation.identityPolicies[key as any];
-    const validationErrors = validateIdentityPolicy(rawPolicy);
+  const identityPolicies: Policy[] = [];
+  simulation.identityPolicies.forEach((value) => {
+    const {name, policy} = value;
+    const validationErrors = validateIdentityPolicy(policy);
     if(validationErrors.length == 0) {
-      acc[key] = loadPolicy(rawPolicy);
+      identityPolicies.push(loadPolicy(policy));
     } else {
-      identityPolicyErrors[key] = validationErrors;
+      identityPolicyErrors[name] = validationErrors;
     }
-    return acc;
-  }, {} as Record<string, Policy>);
+  })
 
   const seviceControlPolicyErrors: Record<string, ValidationError[]> = {};
   const serviceControlPolicies: ServiceControlPolicies[] = simulation.serviceControlPolicies.map((scp) => {
@@ -55,7 +55,7 @@ export async function runSimulation(simulation: Simulation, simulationOptions: P
       if(validationErrors.length > 0) {
         seviceControlPolicyErrors[name] = validationErrors;
       } else {
-        validPolicies.push(policy);
+        validPolicies.push(loadPolicy(policy));
       }
     })
 
@@ -148,7 +148,7 @@ export async function runSimulation(simulation: Simulation, simulationOptions: P
       simulation.request.action,
       new RequestContextImpl(contextValues)
     ),
-    identityPolicies: Object.values(identityPolicies),
+    identityPolicies,
     serviceControlPolicies,
     resourcePolicy
   })

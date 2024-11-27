@@ -9,7 +9,7 @@ export interface Simulation {
     contextVariables: Record<string, string | string[]>;
   }
 
-  identityPolicies: Record<string, any>[];
+  identityPolicies: {name: string, policy: any}[];
   serviceControlPolicies: {
     orgIdentifier: string,
     policies: {name: string, policy: any}[]
