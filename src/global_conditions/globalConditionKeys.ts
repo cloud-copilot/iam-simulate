@@ -303,5 +303,5 @@ export function getGlobalConditionKeysByCategory(category: string): GlobalCondit
  * @returns a list of all the global condition keys
  */
 export function allGlobalConditionKeys(): string[] {
-  return Object.keys(keysByCategory);
+  return Object.keys(keysByName);
 }

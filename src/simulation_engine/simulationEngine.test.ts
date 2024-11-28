@@ -13,10 +13,21 @@ const mockKeyDetails: Record<string, ConditionKey> = {
   "s3:accesspointnetworkorigin": { description: "", key: "s3:AccessPointNetworkOrigin", type: "String"},
 }
 
-vi.mocked(iamResourceTypeDetails).mockResolvedValue({
-  arn: "arn:${Partition}:s3:::${BucketName}/${ObjectName}",
-  conditionKeys: [],
-  key: "object"
+vi.mocked(iamResourceTypeDetails).mockImplementation(async (service, resource) => {
+  if(resource === 'object') {
+    return {
+      arn: "arn:${Partition}:s3:::${BucketName}/${ObjectName}",
+      conditionKeys: [],
+      key: "object"
+    }
+  } else if(resource === 'bucket') {
+    return {
+      arn: "arn:${Partition}:s3:::${BucketName}",
+      conditionKeys: [],
+      key: "bucket"
+    }
+  }
+  throw new Error('Resource not found in mock')
 })
 
 vi.mocked(iamServiceExists).mockImplementation(async (service) => {
@@ -32,7 +43,7 @@ vi.mocked(iamConditionKeyExists).mockImplementation(async (service, key) => {
 })
 
 vi.mocked(iamActionExists).mockImplementation(async (service, action) => {
-  return service === 's3' && ['GetObjects', 'GetObject', 'ListAllMyBuckets'].includes(action)
+  return service === 's3' && ['GetObjects', 'GetObject', 'ListAllMyBuckets', 'ListBucket'].includes(action)
 })
 
 vi.mocked(iamActionDetails).mockImplementation(async (service, actionKey) => {
@@ -57,7 +68,36 @@ vi.mocked(iamActionDetails).mockImplementation(async (service, actionKey) => {
       ],
       dependentActions: []
     }
-  } else if(actionKey === 'ListAllMyBuckets') {
+  } else if(actionKey === 'ListBucket') {
+    return {
+      "name": "ListBucket",
+      "description": "Grants permission to list some or all of the objects in an Amazon S3 bucket (up to 1000)",
+      "accessLevel": "List",
+      "resourceTypes": [
+        {
+          "name": "bucket",
+          "required": true,
+          "conditionKeys": [],
+          "dependentActions": []
+        }
+      ],
+      "conditionKeys": [
+        "s3:AccessGrantsInstanceArn",
+        "s3:DataAccessPointAccount",
+        "s3:DataAccessPointArn",
+        "s3:AccessPointNetworkOrigin",
+        "s3:authType",
+        "s3:delimiter",
+        "s3:max-keys",
+        "s3:prefix",
+        "s3:ResourceAccount",
+        "s3:signatureAge",
+        "s3:signatureversion",
+        "s3:TlsVersion",
+        "s3:x-amz-content-sha256"
+      ],
+      "dependentActions": []
+    }
   } else if(actionKey === 'GetObjects') {
     //This is a fake action used in the multiple matching resources test
     return {
@@ -530,6 +570,52 @@ describe('runSimulation', () => {
     const result = await runSimulation(simulation, {})
 
     //Then there should be no errors
+    expect(result.errors).toBeUndefined()
+    expect(result.result?.evaluationResult).toEqual('Allowed')
+  })
+
+  it('should work with ForAnyValue:StringEquals', async () => {
+    const simulation: Simulation = {
+      "identityPolicies": [
+        {
+          "name": "policy",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:ListBucket",
+                "Resource": "arn:aws:s3:::my-bucket",
+                "Condition": {
+                  "ForAnyValue:StringEquals": {
+                    "aws:PrincipalOrgPaths": [
+                      "ou-12345"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "request": {
+        "action": "s3:ListBucket",
+        "principal": "arn:aws:iam::123456789012:user/username",
+        "resource": {
+          "accountId": "123456789012",
+          "resource": "arn:aws:s3:::my-bucket"
+        },
+        "contextVariables": {
+            "aws:PrincipalOrgPaths": [
+              "ou-12345"
+            ]
+        }
+      }
+    }
+
+    const result = await runSimulation(simulation, {})
+
     expect(result.errors).toBeUndefined()
     expect(result.result?.evaluationResult).toEqual('Allowed')
   })
