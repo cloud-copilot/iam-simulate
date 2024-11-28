@@ -312,17 +312,17 @@ export async function normalizeContextKeyCase(contextKey: string): Promise<strin
  * @throws an error if the condition key is not found
  */
 export async function typeForContextKey(contextKey: string): Promise<ConditionKeyType> {
+  const globalConditionKey = getGlobalConditionKey(contextKey);
+  if(globalConditionKey) {
+    return globalConditionKey.dataType as ConditionKeyType;
+  }
+
   const [service, key] = contextKey.split(":");
   const serviceKeyExists = await iamConditionKeyExists(service, contextKey);
   if(serviceKeyExists) {
     const keyDetails = await iamConditionKeyDetails(service, contextKey);
     return keyDetails.type as ConditionKeyType;
   }
-  const globalConditionKey = getGlobalConditionKey(contextKey);
-  if(globalConditionKey) {
-    return globalConditionKey.dataType as ConditionKeyType;
-  }
-
   throw new Error(`Condition key ${contextKey} not found`);
 }
 
