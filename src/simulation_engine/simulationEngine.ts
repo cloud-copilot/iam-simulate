@@ -1,11 +1,12 @@
 import { iamActionExists, iamServiceExists } from "@cloud-copilot/iam-data";
 import { loadPolicy, Policy, validateIdentityPolicy, validateResourcePolicy, validateServiceControlPolicy, ValidationError } from "@cloud-copilot/iam-policy";
 import { isConditionKeyArray } from "../ConditionKeys.js";
+import { normalizeContextKeyCase, typeForContextKey } from "../context_keys/contextKeys.js";
 import { authorize, ServiceControlPolicies } from "../core_engine/coreSimulatorEngine.js";
 import { EvaluationResult } from "../evaluate.js";
 import { AwsRequestImpl } from "../request/request.js";
 import { RequestContextImpl } from "../requestContext.js";
-import { getResourceTypesForAction, isWildcardOnlyAction, normalizeContextKeyCase, typeForContextKey } from "../util.js";
+import { getResourceTypesForAction, isWildcardOnlyAction } from "../util.js";
 import { allowedContextKeysForRequest } from "./contextKeys.js";
 import { Simulation } from "./simulation.js";
 import { SimulationOptions } from "./simulationOptions.js";

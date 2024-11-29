@@ -1,5 +1,6 @@
 import { Policy } from "@cloud-copilot/iam-policy";
-import { getVariablesFromString, isActualContextKey, normalizeContextKeyCase } from "../util.js";
+import { getVariablesFromString } from "../util.js";
+import { isActualContextKey, normalizeContextKeyCase } from "./contextKeys.js";
 
 /**
  * Find all the context keys in a list of policies
