@@ -1,6 +1,6 @@
 import { ConditionKey, iamConditionKeyDetails, iamConditionKeyExists, iamConditionKeysForService, iamServiceExists } from "@cloud-copilot/iam-data";
-import { ConditionKeyType } from "../ConditionKeys.js";
 import { getGlobalConditionKeyWithOrWithoutPrefix, getVariableGlobalConditionKeyByPrefix, globalConditionKeyExists } from "../global_conditions/globalConditionKeys.js";
+import { ConditionKeyType } from "./contextKeyTypes.js";
 
 /**
  * Check if a context key actually exists

@@ -1,6 +1,6 @@
 import { iamActionExists, iamServiceExists } from "@cloud-copilot/iam-data";
 import { loadPolicy, Policy, validateIdentityPolicy, validateResourcePolicy, validateServiceControlPolicy, ValidationError } from "@cloud-copilot/iam-policy";
-import { isConditionKeyArray } from "../ConditionKeys.js";
+import { isConditionKeyArray } from "../context_keys/contextKeyTypes.js";
 import { normalizeContextKeyCase, typeForContextKey } from "../context_keys/contextKeys.js";
 import { authorize, ServiceControlPolicies } from "../core_engine/coreSimulatorEngine.js";
 import { EvaluationResult } from "../evaluate.js";

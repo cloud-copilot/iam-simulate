@@ -1,4 +1,4 @@
-import { ConditionKeyType } from "../ConditionKeys.js";
+import { ConditionKeyType } from "../context_keys/contextKeyTypes.js";
 
 interface GlobalConditionKey {
   key: string
