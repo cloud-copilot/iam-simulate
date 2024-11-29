@@ -46,4 +46,33 @@ describe('findContextKeys', () => {
       ['bucketName', 'prefix', 's3:fakeValue']
     );
   });
+
+  it('should return valid keys with variables', async () => {
+    //Given a policy with context keys with variables
+    const policies = [
+      loadPolicy({
+        Version: "2012-10-17",
+        Statement: {
+          Effect: "Allow",
+          Action: "s3:ListBucket",
+          Resource: "arn:aws:s3:::my-bucket",
+          Condition: {
+            StringEquals: {
+              "s3:existingobjecttag/ATag:Foo/Bar": "tagValue",
+              "aws:PrincipalArn": "arn:aws:iam::123456789012:role/${aws:ResourceTag/clAss}"
+            }
+          }
+        }
+      })
+    ]
+
+    //When findContextKeys is called
+    const { validKeys, invalidKeys } = await findContextKeys(policies);
+
+    //Then it should return a list of valid and invalid context keys
+    expect(validKeys.sort()).toEqual(
+      ['aws:PrincipalArn', 'aws:ResourceTag/clAss', 's3:ExistingObjectTag/ATag:Foo/Bar']
+    );
+  })
+
 })

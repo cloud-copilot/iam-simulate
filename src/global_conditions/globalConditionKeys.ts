@@ -278,12 +278,27 @@ const keysByName = globalConditionKeys.reduce((acc, key) => {
   return acc;
 }, {} as Record<string, GlobalConditionKey>);
 
+const variableKeysByName = globalConditionKeys.reduce((acc, key) => {
+  if(key.key.includes("/")) {
+    acc[key.key.split("/")[0].toLowerCase()] = key;
+  }
+  return acc;
+}, {} as Record<string, GlobalConditionKey>);
+
 const keysByCategory = globalConditionKeys.reduce((acc, key) => {
   const lowerCategory = key.category.toLowerCase();
   acc[lowerCategory] = acc[lowerCategory] || [];
   acc[lowerCategory].push(key);
   return acc;
 }, {} as Record<string, GlobalConditionKey[]>);
+
+export function getGlobalConditionKeyWithOrWithoutPrefix(key: string): GlobalConditionKey | undefined {
+  const slashIndex = key.indexOf("/");
+  if(slashIndex !== -1) {
+    return getVariableGlobalConditionKeyByPrefix(key.slice(0, slashIndex));
+  }
+  return getGlobalConditionKey(key)
+}
 
 export function getGlobalConditionKey(key: string): GlobalConditionKey | undefined {
   return keysByName[key.toLowerCase()];
@@ -295,6 +310,17 @@ export function globalConditionKeyExists(key: string): boolean {
 
 export function getGlobalConditionKeysByCategory(category: string): GlobalConditionKey[] {
   return keysByCategory[category.toLowerCase()] || [];
+}
+
+/**
+ * Get the details for a global condition key that has a variable by it's prefix
+ * for example, it will find aws:ResourceTag/tag-key if you pass in aws:ResourceTag
+ *
+ * @param prefix - The prefix of the global condition key, case insensitive
+ * @returns The global condition key details if found
+ */
+export function getVariableGlobalConditionKeyByPrefix(prefix: string): GlobalConditionKey | undefined {
+  return variableKeysByName[prefix.toLowerCase()];
 }
 
 /**

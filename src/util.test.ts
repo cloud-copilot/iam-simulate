@@ -312,4 +312,48 @@ describe('isActualContextKey', () => {
     //Then the result should be false
     expect(result).toBeFalsy()
   })
+
+  it('should return true for a global key that accepts a variable in the key', async () => {
+    //Given a global context key
+    const key = 'aws:PrincipalTag/SomeTag'
+
+    //When the key is checked
+    const result = await isActualContextKey(key)
+
+    //Then the result should be true
+    expect(result).toBeTruthy()
+  })
+
+  it('should return true for a global key that accepts a variable and there is a slash in the variable', async () => {
+    //Given a global context key
+    const key = 'aws:PrincipalTag/SomeTag/SomeTag'
+
+    //When the key is checked
+    const result = await isActualContextKey(key)
+
+    //Then the result should be true
+    expect(result).toBeTruthy()
+  })
+
+  it('should return true for a service key that accepts a variable in the key', async () => {
+    //Given a service context key
+    const key = 's3:ExistingObjectTag/Classification'
+
+    //When the key is checked
+    const result = await isActualContextKey(key)
+
+    //Then the result should be true
+    expect(result).toBeTruthy()
+  })
+
+  it('should return true for a service key that accepts a variable and there is a slash in the variable', async () => {
+    //Given a service context key
+    const key = 's3:ExistingObjectTag/Classification/Classification'
+
+    //When the key is checked
+    const result = await isActualContextKey(key)
+
+    //Then the result should be true
+    expect(result).toBeTruthy()
+  })
 })
