@@ -171,10 +171,10 @@ export async function normalizeSimulationParameters(simulation: Simulation): Pro
   for (const key of Object.keys(simulation.request.contextVariables)) {
     const value = simulation.request.contextVariables[key];
     const lowerCaseKey = key.toLowerCase();
-    if (contextVariablesForAction.has(lowerCaseKey)) {
+    if (contextVariablesForAction.has(lowerCaseKey) || listHasVariableKeyMatch(lowerCaseKey, contextVariablesForAction)) {
 
       const conditionType = await typeForContextKey(lowerCaseKey);
-      const normalizedKey = await normalizeContextKeyCase(lowerCaseKey);
+      const normalizedKey = await normalizeContextKeyCase(key);
 
       if(isConditionKeyArray(conditionType)) {
         allowedContextKeys[normalizedKey] = [value].flat();
@@ -187,4 +187,20 @@ export async function normalizeSimulationParameters(simulation: Simulation): Pro
   }
 
   return allowedContextKeys
+}
+
+function listHasVariableKeyMatch(lowerCaseKey: string, contextVariables: Set<string>): boolean {
+  const firstSlashIndex = lowerCaseKey.indexOf("/");
+  if(firstSlashIndex === -1) {
+    return false;
+  }
+
+  const prefix = lowerCaseKey.slice(0, firstSlashIndex + 1);
+  for(const variable of contextVariables) {
+    if(variable.startsWith(prefix)) {
+      return true;
+    }
+  }
+
+  return false
 }

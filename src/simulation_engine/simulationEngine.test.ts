@@ -252,6 +252,34 @@ describe("normalizeSimulationParameters", () => {
       "s3:ResourceAccount": "123456789012"
     })
   })
+
+  it('should return context keys with variables in them', async () => {
+       //Given a request with a variable context key
+       const simulation: Simulation = {
+        identityPolicies: [],
+        serviceControlPolicies: [],
+        resourcePolicy: undefined,
+        request: {
+          action: "s3:GetObject",
+          resource: {
+            resource: "arn:aws:s3:::examplebucket/1234",
+            accountId: "123456789012"
+          },
+          contextVariables: {
+            "aws:RequestTag/Boom": "Town"
+          },
+          principal: "arn:aws:iam::123456789012:user/Alice",
+        }
+      }
+
+      //When we normalize the simulation parameters
+      const normalizedSimulation = await normalizeSimulationParameters(simulation)
+
+      //Then the result should put the single value in an array
+      expect(normalizedSimulation).toEqual({
+        "aws:RequestTag/Boom": "Town"
+      })
+  })
 })
 
 describe('runSimulation', () => {
