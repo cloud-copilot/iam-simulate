@@ -263,7 +263,7 @@ export function convertResourcePatternToRegex(pattern: string): string {
   const regex = pattern.replace(/\$\{.*?\}/g, (match) => {
     const name = match.substring(2, match.length - 1)
     const camelName = name.at(0)?.toLowerCase() + name.substring(1)
-    return `(?<${camelName}>(.*?))`
+    return `(?<${camelName}>(.+?))`
   })
   return `^${regex}$`
 }

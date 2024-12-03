@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { AwsRequest, AwsRequestImpl } from './request/request.js'
 import { RequestContextImpl } from './requestContext.js'
-import { convertIamStringToRegex, getVariablesFromString } from './util.js'
+import { convertIamStringToRegex, getResourceTypesForAction, getVariablesFromString } from './util.js'
 
 function testRequestWithContext(context: any, validContextVariables?: string[]): AwsRequest {
   validContextVariables = validContextVariables || []
@@ -257,3 +257,33 @@ describe('getVariablesFromString', () => {
   })
 })
 
+describe("getResourceTypesForAction", () => {
+  it('should return the type for a resource', async () => {
+    //Given a resource id and action
+    const service = 's3'
+    const action = 'GetObject'
+    const resource = 'arn:aws:s3:::bucket/object'
+
+    //When the resource type is gotten
+    const result = await getResourceTypesForAction(service, action, resource)
+
+    //Then the result should be returned
+    expect(result).toEqual([{
+      arn: "arn:${Partition}:s3:::${BucketName}/${ObjectName}",
+      key: "object",
+    }])
+  })
+
+  it('should not return the type when there are no characters for the segment', async () => {
+    //Given a resource id and action
+    const service = 's3'
+    const action = 'GetObject'
+    const resource = 'arn:aws:s3:::bucket/'
+
+    //When the resource type is gotten
+    const result = await getResourceTypesForAction(service, action, resource)
+
+    //Then the result should be returned
+    expect(result).toEqual([])
+  })
+})
