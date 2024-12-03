@@ -288,5 +288,50 @@
     "expected": {
       "response": "ImplicitlyDenied"
     }
+  },
+  {
+    "name": "context key with variable",
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::my-bucket",
+            "Condition": {
+              "StringEquals": {
+                "s3:prefix": "allowed-prefix/"
+              }
+            }
+          },
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::my-bucket/*",
+            "Condition": {
+              "StringNotEquals": {
+                "s3:ExistingObjecttag/Classification": "proprietary"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "serviceControlPolicies": [],
+    "request": {
+      "action": "s3:GetObject",
+      "principal": "arn:aws:iam::123456789012:user/username",
+      "resource": {
+        "accountId": "123456789012",
+        "resource": "arn:aws:s3:::my-bucket/abcd"
+      },
+      "context": {
+        "s3:ExistingObjectTag/Classification": "proprietary"
+      }
+    },
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
   }
 ]
