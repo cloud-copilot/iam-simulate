@@ -140,11 +140,10 @@ export async function typeForContextKey(contextKey: string): Promise<ConditionKe
     return globalConditionKey.dataType as ConditionKeyType;
   }
 
-  const [service, key] = contextKey.split(":");
-  const serviceKeyExists = await iamConditionKeyExists(service, contextKey);
-  if(serviceKeyExists) {
-    const keyDetails = await iamConditionKeyDetails(service, contextKey);
+  const keyDetails = await serviceContextKeyDetails(contextKey)
+  if(keyDetails) {
     return keyDetails.type as ConditionKeyType;
   }
+
   throw new Error(`Condition key ${contextKey} not found`);
 }

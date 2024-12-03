@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isActualContextKey } from './contextKeys.js'
+import { isActualContextKey, typeForContextKey } from './contextKeys.js'
 
 describe('isActualContextKey', () => {
   it('should return true for a global context key', async () => {
@@ -99,5 +99,18 @@ describe('isActualContextKey', () => {
 
     //Then the result should be true
     expect(result).toBeTruthy()
+  })
+})
+
+describe("typeForContextKey", () => {
+  it('should return a service key with a slash in it', async () => {
+    //Given a service key
+    const key = 's3:ExistingObjectTag/Classification'
+
+    //When the type is gotten
+    const result = await typeForContextKey(key)
+
+    //Then the result should be returned
+    expect(result).toEqual('String')
   })
 })
