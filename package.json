@@ -40,6 +40,6 @@
   },
   "dependencies": {
     "@cloud-copilot/iam-data": ">=0.8.0 <1.0.0",
-    "@cloud-copilot/iam-policy": "^0.1.1"
+    "@cloud-copilot/iam-policy": "0.1.5-2"
   }
 }

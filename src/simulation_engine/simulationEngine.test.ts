@@ -599,7 +599,7 @@ describe('runSimulation', () => {
 
     //Then there should be no errors
     expect(result.errors).toBeUndefined()
-    expect(result.result?.evaluationResult).toEqual('Allowed')
+    expect(result.analysis?.result).toEqual('Allowed')
   })
 
   it('should work with ForAnyValue:StringEquals', async () => {
@@ -645,6 +645,6 @@ describe('runSimulation', () => {
     const result = await runSimulation(simulation, {})
 
     expect(result.errors).toBeUndefined()
-    expect(result.result?.evaluationResult).toEqual('Allowed')
+    expect(result.analysis?.result).toEqual('Allowed')
   })
 })

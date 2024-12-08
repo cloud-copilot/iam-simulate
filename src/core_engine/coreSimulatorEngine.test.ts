@@ -1,4 +1,4 @@
-import { loadPolicy } from '@cloud-copilot/iam-policy';
+import { loadAnnotatedPolicy } from '@cloud-copilot/iam-policy';
 import { readdirSync, readFileSync, statSync } from 'fs';
 import { join, resolve } from 'path';
 import { describe, expect, it } from "vitest";
@@ -48,14 +48,14 @@ describe('coreSimulatorEngine', () => {
           const {principal, resource, action, context} = testCase.request;
           const request = new AwsRequestImpl(principal, resource, action, new RequestContextImpl(context));
           // And Policies
-          const identityPolicies = testCase.identityPolicies.map((p: any) => loadPolicy(p));
+          const identityPolicies = testCase.identityPolicies.map((p: any) => loadAnnotatedPolicy(p));
           const serviceControlPolicies = (testCase.serviceControlPolicies || []).map((scp: any) => {
             return {
               orgIdentifier: scp.orgIdentifier,
-              policies: scp.policies.map((p: any) => loadPolicy(p))
+              policies: scp.policies.map((p: any) => loadAnnotatedPolicy(p))
             }
           })
-          const resourcePolicy = testCase.resourcePolicy ? loadPolicy(testCase.resourcePolicy) : undefined;
+          const resourcePolicy = testCase.resourcePolicy ? loadAnnotatedPolicy(testCase.resourcePolicy) : undefined;
           //In an authorization request
           const authorizationRequest: AuthorizationRequest = {
             request,
@@ -65,11 +65,11 @@ describe('coreSimulatorEngine', () => {
           };
 
           // When the request is authorized
-          const result = authorize(authorizationRequest);
+          const analysis = authorize(authorizationRequest);
 
           // Then the result should match the expected result
           const expected = testCase.expected.response
-          expect(result).toEqual(expected);
+          expect(analysis.result).toEqual(expected);
         });
       }
     })

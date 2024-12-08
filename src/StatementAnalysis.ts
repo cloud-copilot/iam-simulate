@@ -26,5 +26,9 @@ export interface StatementAnalysis {
    * Whether the Principal or NotPrincipal – if any – matches the request.
    */
   principalMatch: PrincipalMatchResult
+
+  /**
+   * Whether the Conditions matches the request.
+   */
   conditionMatch: ConditionMatchResult
 }

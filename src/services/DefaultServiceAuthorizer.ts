@@ -1,4 +1,4 @@
-import { EvaluationResult, ResourceEvaluationResult } from "../evaluate.js";
+import { EvaluationResult, RequestAnalysis, ResourceEvaluationResult } from "../evaluate.js";
 import { StatementAnalysis } from "../StatementAnalysis.js";
 import { ServiceAuthorizationRequest, ServiceAuthorizer } from "./ServiceAuthorizer.js";
 
@@ -6,7 +6,7 @@ import { ServiceAuthorizationRequest, ServiceAuthorizer } from "./ServiceAuthori
  * The default authorizer for services.
  */
 export class DefaultServiceAuthorizer implements ServiceAuthorizer {
-  public authorize(request: ServiceAuthorizationRequest): EvaluationResult {
+  public authorize(request: ServiceAuthorizationRequest): RequestAnalysis {
     const scpResult = this.serviceControlPolicyResult(request);
     const identityStatementResult = this.identityStatementResult(request);
     const resourcePolicyResult = this.resourcePolicyResult(request);
@@ -15,34 +15,50 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     const resourceAccount = request.request.resource?.accountId()
 
     if(scpResult !== 'Allowed') {
-      return scpResult
+      return {
+        result: scpResult
+      }
     }
 
     if(resourcePolicyResult === 'ExplicitlyDenied' || resourcePolicyResult === 'DeniedForAccount') {
-      return 'ExplicitlyDenied'
+      return {
+        result: 'ExplicitlyDenied'
+      }
     }
 
     if(identityStatementResult === 'ExplicitlyDenied') {
-      return 'ExplicitlyDenied'
+      return {
+        result: 'ExplicitlyDenied'
+      }
     }
 
     //Same Account
     if(principalAccount === resourceAccount) {
       if(resourcePolicyResult === 'Allowed' || resourcePolicyResult === 'AllowedForAccount' || identityStatementResult === 'Allowed') {
-        return 'Allowed'
+        return {
+          result: 'Allowed'
+        }
       }
-      return 'ImplicitlyDenied'
+      return {
+        result: 'ImplicitlyDenied'
+      }
     }
 
     //Cross Account
     if(resourcePolicyResult === 'Allowed' || resourcePolicyResult === 'AllowedForAccount') {
       if(identityStatementResult === 'Allowed') {
-        return 'Allowed'
+        return {
+          result: 'Allowed'
+        }
       }
-      return 'ImplicitlyDenied'
+      return {
+        result: 'ImplicitlyDenied'
+      }
     }
 
-    return 'ImplicitlyDenied'
+    return {
+      result: 'ImplicitlyDenied'
+    }
 
     /**
      * Add checks for:

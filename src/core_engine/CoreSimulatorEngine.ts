@@ -1,7 +1,7 @@
-import { Policy } from "@cloud-copilot/iam-policy";
+import { AnnotatedPolicy, Policy } from "@cloud-copilot/iam-policy";
 import { requestMatchesStatementActions } from "../action/action.js";
 import { requestMatchesConditions } from "../condition/condition.js";
-import { EvaluationResult } from "../evaluate.js";
+import { RequestAnalysis } from "../evaluate.js";
 import { requestMatchesStatementPrincipals } from "../principal/principal.js";
 import { AwsRequest } from "../request/request.js";
 import { requestMatchesStatementResources } from "../resource/resource.js";
@@ -22,7 +22,7 @@ export interface ServiceControlPolicies {
   /**
    * The policies that apply to this organizational unit.
    */
-  policies: Policy[];
+  policies: AnnotatedPolicy[];
 }
 
 /**
@@ -37,7 +37,7 @@ export interface AuthorizationRequest {
   /**
    * The identity policies that are applicable to the principal making the request.
    */
-  identityPolicies: Policy[]
+  identityPolicies: AnnotatedPolicy[]
 
   /**
    * The service control policies that apply to the principal making the request. In
@@ -48,7 +48,7 @@ export interface AuthorizationRequest {
   /**
    * The resource policy that applies to the resource being accessed.
    */
-  resourcePolicy: Policy | undefined;
+  resourcePolicy: AnnotatedPolicy | undefined;
 }
 
 const serviceEngines: Record<string, new () => ServiceAuthorizer> = {};
@@ -61,7 +61,7 @@ const serviceEngines: Record<string, new () => ServiceAuthorizer> = {};
  * @param request the request to authorize
  * @returns the result of the authorization
  */
-export function authorize(request: AuthorizationRequest): EvaluationResult {
+export function authorize(request: AuthorizationRequest): RequestAnalysis {
   const identityAnalysis = analyzeIdentityPolicies(request.identityPolicies, request.request);
   const scpAnalysis = analyzeServiceControlPolicies(request.serviceControlPolicies, request.request);
   const serviceAuthorizer = getServiceAuthorizer(request);

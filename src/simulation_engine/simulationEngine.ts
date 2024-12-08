@@ -1,9 +1,9 @@
 import { iamActionExists, iamServiceExists } from "@cloud-copilot/iam-data";
-import { loadPolicy, Policy, validateIdentityPolicy, validateResourcePolicy, validateServiceControlPolicy, ValidationError } from "@cloud-copilot/iam-policy";
+import { AnnotatedPolicy, loadAnnotatedPolicy, validateIdentityPolicy, validateResourcePolicy, validateServiceControlPolicy, ValidationError } from "@cloud-copilot/iam-policy";
 import { isConditionKeyArray } from "../context_keys/contextKeyTypes.js";
 import { normalizeContextKeyCase, typeForContextKey } from "../context_keys/contextKeys.js";
 import { authorize, ServiceControlPolicies } from "../core_engine/coreSimulatorEngine.js";
-import { EvaluationResult } from "../evaluate.js";
+import { RequestAnalysis } from "../evaluate.js";
 import { AwsRequestImpl } from "../request/request.js";
 import { RequestContextImpl } from "../requestContext.js";
 import { getResourceTypesForAction, isWildcardOnlyAction } from "../util.js";
@@ -20,9 +20,7 @@ export interface SimulationErrors {
 
 export interface SimulationResult {
   errors?: SimulationErrors;
-  result?: {
-    evaluationResult: EvaluationResult
-  }
+  analysis?: RequestAnalysis
 }
 
 /**
@@ -34,12 +32,12 @@ export interface SimulationResult {
  */
 export async function runSimulation(simulation: Simulation, simulationOptions: Partial<SimulationOptions>): Promise<SimulationResult> {
   const identityPolicyErrors: Record<string, ValidationError[]> = {};
-  const identityPolicies: Policy[] = [];
+  const identityPolicies: AnnotatedPolicy[] = [];
   simulation.identityPolicies.forEach((value) => {
     const {name, policy} = value;
     const validationErrors = validateIdentityPolicy(policy);
     if(validationErrors.length == 0) {
-      identityPolicies.push(loadPolicy(policy));
+      identityPolicies.push(loadAnnotatedPolicy(policy));
     } else {
       identityPolicyErrors[name] = validationErrors;
     }
@@ -48,7 +46,7 @@ export async function runSimulation(simulation: Simulation, simulationOptions: P
   const seviceControlPolicyErrors: Record<string, ValidationError[]> = {};
   const serviceControlPolicies: ServiceControlPolicies[] = simulation.serviceControlPolicies.map((scp) => {
     const ouId = scp.orgIdentifier;
-    const validPolicies: Policy[] = [];
+    const validPolicies: AnnotatedPolicy[] = [];
 
     scp.policies.forEach((value) => {
       const {name, policy} = value;
@@ -56,7 +54,7 @@ export async function runSimulation(simulation: Simulation, simulationOptions: P
       if(validationErrors.length > 0) {
         seviceControlPolicyErrors[name] = validationErrors;
       } else {
-        validPolicies.push(loadPolicy(policy));
+        validPolicies.push(loadAnnotatedPolicy(policy));
       }
     })
 
@@ -81,7 +79,7 @@ export async function runSimulation(simulation: Simulation, simulationOptions: P
     }
   }
 
-  const resourcePolicy = simulation.resourcePolicy ? loadPolicy(simulation.resourcePolicy) : undefined;
+  const resourcePolicy = simulation.resourcePolicy ? loadAnnotatedPolicy(simulation.resourcePolicy) : undefined;
 
   if(simulation.request.action.split(":").length != 2) {
     return {
@@ -155,9 +153,7 @@ export async function runSimulation(simulation: Simulation, simulationOptions: P
   })
 
   return {
-    result: {
-      evaluationResult: simulationResult
-    }
+    analysis: simulationResult
   }
 }
 
