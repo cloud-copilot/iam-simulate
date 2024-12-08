@@ -3,6 +3,36 @@ import { StatementAnalysis } from "./StatementAnalysis.js";
 export type EvaluationResult = 'Allowed' | 'ExplicitlyDenied' | 'AllowedWithConditions' | 'ImplicitlyDenied' | 'Unknown';
 export type ResourceEvaluationResult = 'NotApplicable' | 'Allowed' | 'ExplicitlyDenied' | 'AllowedForAccount' | 'DeniedForAccount' | 'ImplicityDenied';
 
+export interface IdentityAnalysis {
+  result: EvaluationResult
+  denyStatements: StatementAnalysis[]
+  allowStatements: StatementAnalysis[]
+  unmatchedStatements: StatementAnalysis[]
+}
+
+export interface ResourceAnalysis {
+  result: ResourceEvaluationResult
+  denyStatements: StatementAnalysis[]
+  allowStatements: StatementAnalysis[]
+  unmatchedStatements: StatementAnalysis[]
+}
+
+export interface OuScpAnalysis {
+  orgIdentifier: string
+  result: EvaluationResult
+  denyStatements: StatementAnalysis[]
+  allowStatements: StatementAnalysis[]
+  unmatchedStatements: StatementAnalysis[]
+}
+
+export interface ScpAnalysis {
+  /**
+   * OU Result
+   */
+  result: EvaluationResult
+  ouAnalysis: OuScpAnalysis[]
+}
+
 /**
  * The analysis of a request.
  */
@@ -12,55 +42,17 @@ export interface RequestAnalysis {
    */
   result: EvaluationResult;
 
-  /**
-   * The result of the evaluation of the resource policy.
-   */
-  identityStatements?: {
-    /**
-     * The identity statements that matched the request
-     */
-    matched?: StatementAnalysis[]
-
-    /**
-     * The identity statements that did not match the request
-     */
-    unmatched?: StatementAnalysis[]
-  }
+  sameAccount: boolean;
 
   /**
    * The result of the evaluation of the resource policy.
    */
-  resourceStatements?: {
-
-    /**
-     * The resource statement that matched the request
-     */
-    matched?: StatementAnalysis[]
-
-    /**
-     * The resource statements that did not match the request
-     */
-    unmatched?: StatementAnalysis[]
-  }
+  identityAnalysis?: IdentityAnalysis
 
   /**
-   * The result of the evaluation of the service control policies.
+   * The result of the evaluation of the resource policy.
    */
-  scpStatements?: {
+  resourceAnalysis?: ResourceAnalysis
 
-    /**
-     * The organization identifier for the organizational unit these policies apply to.
-     */
-    orgIdentifier: string
-
-    /**
-     * The SCP statements that matched the request
-     */
-    matched?: StatementAnalysis[]
-
-    /**
-     * The SCP statements that did not match the request
-     */
-    unmatched?: StatementAnalysis[]
-  }[]
+  scpAnalysis?: ScpAnalysis
 }

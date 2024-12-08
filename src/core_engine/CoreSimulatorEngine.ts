@@ -1,14 +1,13 @@
-import { AnnotatedPolicy, Policy } from "@cloud-copilot/iam-policy";
+import { AnnotatedPolicy } from "@cloud-copilot/iam-policy";
 import { requestMatchesStatementActions } from "../action/action.js";
 import { requestMatchesConditions } from "../condition/condition.js";
-import { RequestAnalysis } from "../evaluate.js";
+import { EvaluationResult, OuScpAnalysis, RequestAnalysis, ResourceAnalysis, ScpAnalysis } from "../evaluate.js";
 import { requestMatchesStatementPrincipals } from "../principal/principal.js";
 import { AwsRequest } from "../request/request.js";
 import { requestMatchesStatementResources } from "../resource/resource.js";
-import { SCPAnalysis } from "../SCPAnalysis.js";
 import { DefaultServiceAuthorizer } from "../services/DefaultServiceAuthorizer.js";
 import { ServiceAuthorizer } from "../services/ServiceAuthorizer.js";
-import { StatementAnalysis } from "../StatementAnalysis.js";
+import { identityStatementAllows, identityStatementExplicitDeny, StatementAnalysis } from "../StatementAnalysis.js";
 
 /**
  * A set of service control policies for each level of an organization tree
@@ -65,7 +64,7 @@ export function authorize(request: AuthorizationRequest): RequestAnalysis {
   const identityAnalysis = analyzeIdentityPolicies(request.identityPolicies, request.request);
   const scpAnalysis = analyzeServiceControlPolicies(request.serviceControlPolicies, request.request);
   const serviceAuthorizer = getServiceAuthorizer(request);
-  const resourceAnalysis = request.resourcePolicy ? analyzeResourcePolicy(request.resourcePolicy, request.request) : [];
+  const resourceAnalysis = analyzeResourcePolicy(request.resourcePolicy, request.request);
 
   return serviceAuthorizer.authorize({
     request: request.request,
@@ -97,7 +96,7 @@ export function getServiceAuthorizer(request: AuthorizationRequest): ServiceAuth
  * @param request the request to analyze against
  * @returns an array of statement analysis results
  */
-export function analyzeIdentityPolicies(identityPolicies: Policy[], request: AwsRequest): StatementAnalysis[] {
+export function analyzeIdentityPolicies(identityPolicies: AnnotatedPolicy[], request: AwsRequest): StatementAnalysis[] {
   const analysis: StatementAnalysis[] = [];
   for(const policy of identityPolicies) {
     for(const statement of policy.statements()) {
@@ -121,28 +120,57 @@ export function analyzeIdentityPolicies(identityPolicies: Policy[], request: Aws
  * @param request the request to analyze against
  * @returns an array of SCP analysis results
  */
-export function analyzeServiceControlPolicies(serviceControlPolicies: ServiceControlPolicies[], request: AwsRequest): SCPAnalysis[] {
-  const analysis: SCPAnalysis[] = [];
+export function analyzeServiceControlPolicies(serviceControlPolicies: ServiceControlPolicies[], request: AwsRequest): ScpAnalysis {
+  const analysis: OuScpAnalysis[] = [];
   for(const controlPolicy of serviceControlPolicies) {
-    const ouAnalysis: SCPAnalysis = {
+    const ouAnalysis: OuScpAnalysis = {
       orgIdentifier: controlPolicy.orgIdentifier,
-      statementAnalysis: [],
+      result: 'ImplicitlyDenied',
+      allowStatements: [],
+      denyStatements: [],
+      unmatchedStatements: [],
     }
     for(const policy of controlPolicy.policies) {
       for(const statement of policy.statements()) {
-        ouAnalysis.statementAnalysis.push({
+        const statementAnalysis: StatementAnalysis = {
           statement,
           resourceMatch: requestMatchesStatementResources(request, statement),
           actionMatch: requestMatchesStatementActions(request, statement),
           conditionMatch: requestMatchesConditions(request, statement.conditions()),
           principalMatch: 'Match',
-        });
+        }
+
+        if(identityStatementAllows(statementAnalysis)) {
+          ouAnalysis.allowStatements.push(statementAnalysis);
+        } else if (identityStatementExplicitDeny(statementAnalysis)) {
+          ouAnalysis.denyStatements.push(statementAnalysis);
+        } else {
+          ouAnalysis.unmatchedStatements.push(statementAnalysis);
+        }
       }
+    }
+
+    if(ouAnalysis.denyStatements.length > 0) {
+      ouAnalysis.result = 'ExplicitlyDenied'
+    } else if(ouAnalysis.allowStatements.length > 0) {
+      ouAnalysis.result = 'Allowed'
     }
     analysis.push(ouAnalysis);
   }
 
-  return analysis;
+  let overallResult: EvaluationResult = 'ImplicitlyDenied'
+  if(analysis.some(ou => ou.result === 'ExplicitlyDenied')) {
+    overallResult = 'ExplicitlyDenied'
+  } else if(analysis.some(ou => ou.allowStatements.length === 0)) {
+    overallResult = 'ImplicitlyDenied'
+  } else if (analysis.every(ou => ou.result === 'Allowed')) {
+    overallResult = 'Allowed'
+  }
+
+  return {
+    result: overallResult,
+    ouAnalysis: analysis
+  }
 }
 
 /**
@@ -152,17 +180,47 @@ export function analyzeServiceControlPolicies(serviceControlPolicies: ServiceCon
  * @param request the request to analyze against
  * @returns an array of statement analysis results
  */
-export function analyzeResourcePolicy(resourcePolicy: Policy, request: AwsRequest): StatementAnalysis[] {
-  const analysis: StatementAnalysis[] = [];
+export function analyzeResourcePolicy(resourcePolicy: AnnotatedPolicy | undefined, request: AwsRequest): ResourceAnalysis {
+  const resourceAnalysis: ResourceAnalysis = {
+    result: 'NotApplicable',
+    allowStatements: [],
+    denyStatements: [],
+    unmatchedStatements: [],
+  }
+
+  if(!resourcePolicy) {
+    return resourceAnalysis;
+  }
+
+  // const analysis: StatementAnalysis[] = [];
   for(const statement of resourcePolicy.statements()) {
-    analysis.push({
+    const analysis: StatementAnalysis = {
       statement,
       resourceMatch: requestMatchesStatementResources(request, statement),
       actionMatch: requestMatchesStatementActions(request, statement),
       conditionMatch: requestMatchesConditions(request, statement.conditions()),
       principalMatch: requestMatchesStatementPrincipals(request, statement),
-    });
+    }
+    if(identityStatementExplicitDeny(analysis)) {
+      resourceAnalysis.denyStatements.push(analysis);
+    } else if(identityStatementAllows(analysis)) {
+      resourceAnalysis.allowStatements.push(analysis);
+    } else {
+      resourceAnalysis.unmatchedStatements.push(analysis);
+    }
   }
 
-  return analysis;
+  if(resourceAnalysis.denyStatements.some(s => s.principalMatch === 'Match')) {
+    resourceAnalysis.result = 'ExplicitlyDenied'
+  } else if(resourceAnalysis.denyStatements.some(s => s.principalMatch === 'AccountLevelMatch')) {
+    resourceAnalysis.result = 'DeniedForAccount'
+  } else if(resourceAnalysis.allowStatements.some(s => s.principalMatch === 'Match')) {
+    resourceAnalysis.result = 'Allowed'
+  } else if(resourceAnalysis.allowStatements.some(s => s.principalMatch === 'AccountLevelMatch')) {
+    resourceAnalysis.result = 'AllowedForAccount'
+  } else {
+    resourceAnalysis.result = 'NotApplicable'
+  }
+
+  return resourceAnalysis;
 }

@@ -32,3 +32,49 @@ export interface StatementAnalysis {
    */
   conditionMatch: ConditionMatchResult
 }
+
+/**
+ * Checks if a statement is an identity statement that allows the request.
+ *
+ * @param statement The statement to check.
+ * @returns Whether the statement is an identity statement that allows the request.
+ */
+export function identityStatementAllows(statement: StatementAnalysis): boolean {
+  if(statement.resourceMatch &&
+    statement.actionMatch &&
+    statement.conditionMatch === 'Match' &&
+    statement.statement.effect() === 'Allow') {
+      return true;
+  }
+  return false;
+}
+
+export function identityStatementUknownAllow(statement: StatementAnalysis): boolean {
+  if(statement.resourceMatch &&
+    statement.actionMatch &&
+    statement.conditionMatch === 'Unknown' &&
+    statement.statement.effect() === 'Allow') {
+      return true;
+  }
+  return false
+}
+
+export function identityStatementUknownDeny(statement: StatementAnalysis): boolean {
+  if(statement.resourceMatch &&
+    statement.actionMatch &&
+    statement.conditionMatch === 'Unknown' &&
+    statement.statement.effect() === 'Deny') {
+      return true;
+  }
+  return false
+}
+
+export function identityStatementExplicitDeny(statement: StatementAnalysis): boolean {
+  if(statement.resourceMatch &&
+    statement.actionMatch &&
+    statement.conditionMatch === 'Match' &&
+    statement.statement.effect() === 'Deny') {
+      return true;
+  }
+  return false;
+}
