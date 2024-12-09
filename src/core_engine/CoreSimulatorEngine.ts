@@ -1,7 +1,7 @@
 import { AnnotatedPolicy } from "@cloud-copilot/iam-policy";
 import { requestMatchesStatementActions } from "../action/action.js";
 import { requestMatchesConditions } from "../condition/condition.js";
-import { EvaluationResult, OuScpAnalysis, RequestAnalysis, ResourceAnalysis, ScpAnalysis } from "../evaluate.js";
+import { EvaluationResult, IdentityAnalysis, OuScpAnalysis, RequestAnalysis, ResourceAnalysis, ScpAnalysis } from "../evaluate.js";
 import { requestMatchesStatementPrincipals } from "../principal/principal.js";
 import { AwsRequest } from "../request/request.js";
 import { requestMatchesStatementResources } from "../resource/resource.js";
@@ -68,7 +68,7 @@ export function authorize(request: AuthorizationRequest): RequestAnalysis {
   const serviceAuthorizer = getServiceAuthorizer(request);
   return serviceAuthorizer.authorize({
     request: request.request,
-    identityStatements: identityAnalysis,
+    identityAnalysis,
     scpAnalysis,
     resourceAnalysis
   });
@@ -96,21 +96,42 @@ export function getServiceAuthorizer(request: AuthorizationRequest): ServiceAuth
  * @param request the request to analyze against
  * @returns an array of statement analysis results
  */
-export function analyzeIdentityPolicies(identityPolicies: AnnotatedPolicy[], request: AwsRequest): StatementAnalysis[] {
-  const analysis: StatementAnalysis[] = [];
+export function analyzeIdentityPolicies(identityPolicies: AnnotatedPolicy[], request: AwsRequest): IdentityAnalysis {
+
+  const identityAnalysis: IdentityAnalysis = {
+    result: 'ImplicitlyDenied',
+    allowStatements: [],
+    denyStatements: [],
+    unmatchedStatements: [],
+  }
+
   for(const policy of identityPolicies) {
     for(const statement of policy.statements()) {
-      analysis.push({
+      const statementAnalysis: StatementAnalysis = {
         statement,
         resourceMatch: requestMatchesStatementResources(request, statement),
         actionMatch: requestMatchesStatementActions(request, statement),
         conditionMatch: requestMatchesConditions(request, statement.conditions()),
         principalMatch: 'Match',
-      });
+      }
+
+      if(identityStatementExplicitDeny(statementAnalysis)) {
+        identityAnalysis.denyStatements.push(statementAnalysis);
+      } else if(identityStatementAllows(statementAnalysis)) {
+        identityAnalysis.allowStatements.push(statementAnalysis);
+      } else {
+        identityAnalysis.unmatchedStatements.push(statementAnalysis);
+      }
     }
   }
 
-  return analysis;
+  if(identityAnalysis.denyStatements.length > 0) {
+    identityAnalysis.result = 'ExplicitlyDenied'
+  } else if(identityAnalysis.allowStatements.length > 0) {
+    identityAnalysis.result = 'Allowed'
+  }
+
+  return identityAnalysis;
 }
 
 /**

@@ -1,5 +1,4 @@
-import { EvaluationResult, RequestAnalysis } from "../evaluate.js";
-import { identityStatementAllows, identityStatementExplicitDeny, identityStatementUknownAllow, identityStatementUknownDeny } from "../StatementAnalysis.js";
+import { RequestAnalysis } from "../evaluate.js";
 import { ServiceAuthorizationRequest, ServiceAuthorizer } from "./ServiceAuthorizer.js";
 
 /**
@@ -8,15 +7,16 @@ import { ServiceAuthorizationRequest, ServiceAuthorizer } from "./ServiceAuthori
 export class DefaultServiceAuthorizer implements ServiceAuthorizer {
   public authorize(request: ServiceAuthorizationRequest): RequestAnalysis {
     const scpResult = request.scpAnalysis.result;
-    const identityStatementResult = this.identityStatementResult(request);
+    const identityStatementResult = request.identityAnalysis.result;
     const resourcePolicyResult = request.resourceAnalysis?.result
 
     const principalAccount = request.request.principal.accountId()
     const resourceAccount = request.request.resource?.accountId()
     const sameAccount = principalAccount === resourceAccount
 
-    const baseResult: Pick<RequestAnalysis, 'sameAccount' | 'scpAnalysis' | 'resourceAnalysis' > = {
+    const baseResult: Pick<RequestAnalysis, 'sameAccount' | 'scpAnalysis' | 'resourceAnalysis' | 'identityAnalysis' > = {
       sameAccount,
+      identityAnalysis: request.identityAnalysis,
       scpAnalysis: request.scpAnalysis,
       resourceAnalysis: request.resourceAnalysis
     }
@@ -120,31 +120,31 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
   //   return 'Allowed'
   // }
 
-  /**
-   * Evaluate the identity statements to determine the result.
-   *
-   * @param request The request to authorize.
-   * @returns The result of the identity statement analysis.
-   */
-  public identityStatementResult(request: ServiceAuthorizationRequest): EvaluationResult {
-    const explicitDeny = request.identityStatements.some(s => identityStatementExplicitDeny(s));
-    if(explicitDeny) {
-      return 'ExplicitlyDenied';
-    }
+  // /**
+  //  * Evaluate the identity statements to determine the result.
+  //  *
+  //  * @param request The request to authorize.
+  //  * @returns The result of the identity statement analysis.
+  //  */
+  // public identityStatementResult(request: ServiceAuthorizationRequest): EvaluationResult {
+  //   const explicitDeny = request.identityAnalysis.some(s => identityStatementExplicitDeny(s));
+  //   if(explicitDeny) {
+  //     return 'ExplicitlyDenied';
+  //   }
 
-    const explicitAllow = request.identityStatements.some(s => identityStatementAllows(s));
-    const possibleDeny = request.identityStatements.some(s => identityStatementUknownDeny(s));
-    if(explicitAllow) {
-      return possibleDeny ? 'Unknown' : 'Allowed';
-    }
+  //   const explicitAllow = request.identityAnalysis.some(s => identityStatementAllows(s));
+  //   const possibleDeny = request.identityAnalysis.some(s => identityStatementUknownDeny(s));
+  //   if(explicitAllow) {
+  //     return possibleDeny ? 'Unknown' : 'Allowed';
+  //   }
 
-    const possibleAllow = request.identityStatements.some(s => identityStatementUknownAllow(s));
-    if(possibleAllow) {
-      return 'Unknown';
-    }
+  //   const possibleAllow = request.identityAnalysis.some(s => identityStatementUknownAllow(s));
+  //   if(possibleAllow) {
+  //     return 'Unknown';
+  //   }
 
-    return 'ImplicitlyDenied'
-  }
+  //   return 'ImplicitlyDenied'
+  // }
 
   // /**
   //  * Evaluate the resource policy to determine the result.

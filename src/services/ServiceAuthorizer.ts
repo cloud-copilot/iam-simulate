@@ -1,10 +1,9 @@
-import { RequestAnalysis, ResourceAnalysis, ScpAnalysis } from "../evaluate.js";
+import { IdentityAnalysis, RequestAnalysis, ResourceAnalysis, ScpAnalysis } from "../evaluate.js";
 import { AwsRequest } from "../request/request.js";
-import { StatementAnalysis } from "../StatementAnalysis.js";
 
 export interface ServiceAuthorizationRequest {
   request: AwsRequest;
-  identityStatements: StatementAnalysis[];
+  identityAnalysis: IdentityAnalysis;
   scpAnalysis: ScpAnalysis;
   resourceAnalysis: ResourceAnalysis;
 }
