@@ -63,9 +63,9 @@ const serviceEngines: Record<string, new () => ServiceAuthorizer> = {};
 export function authorize(request: AuthorizationRequest): RequestAnalysis {
   const identityAnalysis = analyzeIdentityPolicies(request.identityPolicies, request.request);
   const scpAnalysis = analyzeServiceControlPolicies(request.serviceControlPolicies, request.request);
-  const serviceAuthorizer = getServiceAuthorizer(request);
   const resourceAnalysis = analyzeResourcePolicy(request.resourcePolicy, request.request);
 
+  const serviceAuthorizer = getServiceAuthorizer(request);
   return serviceAuthorizer.authorize({
     request: request.request,
     identityStatements: identityAnalysis,
