@@ -5,7 +5,7 @@ export interface ActionExplain {
 
 export interface ResourceExplain {
   resource: string;
-  resolvedValue: string;
+  resolvedValue?: string;
   errors: string[];
   matches: boolean;
 }
@@ -18,7 +18,7 @@ export interface PrincipalExplain {
 
 export interface ConditionValueExplain {
   value: string;
-  resolvedValue: string;
+  resolvedValue: string | string[];
   matches: boolean;
   errors: string[];
 }
@@ -26,29 +26,32 @@ export interface ConditionValueExplain {
 export interface ConditionExplain {
   operator: string;
   conditionKeyValue: string
+  resolvedConditionKeyValue?: string;
   values: ConditionValueExplain | ConditionValueExplain[];
-  unmatchedValues: string[]
+  unmatchedValues?: string[]
   matches: boolean;
   matchedBecauseMissing?: boolean;
   failedBecauseMissing?: boolean;
 }
 
 export interface StatementExplain {
-  requestExplain: {
+  request: {
     action: string;
     principal: string;
     resource: string;
     context: Record<string, string | string[]>;
   }
 
+  matches: boolean
+  identifier: string;
   effect: string;
   actions?: ActionExplain | ActionExplain[];
   notActions?: ActionExplain | ActionExplain[];
-  resource?: ResourceExplain | ResourceExplain[];
-  notResource?: ResourceExplain | ResourceExplain[];
-  principal? : PrincipalExplain | PrincipalExplain[];
-  notPrincipal?: PrincipalExplain | PrincipalExplain[];
-  condition?: ConditionExplain[];
+  resources?: ResourceExplain | ResourceExplain[];
+  notResources?: ResourceExplain | ResourceExplain[];
+  principals? : PrincipalExplain | PrincipalExplain[];
+  notPrincipals?: PrincipalExplain | PrincipalExplain[];
+  conditions?: ConditionExplain[];
 }
 
 /*
