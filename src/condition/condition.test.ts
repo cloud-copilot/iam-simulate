@@ -11,7 +11,7 @@ function testRequestWithContext(context: any, validContextVariables?: string[]):
 }
 
 describe('singleConditionMatchesRequest', () => {
-  it('should throw an error if the base operation is not found', () => {
+  it('should return no match if the base operation is not found', () => {
     //Given a request
     const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:username': 'test'}))
     //And a condition that test for an operation that does not exist
@@ -31,8 +31,10 @@ describe('singleConditionMatchesRequest', () => {
     const condition = policy.statements()[0].conditions()[0]
 
     //When the request is checked against the condition
-    //Then an error should be thrown
-    expect(() => singleConditionMatchesRequest(request, condition)).toThrow('Unknown base operation: ');
+    const result = singleConditionMatchesRequest(request, condition)
+
+    //Then the result should not match
+    expect(result.matches).toEqual(false)
   })
 
   it('should return Match if the base operation is negative and the key does not exist', () => {
@@ -242,7 +244,7 @@ describe('singleConditionMatchesRequest', () => {
       expect(response.matches).toEqual(true)
     })
 
-    it('should return unknown if the base operation is not found', () => {
+    it('should return no match if the base operation is not found', () => {
       //Given a request
       const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:CalledVia': ['B', 'A']}))
       //And a condition that test for an operation that does not exist
@@ -260,10 +262,12 @@ describe('singleConditionMatchesRequest', () => {
         }]
       })
       const condition = policy.statements()[0].conditions()[0]
-      //When the request is checked against the condition
 
-      //Then an error should be thrown
-      expect(() => singleConditionMatchesRequest(request, condition)).toThrow('Unknown base operation: ');
+      //When the request is checked against the condition
+      const result = singleConditionMatchesRequest(request, condition)
+
+      //Then it should not be a match
+      expect(result.matches).toEqual(false)
     })
   })
 
@@ -393,7 +397,7 @@ describe('singleConditionMatchesRequest', () => {
       expect(response.matches).toEqual(false)
     })
 
-    it('should return unknown if the base operation is not found', () => {
+    it('should return no match if the base operation is not found', () => {
       //Given a request
       const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:CalledVia': ['B', 'A']}))
       //And a condition that test for an operation that does not exist
@@ -411,13 +415,12 @@ describe('singleConditionMatchesRequest', () => {
         }]
       })
       const condition = policy.statements()[0].conditions()[0]
-      //When the request is checked against the condition
-      //Then an error should be thrown
-      expect(() => singleConditionMatchesRequest(request, condition)).toThrow('Unknown base operation: ');
-      // const response = singleConditionMatchesRequest(request, condition)
 
-      //Then the result should be 'Unknown'
-      // expect(response).toEqual('Unknown')
+      //When the request is checked against the condition
+      const result = singleConditionMatchesRequest(request, condition)
+
+      //Then the should not be a match
+      expect(result.matches).toEqual(false)
     })
   })
 

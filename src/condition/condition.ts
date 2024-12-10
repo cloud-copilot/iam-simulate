@@ -92,7 +92,14 @@ export function singleConditionMatchesRequest(request: AwsRequest, condition: Co
 
       if(!baseOperation) {
         //TODO: This should return a nomatch rather than throw an error
-        throw new Error(`Unknown base operation: ${condition.operation().baseOperator()}`)
+        // throw new Error(`Unknown base operation: ${condition.operation().baseOperator()}`)
+        return {
+          operator: condition.operation().value(),
+          conditionKeyValue: condition.conditionKey(),
+          values: [],
+          matches: false,
+          missingOperator: true
+        }
       }
       //Do the loop
       const anyMatch = keyValue.values.some(value => {
@@ -130,7 +137,13 @@ export function singleConditionMatchesRequest(request: AwsRequest, condition: Co
       }
       if(!baseOperation) {
         //TODO: This should return a nomatch rather than throw an error
-        throw new Error(`Unknown base operation: ${condition.operation().baseOperator()}`)
+        return {
+          operator: condition.operation().value(),
+          conditionKeyValue: condition.conditionKey(),
+          values: [],
+          matches: false,
+          missingOperator: true
+        }
       }
       //Do the loop
       const anyNotMatch = keyValue.values.some(value => {
@@ -182,7 +195,14 @@ export function singleConditionMatchesRequest(request: AwsRequest, condition: Co
 
   if(!baseOperation) {
     //TODO: This should return a nomatch rather than throw an error
-    throw new Error(`Unknown base operation: ${condition.operation().baseOperator()}`)
+    // throw new Error(`Unknown base operation: ${condition.operation().baseOperator()}`)
+    return {
+      operator: condition.operation().value(),
+      conditionKeyValue: condition.conditionKey(),
+      values: [],
+      matches: false,
+      missingOperator: true
+    }
   }
 
   const valueExplains = policyValues.map(value => {

@@ -37,6 +37,7 @@ export interface ConditionExplain {
   failedBecauseMissing?: boolean
   failedBecauseArray?: boolean
   failedBecauseNotArray?: boolean
+  missingOperator?: boolean
 }
 
 export interface StatementExplain {
