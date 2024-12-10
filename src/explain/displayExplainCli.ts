@@ -1,16 +1,16 @@
 import { StatementExplain } from "./statementExplain.js";
 
 const explain1: StatementExplain = {
-  request: {
-    action: 's3:GetObject',
-    principal: 'arn:aws:iam::123456789012:user/Bob',
-    resource: 'arn:aws:s3:::examplebucket/123.txt',
-    context: {
-      'aws:SecureTransport': 'true',
-      's3:ExistingObjectTag/Department': 'Engineering',
-      'aws:PrincipalTag/Department': 'Engineering'
-    }
-  },
+  // request: {
+  //   action: 's3:GetObject',
+  //   principal: 'arn:aws:iam::123456789012:user/Bob',
+  //   resource: 'arn:aws:s3:::examplebucket/123.txt',
+  //   context: {
+  //     'aws:SecureTransport': 'true',
+  //     's3:ExistingObjectTag/Department': 'Engineering',
+  //     'aws:PrincipalTag/Department': 'Engineering'
+  //   }
+  // },
 
   identifier: 'Statement1',
   matches: true,
