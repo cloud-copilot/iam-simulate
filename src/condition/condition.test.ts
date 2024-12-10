@@ -7,13 +7,13 @@ import { requestMatchesConditions, singleConditionMatchesRequest } from "./condi
 function testRequestWithContext(context: any, validContextVariables?: string[]): AwsRequest {
   validContextVariables = validContextVariables || []
   //For now we assume that all values passed into the context are valid
-  return new AwsRequestImpl('', '', '', new RequestContextImpl(context))
+  return new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl(context))
 }
 
 describe('singleConditionMatchesRequest', () => {
-  it('should return Unknown if the base operation is not found', () => {
+  it('should throw an error if the base operation is not found', () => {
     //Given a request
-    const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:username': 'test'}))
+    const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:username': 'test'}))
     //And a condition that test for an operation that does not exist
     const policy = loadPolicy({
       Version: '2012-10-17',
@@ -29,16 +29,15 @@ describe('singleConditionMatchesRequest', () => {
       }]
     })
     const condition = policy.statements()[0].conditions()[0]
-    //When the request is checked against the condition
-    const response = singleConditionMatchesRequest(request, condition)
 
-    //Then the result should be 'Unknown'
-    expect(response).toEqual('Unknown')
+    //When the request is checked against the condition
+    //Then an error should be thrown
+    expect(() => singleConditionMatchesRequest(request, condition)).toThrow('Unknown base operation: ');
   })
 
   it('should return Match if the base operation is negative and the key does not exist', () => {
     //Given a request
-    const request = new AwsRequestImpl('', '', '', new RequestContextImpl({}))
+    const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({}))
     //And a condition that test for an operation that does not exist
     const policy = loadPolicy({
       Version: '2012-10-17',
@@ -58,12 +57,12 @@ describe('singleConditionMatchesRequest', () => {
     const response = singleConditionMatchesRequest(request, condition)
 
     //Then the result should be 'Match'
-    expect(response).toEqual('Match')
+    expect(response.matches).toEqual(true)
   })
 
   it('should return NoMatch if the operation is single value but the key is an array', () => {
     //Given a request
-    const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['test', 'test2']}))
+    const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:CalledVia': ['test', 'test2']}))
     //And a single valued condition test for that key
     const policy = loadPolicy({
       Version: '2012-10-17',
@@ -85,12 +84,12 @@ describe('singleConditionMatchesRequest', () => {
     const response = singleConditionMatchesRequest(request, condition)
 
     //Then the result should be 'NoMatch'
-    expect(response).toEqual('NoMatch')
+    expect(response.matches).toEqual(false)
   })
 
   it('should return Match if the operation is a single value, the key is a single value, and they match', () => {
     //Given a request
-    const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:PrincipalOrgId': 'o-123456'}))
+    const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:PrincipalOrgId': 'o-123456'}))
     //And a single valued condition test for that key
     const policy = loadPolicy({
       Version: '2012-10-17',
@@ -112,12 +111,12 @@ describe('singleConditionMatchesRequest', () => {
     const response = singleConditionMatchesRequest(request, condition)
 
     //Then the result should be 'Match'
-    expect(response).toEqual('Match')
+    expect(response.matches).toEqual(true)
   })
 
   it('should return NoMatch if the operation is a single value, the key is a single value, and they do not match', () => {
     //Given a request
-    const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:PrincipalOrgId': 'o-123456'}))
+    const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:PrincipalOrgId': 'o-123456'}))
     //And a single valued condition test for that key
     const policy = loadPolicy({
       Version: '2012-10-17',
@@ -139,13 +138,13 @@ describe('singleConditionMatchesRequest', () => {
     const response = singleConditionMatchesRequest(request, condition)
 
     //Then the result should be 'NoMatch'
-    expect(response).toEqual('NoMatch')
+    expect(response.matches).toEqual(false)
   })
 
   describe('ForAnyValue', () => {
     it('should return NoMatch if the value does not exist', () => {
       //Given a request
-      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({}))
+      const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({}))
       //And a condition that test for an operation that does not exist
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -165,12 +164,12 @@ describe('singleConditionMatchesRequest', () => {
       const response = singleConditionMatchesRequest(request, condition)
 
       //Then the result should be 'NoMatch'
-      expect(response).toEqual('NoMatch')
+      expect(response.matches).toEqual(false)
     })
 
     it('should return NoMatch if none of the values match', () => {
       //Given a request
-      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['Z', 'X']}))
+      const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:CalledVia': ['Z', 'X']}))
       //And a condition that test for an operation that does not exist
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -190,12 +189,12 @@ describe('singleConditionMatchesRequest', () => {
       const response = singleConditionMatchesRequest(request, condition)
 
       //Then the result should be 'NoMatch'
-      expect(response).toEqual('NoMatch')
+      expect(response.matches).toEqual(false)
     })
 
     it('should return Match if any of the values match', () => {
       //Given a request
-      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['Z', 'X', 'A']}))
+      const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:CalledVia': ['Z', 'X', 'A']}))
       //And a condition that test for an operation that does not exist
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -215,12 +214,12 @@ describe('singleConditionMatchesRequest', () => {
       const response = singleConditionMatchesRequest(request, condition)
 
       //Then the result should be 'Match'
-      expect(response).toEqual('Match')
+      expect(response.matches).toEqual(true)
     })
 
     it('should return Match if all of the values match', () => {
       //Given a request
-      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['B', 'A']}))
+      const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:CalledVia': ['B', 'A']}))
       //And a condition that test for an operation that does not exist
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -240,12 +239,12 @@ describe('singleConditionMatchesRequest', () => {
       const response = singleConditionMatchesRequest(request, condition)
 
       //Then the result should be 'Match'
-      expect(response).toEqual('Match')
+      expect(response.matches).toEqual(true)
     })
 
     it('should return unknown if the base operation is not found', () => {
       //Given a request
-      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['B', 'A']}))
+      const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:CalledVia': ['B', 'A']}))
       //And a condition that test for an operation that does not exist
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -262,17 +261,16 @@ describe('singleConditionMatchesRequest', () => {
       })
       const condition = policy.statements()[0].conditions()[0]
       //When the request is checked against the condition
-      const response = singleConditionMatchesRequest(request, condition)
 
-      //Then the result should be 'Unknown'
-      expect(response).toEqual('Unknown')
+      //Then an error should be thrown
+      expect(() => singleConditionMatchesRequest(request, condition)).toThrow('Unknown base operation: ');
     })
   })
 
   describe('ForAllValues', () => {
     it('should return Match if the key does not exist', () => {
       //Given a request
-      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({}))
+      const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({}))
       //And a condition that test for an operation that does not exist
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -292,12 +290,12 @@ describe('singleConditionMatchesRequest', () => {
       const response = singleConditionMatchesRequest(request, condition)
 
       //Then the result should be 'Match'
-      expect(response).toEqual('Match')
+      expect(response.matches).toEqual(true)
     })
 
     it('should return no match if none of the values match', () => {
       //Given a request
-      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['Z', 'X']}))
+      const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:CalledVia': ['Z', 'X']}))
       //And a condition that test for an operation that does not exist
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -317,12 +315,12 @@ describe('singleConditionMatchesRequest', () => {
       const response = singleConditionMatchesRequest(request, condition)
 
       //Then the result should be 'NoMatch'
-      expect(response).toEqual('NoMatch')
+      expect(response.matches).toEqual(false)
     })
 
     it('should return no match if some of the values match but not all', () => {
       //Given a request
-      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['A', 'X']}))
+      const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:CalledVia': ['A', 'X']}))
       //And a condition that test for an operation that does not exist
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -342,12 +340,12 @@ describe('singleConditionMatchesRequest', () => {
       const response = singleConditionMatchesRequest(request, condition)
 
       //Then the result should be 'NoMatch'
-      expect(response).toEqual('NoMatch')
+      expect(response.matches).toEqual(false)
     })
 
     it('should return Match if all of the values match', () => {
       //Given a request
-      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['A', 'B']}))
+      const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:CalledVia': ['A', 'B']}))
       //And a condition that test for an operation that does not exist
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -367,12 +365,12 @@ describe('singleConditionMatchesRequest', () => {
       const response = singleConditionMatchesRequest(request, condition)
 
       //Then the result should be 'Match'
-      expect(response).toEqual('Match')
+      expect(response.matches).toEqual(true)
     })
 
     it('should return no match if the value is not an array', () => {
       //Given a request
-      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:PrincipalOrgId': 'o-12345'}))
+      const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:PrincipalOrgId': 'o-12345'}))
       //And a condition that test for an operation that does not exist
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -392,12 +390,12 @@ describe('singleConditionMatchesRequest', () => {
       const response = singleConditionMatchesRequest(request, condition)
 
       //Then the result should be 'NoMatch'
-      expect(response).toEqual('NoMatch')
+      expect(response.matches).toEqual(false)
     })
 
     it('should return unknown if the base operation is not found', () => {
       //Given a request
-      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': ['B', 'A']}))
+      const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:CalledVia': ['B', 'A']}))
       //And a condition that test for an operation that does not exist
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -414,17 +412,19 @@ describe('singleConditionMatchesRequest', () => {
       })
       const condition = policy.statements()[0].conditions()[0]
       //When the request is checked against the condition
-      const response = singleConditionMatchesRequest(request, condition)
+      //Then an error should be thrown
+      expect(() => singleConditionMatchesRequest(request, condition)).toThrow('Unknown base operation: ');
+      // const response = singleConditionMatchesRequest(request, condition)
 
       //Then the result should be 'Unknown'
-      expect(response).toEqual('Unknown')
+      // expect(response).toEqual('Unknown')
     })
   })
 
   describe('Null checks', () => {
     it('should return Match if the key does not exist and the policy has true', () => {
       //Given a request with no context key
-      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({}))
+      const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({}))
       //And a condition that tests for null
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -444,12 +444,12 @@ describe('singleConditionMatchesRequest', () => {
       const response = singleConditionMatchesRequest(request, condition)
 
       //Then the result should be 'Match'
-      expect(response).toEqual('Match')
+      expect(response.matches).toEqual(true)
     })
 
     it('should return NoMatch if the key exists and the policy has true', () => {
       //Given a request with context key
-      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': 'test'}))
+      const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:CalledVia': 'test'}))
       //And a condition that tests for null
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -469,12 +469,12 @@ describe('singleConditionMatchesRequest', () => {
       const response = singleConditionMatchesRequest(request, condition)
 
       //Then the result should be 'NoMatch'
-      expect(response).toEqual('NoMatch')
+      expect(response.matches).toEqual(false)
     })
 
     it('should return NoMatch if the key does not exist and the policy has false', () => {
       //Given a request with no context key
-      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({}))
+      const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({}))
       //And a condition that tests for null
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -494,12 +494,12 @@ describe('singleConditionMatchesRequest', () => {
       const response = singleConditionMatchesRequest(request, condition)
 
       //Then the result should be 'Match'
-      expect(response).toEqual('NoMatch')
+      expect(response.matches).toEqual(false)
     })
 
     it('should return Match if the key exists and the policy has false', () => {
       //Given a request with context key
-      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:CalledVia': 'test'}))
+      const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:CalledVia': 'test'}))
       //And a condition that tests for null
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -519,12 +519,12 @@ describe('singleConditionMatchesRequest', () => {
       const response = singleConditionMatchesRequest(request, condition)
 
       //Then the result should be 'Match'
-      expect(response).toEqual('Match')
+      expect(response.matches).toEqual(true)
     })
 
     it('should treat treat ForAllValues:Null the same as Null', () => {
       //Given a request with no context key
-      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({}))
+      const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({}))
       //And a condition that tests for null
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -544,12 +544,12 @@ describe('singleConditionMatchesRequest', () => {
       const response = singleConditionMatchesRequest(request, condition)
 
       //Then the result should be 'Match'
-      expect(response).toEqual('Match')
+      expect(response.matches).toEqual(true)
     })
 
     it('should treat ForAnyValue:Null the same as Null', () => {
       //Given a request with no context key
-      const request = new AwsRequestImpl('', '', '', new RequestContextImpl({}))
+      const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({}))
       //And a condition that tests for null
       const policy = loadPolicy({
         Version: '2012-10-17',
@@ -569,43 +569,44 @@ describe('singleConditionMatchesRequest', () => {
       const response = singleConditionMatchesRequest(request, condition)
 
       //Then the result should be 'Match'
-      expect(response).toEqual('Match')
+      expect(response.matches).toEqual(true)
     })
   })
 })
 
 describe('requestMatchesConditions', () => {
-  it('should return Unknown if any condition returns Unknown', () => {
-    // Given a request
-    const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:username': 'test'}))
-    // And a condition that returns Unknown
-    const policy = loadPolicy({
-      Version: '2012-10-17',
-      Statement: [{
-        Effect: 'Allow',
-        Action: '*',
-        Resource: '*',
-        Condition: {
-          FakeConditionOperator: {
-            'aws:username': 'test'
-          },
-          StringEquals: {
-            'aws:username': 'test'
-          }
-        }
-      }]
-    })
+  // it('should return Unknown if any condition returns Unknown', () => {
+  //   // Given a request
+  //   const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:username': 'test'}))
+  //   // And a condition that returns Unknown
+  //   const policy = loadPolicy({
+  //     Version: '2012-10-17',
+  //     Statement: [{
+  //       Effect: 'Allow',
+  //       Action: '*',
+  //       Resource: '*',
+  //       Condition: {
+  //         FakeConditionOperator: {
+  //           'aws:username': 'test'
+  //         },
+  //         StringEquals: {
+  //           'aws:username': 'test'
+  //         }
+  //       }
+  //     }]
+  //   })
 
-    const conditions = policy.statements()[0].conditions()
-    // When the request is checked against the conditions
-    const response = requestMatchesConditions(request, conditions)
+  //   const conditions = policy.statements()[0].conditions()
+  //   // When the request is checked against the conditions
+  //   const response = requestMatchesConditions(request, conditions)
 
-    // Then the result should be 'Unknown'
-    expect(response).toEqual('Unknown')
-  })
-  it('should return NoMatch if any condition returns NoMatch', () => {
+  //   // Then the result should be 'Unknown'
+  //   expect(response).toEqual('Unknown')
+  // })
+
+  it('should return NoMatch if any condition returns false', () => {
     // Given a request
-    const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:username': 'test'}))
+    const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:username': 'test'}))
     // And a condition that returns Unknown
     const policy = loadPolicy({
       Version: '2012-10-17',
@@ -629,11 +630,12 @@ describe('requestMatchesConditions', () => {
     const response = requestMatchesConditions(request, conditions)
 
     // Then the result should be 'Unknown'
-    expect(response).toEqual('NoMatch')
+    expect(response.matches).toEqual('NoMatch')
   })
-  it('should return Match if all conditions return Match', () => {
+
+  it('should return Match if all conditions return true', () => {
     // Given a request
-    const request = new AwsRequestImpl('', '', '', new RequestContextImpl({'aws:username': 'test'}))
+    const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:username': 'test'}))
     // And a condition that returns Unknown
     const policy = loadPolicy({
       Version: '2012-10-17',
@@ -657,6 +659,6 @@ describe('requestMatchesConditions', () => {
     const response = requestMatchesConditions(request, conditions)
 
     // Then the result should be 'Unknown'
-    expect(response).toEqual('Match')
+    expect(response.matches).toEqual('Match')
   })
 })

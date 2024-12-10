@@ -1,4 +1,5 @@
 import { Condition } from '@cloud-copilot/iam-policy';
+import { ConditionExplain, ConditionValueExplain, StatementExplain } from '../explain/statementExplain.js';
 import { AwsRequest } from '../request/request';
 import { ArnEquals } from './arn/ArnEquals.js';
 import { ArnLike } from './arn/ArnLike.js';
@@ -27,7 +28,7 @@ import { StringNotEquals } from './string/StringNotEquals.js';
 import { StringNotEqualsIgnoreCase } from './string/StringNotEqualsIgnoreCase.js';
 import { StringNotLike } from './string/StringNotLike.js';
 
-export type ConditionMatchResult = 'Match' | 'NoMatch' | 'Unknown'
+export type ConditionMatchResult = 'Match' | 'NoMatch'
 
 const allOperators = [
   StringEquals, StringNotEquals, StringEqualsIgnoreCase, StringNotEqualsIgnoreCase, StringLike, StringNotLike,
@@ -44,20 +45,26 @@ for(const operator of allOperators) {
   baseOperations[operator.name.toLowerCase()] = operator
 }
 
-export function requestMatchesConditions(request: AwsRequest, conditions: Condition[]): ConditionMatchResult {
+export function requestMatchesConditions(request: AwsRequest, conditions: Condition[]): { matches: ConditionMatchResult, details: Pick<StatementExplain, 'conditions'> } {
   const results = conditions.map(condition => singleConditionMatchesRequest(request, condition))
-  const unknowns = results.filter(result => result === 'Unknown')
-  if(unknowns.length > 0) {
-    return 'Unknown'
+  // const unknowns = results.filter(result => result === 'Unknown')
+  // if(unknowns.length > 0) {
+  //   return 'Unknown'
+  // }
+  const nonMatch = results.some(result => !result.matches)
+  return {
+    matches: nonMatch ? 'NoMatch' : 'Match',
+    details: {
+      conditions: results
+    }
   }
-  const noMatches = results.filter(result => result === 'NoMatch')
-  if(noMatches.length > 0 ) {
-    return 'NoMatch'
-  }
-  return 'Match'
+  // if(noMatches.length > 0 ) {
+  //   return
+  // }
+  // return 'Match'
 }
 
-export function singleConditionMatchesRequest(request: AwsRequest, condition: Condition): ConditionMatchResult {
+export function singleConditionMatchesRequest(request: AwsRequest, condition: Condition): ConditionExplain {
   const key = condition.conditionKey()
   const policyValues = condition.conditionValues()
   const baseOperation = baseOperations[condition.operation().baseOperator().toLowerCase()]?.matches
@@ -72,63 +79,153 @@ export function singleConditionMatchesRequest(request: AwsRequest, condition: Co
     const setOperator = condition.operation().setOperator()
     if(setOperator === 'ForAnyValue') {
       if(!keyExists || !keyValue || !keyValue.isArrayValue()) {
-        return 'NoMatch'
+        return {
+          operator: condition.operation().value(),
+          conditionKeyValue: condition.conditionKey(),
+          values: [],
+          matches: false,
+          failedBecauseMissing: !keyExists || !keyValue,
+          failedBecauseNotArray: keyValue && !keyValue.isArrayValue()
+        }
+        // return 'NoMatch'
       }
 
       if(!baseOperation) {
-        return 'Unknown'
+        //TODO: This should return a nomatch rather than throw an error
+        throw new Error(`Unknown base operation: ${condition.operation().baseOperator()}`)
       }
       //Do the loop
       const anyMatch = keyValue.values.some(value => {
         return baseOperation(request, value, policyValues)
       })
-      return anyMatch ? 'Match' : 'NoMatch'
+
+      return {
+        operator: condition.operation().value(),
+        conditionKeyValue: condition.conditionKey(),
+        values: [],
+        matches: anyMatch
+      }
+      // return anyMatch ? 'Match' : 'NoMatch'
     } else if (setOperator === 'ForAllValues') {
       if(!keyExists) {
-        return 'Match'
+        return {
+          operator: condition.operation().value(),
+          conditionKeyValue: condition.conditionKey(),
+          values: [],
+          matches: true,
+          matchedBecauseMissing: true
+        }
+        // return 'Match'
       }
       if(!keyValue || !keyValue.isArrayValue()) {
-        return 'NoMatch'
+        return {
+          operator: condition.operation().value(),
+          conditionKeyValue: condition.conditionKey(),
+          values: [],
+          matches: false,
+          failedBecauseMissing: !keyValue,
+          failedBecauseNotArray: !!keyValue && !keyValue.isArrayValue()
+        }
+        // return 'NoMatch'
       }
       if(!baseOperation) {
-        return 'Unknown'
+        //TODO: This should return a nomatch rather than throw an error
+        throw new Error(`Unknown base operation: ${condition.operation().baseOperator()}`)
       }
       //Do the loop
       const anyNotMatch = keyValue.values.some(value => {
+        //TODO: Need to add explains for each value
         return !baseOperation(request, value, policyValues)
       })
 
-      return anyNotMatch ? 'NoMatch' : 'Match'
+      return {
+        operator: condition.operation().value(),
+        conditionKeyValue: condition.conditionKey(),
+        values: [],
+        matches: !anyNotMatch
+      }
+      //return anyNotMatch ? 'NoMatch' : 'Match'
     } else {
       throw new Error(`Unknown set operator: ${setOperator}`)
     }
   }
 
-  if(condition.operation().isIfExists() || condition.operation().baseOperator().toLowerCase().includes('not')) {
+
+  const isNotOperator = condition.operation().baseOperator().toLowerCase().includes('not')
+  if(condition.operation().isIfExists() || isNotOperator) {
     //Check if it exists, return true if it doesn't
     //Double check what happens here if the key is not a valid key or is of the wrong type
     if(!keyExists) {
-      return 'Match'
+      return {
+        operator: condition.operation().value(),
+        conditionKeyValue: condition.conditionKey(),
+        values: [],
+        matches: true,
+        matchedBecauseMissing: true
+      }
+      // return 'Match'
     }
   }
 
   if(!keyValue || !keyValue.isStringValue()) {
     //Set operator is required for a multi-value key
-    return 'NoMatch'
+    return {
+      operator: condition.operation().value(),
+      conditionKeyValue: condition.conditionKey(),
+      values: [],
+      matches: false,
+      failedBecauseMissing: !keyValue,
+      failedBecauseArray: keyValue?.isArrayValue(),
+    }
+    // return 'NoMatch'
   }
 
   if(!baseOperation) {
-    return 'Unknown'
+    //TODO: This should return a nomatch rather than throw an error
+    throw new Error(`Unknown base operation: ${condition.operation().baseOperator()}`)
   }
-  const matches = baseOperation(request, keyValue.value, policyValues)
-  return matches ? 'Match' : 'NoMatch'
+
+  const valueExplains = policyValues.map(value => {
+    const valueMatch = baseOperation(request, keyValue.value, [value])
+    const explain:ConditionValueExplain = {
+      value,
+      matches: valueMatch
+    }
+    if(isNotOperator) {
+      explain.negativeMatchingValues = [value]
+    } else {
+      explain.matchingValues = [value]
+    }
+    return explain
+  })
+
+  let matches = valueExplains.some(explain => explain.matches)
+
+  if(isNotOperator) {
+    matches = valueExplains.every(explain => explain.matches)
+  }
+
+  return {
+    operator: condition.operation().value(),
+    conditionKeyValue: condition.conditionKey(),
+    values: valueExplains,
+    matches
+  }
 }
 
-function testNull(condition: Condition, keyExists: boolean): ConditionMatchResult {
-  const lowerCaseValues = condition.conditionValues().map(value => value.toLowerCase())
-  if(keyExists) {
-    return lowerCaseValues.includes('false') ? 'Match' : 'NoMatch'
-  }
+function testNull(condition: Condition, keyExists: boolean): ConditionExplain {
+  const goalValue = keyExists ? 'false' : 'true'
+  const conditionValues: ConditionValueExplain[] = condition.conditionValues().map(value => {
+    return {
+      value,
+      matches: value.toLowerCase() === goalValue
+    }
+  })
 
-  return lowerCaseValues.includes('true') ? 'Match' : 'NoMatch'
+  return {
+    operator: condition.operation().value(),
+    conditionKeyValue: condition.conditionKey(),
+    values: conditionValues,
+    matches: conditionValues.some(value => value.matches)
+  }
 }

@@ -1,13 +1,14 @@
-import { AnnotatedPolicy } from "@cloud-copilot/iam-policy";
+import { AnnotatedPolicy, Statement } from "@cloud-copilot/iam-policy";
 import { requestMatchesStatementActions } from "../action/action.js";
 import { requestMatchesConditions } from "../condition/condition.js";
 import { EvaluationResult, IdentityAnalysis, OuScpAnalysis, RequestAnalysis, ResourceAnalysis, ScpAnalysis } from "../evaluate.js";
-import { requestMatchesStatementPrincipals } from "../principal/principal.js";
+import { StatementExplain } from "../explain/statementExplain.js";
+import { PrincipalMatchResult, requestMatchesStatementPrincipals } from "../principal/principal.js";
 import { AwsRequest } from "../request/request.js";
 import { requestMatchesStatementResources } from "../resource/resource.js";
 import { DefaultServiceAuthorizer } from "../services/DefaultServiceAuthorizer.js";
 import { ServiceAuthorizer } from "../services/ServiceAuthorizer.js";
-import { identityStatementAllows, identityStatementExplicitDeny, StatementAnalysis } from "../StatementAnalysis.js";
+import { identityStatementAllows, identityStatementExplicitDeny, StatementAnalysis, statementMatches } from "../StatementAnalysis.js";
 
 /**
  * A set of service control policies for each level of an organization tree
@@ -109,12 +110,16 @@ export function analyzeIdentityPolicies(identityPolicies: AnnotatedPolicy[], req
     for(const statement of policy.statements()) {
       const {matches: resourceMatch, details: resourceDetails} = requestMatchesStatementResources(request, statement);
       const {matches: actionMatch, details: actionDetails} = requestMatchesStatementActions(request, statement);
+      const {matches: conditionMatch, details: conditionDetails} = requestMatchesConditions(request, statement.conditions());
+      const principalMatch: PrincipalMatchResult = 'Match';
+      const overallMatch = statementMatches({actionMatch, conditionMatch, principalMatch, resourceMatch});
       const statementAnalysis: StatementAnalysis = {
         statement,
         resourceMatch,
         actionMatch,
-        conditionMatch: requestMatchesConditions(request, statement.conditions()),
-        principalMatch: 'Match',
+        conditionMatch,
+        principalMatch,
+        explain: makeStatementExplain(statement, overallMatch, {...resourceDetails, ...actionDetails, ...conditionDetails})
       }
 
       if(identityStatementExplicitDeny(statementAnalysis)) {
@@ -157,12 +162,16 @@ export function analyzeServiceControlPolicies(serviceControlPolicies: ServiceCon
       for(const statement of policy.statements()) {
         const {matches: resourceMatch, details: resourceDetails} = requestMatchesStatementResources(request, statement);
         const {matches: actionMatch, details: actionDetails} = requestMatchesStatementActions(request, statement);
+        const {matches: conditionMatch, details: conditionDetails} = requestMatchesConditions(request, statement.conditions());
+        const principalMatch: PrincipalMatchResult = 'Match'
+        const overallMatch = statementMatches({actionMatch, conditionMatch, principalMatch, resourceMatch});
         const statementAnalysis: StatementAnalysis = {
           statement,
           resourceMatch,
           actionMatch,
-          conditionMatch: requestMatchesConditions(request, statement.conditions()),
-          principalMatch: 'Match',
+          conditionMatch,
+          principalMatch,
+          explain: makeStatementExplain(statement, overallMatch, {...resourceDetails, ...actionDetails, ...conditionDetails})
         }
 
         if(identityStatementAllows(statementAnalysis)) {
@@ -221,12 +230,15 @@ export function analyzeResourcePolicy(resourcePolicy: AnnotatedPolicy | undefine
     const {matches: resourceMatch, details: resourceDetails} = requestMatchesStatementResources(request, statement);
     const {matches: actionMatch, details: actionDetails} = requestMatchesStatementActions(request, statement);
     const {matches: principalMatch, details: principalDetails} = requestMatchesStatementPrincipals(request, statement);
+    const {matches: conditionMatch, details: conditionDetails} = requestMatchesConditions(request, statement.conditions());
+    const overallMatch = statementMatches({actionMatch, conditionMatch, principalMatch, resourceMatch});
     const analysis: StatementAnalysis = {
       statement,
       resourceMatch: resourceMatch,
       actionMatch,
-      conditionMatch: requestMatchesConditions(request, statement.conditions()),
+      conditionMatch,
       principalMatch,
+      explain: makeStatementExplain(statement, overallMatch, {...resourceDetails, ...actionDetails, ...principalDetails, ...conditionDetails})
     }
     if(identityStatementExplicitDeny(analysis) && analysis.principalMatch !== 'NoMatch') {
       resourceAnalysis.denyStatements.push(analysis);
@@ -250,4 +262,13 @@ export function analyzeResourcePolicy(resourcePolicy: AnnotatedPolicy | undefine
   }
 
   return resourceAnalysis;
+}
+
+function makeStatementExplain(statement: Statement, overallMatch: boolean, details: Partial<StatementExplain>): StatementExplain {
+  return {
+    effect: statement.effect(),
+    identifier: statement.sid() || statement.index().toString(),
+    matches: overallMatch,
+    ...details
+  }
 }

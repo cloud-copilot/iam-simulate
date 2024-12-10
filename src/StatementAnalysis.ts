@@ -1,5 +1,6 @@
 import { Statement } from "@cloud-copilot/iam-policy";
 import { ConditionMatchResult } from "./condition/condition.js";
+import { StatementExplain } from "./explain/statementExplain.js";
 import { PrincipalMatchResult } from "./principal/principal.js";
 
 /**
@@ -31,6 +32,8 @@ export interface StatementAnalysis {
    * Whether the Conditions matches the request.
    */
   conditionMatch: ConditionMatchResult
+
+  explain?: StatementExplain
 }
 
 /**
@@ -49,25 +52,25 @@ export function identityStatementAllows(statement: StatementAnalysis): boolean {
   return false;
 }
 
-export function identityStatementUknownAllow(statement: StatementAnalysis): boolean {
-  if(statement.resourceMatch &&
-    statement.actionMatch &&
-    statement.conditionMatch === 'Unknown' &&
-    statement.statement.effect() === 'Allow') {
-      return true;
-  }
-  return false
-}
+// export function identityStatementUknownAllow(statement: StatementAnalysis): boolean {
+//   if(statement.resourceMatch &&
+//     statement.actionMatch &&
+//     statement.conditionMatch === 'Unknown' &&
+//     statement.statement.effect() === 'Allow') {
+//       return true;
+//   }
+//   return false
+// }
 
-export function identityStatementUknownDeny(statement: StatementAnalysis): boolean {
-  if(statement.resourceMatch &&
-    statement.actionMatch &&
-    statement.conditionMatch === 'Unknown' &&
-    statement.statement.effect() === 'Deny') {
-      return true;
-  }
-  return false
-}
+// export function identityStatementUknownDeny(statement: StatementAnalysis): boolean {
+//   if(statement.resourceMatch &&
+//     statement.actionMatch &&
+//     statement.conditionMatch === 'Unknown' &&
+//     statement.statement.effect() === 'Deny') {
+//       return true;
+//   }
+//   return false
+// }
 
 export function identityStatementExplicitDeny(statement: StatementAnalysis): boolean {
   if(statement.resourceMatch &&
@@ -77,4 +80,11 @@ export function identityStatementExplicitDeny(statement: StatementAnalysis): boo
       return true;
   }
   return false;
+}
+
+export function statementMatches(analysis: Pick<StatementAnalysis, 'actionMatch' | 'conditionMatch' | 'principalMatch' | 'resourceMatch'>): boolean {
+  return analysis.resourceMatch &&
+    analysis.actionMatch &&
+    analysis.conditionMatch === 'Match' &&
+    (analysis.principalMatch === 'Match' || analysis.principalMatch === 'AccountLevelMatch');
 }

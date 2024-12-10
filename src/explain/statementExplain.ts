@@ -19,8 +19,10 @@ export interface PrincipalExplain {
 
 export interface ConditionValueExplain {
   value: string
-  resolvedValue: string | string[]
+  resolvedValue?: string
   matches: boolean
+  matchingValues?: string[]
+  negativeMatchingValues?: string[]
   errors?: string[]
 }
 
@@ -33,15 +35,17 @@ export interface ConditionExplain {
   matches: boolean
   matchedBecauseMissing?: boolean
   failedBecauseMissing?: boolean
+  failedBecauseArray?: boolean
+  failedBecauseNotArray?: boolean
 }
 
 export interface StatementExplain {
-  request: {
-    action: string
-    principal: string
-    resource: string
-    context: Record<string, string | string[]>
-  }
+  // request: {
+  //   action: string
+  //   principal: string
+  //   resource: string
+  //   context: Record<string, string | string[]>
+  // }
 
   matches: boolean
   identifier: string
