@@ -6,7 +6,7 @@ export interface ActionExplain {
 export interface ResourceExplain {
   resource: string;
   resolvedValue?: string;
-  errors: string[];
+  errors?: string[];
   matches: boolean;
 }
 
@@ -43,15 +43,15 @@ export interface StatementExplain {
   }
 
   matches: boolean
-  identifier: string;
-  effect: string;
-  actions?: ActionExplain | ActionExplain[];
-  notActions?: ActionExplain | ActionExplain[];
-  resources?: ResourceExplain | ResourceExplain[];
-  notResources?: ResourceExplain | ResourceExplain[];
-  principals? : PrincipalExplain | PrincipalExplain[];
-  notPrincipals?: PrincipalExplain | PrincipalExplain[];
-  conditions?: ConditionExplain[];
+  identifier: string
+  effect: string
+  actions?: ActionExplain | ActionExplain[]
+  notActions?: ActionExplain | ActionExplain[]
+  resources?: ResourceExplain | ResourceExplain[]
+  notResources?: ResourceExplain | ResourceExplain[]
+  principals? : PrincipalExplain | PrincipalExplain[]
+  notPrincipals?: PrincipalExplain | PrincipalExplain[]
+  conditions?: ConditionExplain[]
 }
 
 /*

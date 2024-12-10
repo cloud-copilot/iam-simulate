@@ -1,4 +1,5 @@
 import { Resource, Statement } from "@cloud-copilot/iam-policy";
+import { ResourceExplain, StatementExplain } from "../explain/statementExplain.js";
 import { AwsRequest } from "../request/request.js";
 import { convertIamStringToRegex, getResourceSegments } from "../util.js";
 
@@ -25,13 +26,23 @@ function convertResourceSegmentToRegex(segment: string): RegExp {
  * @param statement the statement to check against
  * @returns true if the request matches the resources in the statement, false otherwise
  */
-export function requestMatchesStatementResources(request: AwsRequest, statement: Statement): boolean {
+export function requestMatchesStatementResources(request: AwsRequest, statement: Statement): {matches: boolean, details: Pick<StatementExplain, 'resources' | 'notResources'>} {
   if(statement.isResourceStatement()) {
-    return requestMatchesResources(request, statement.resources());
+    const {matches, explains} = requestMatchesResources(request, statement.resources());
+    if(!statement.resourceIsArray()) {
+      return {matches, details: {resources: explains[0]}}
+    }
+    return {matches, details: {resources: explains}}
+    // return requestMatchesResources(request, statement.resources());
   } else if(statement.isNotResourceStatement()) {
-    return requestMatchesNotResources(request, statement.notResources());
+    const {matches, explains} = requestMatchesNotResources(request, statement.notResources());
+    if(!statement.notResourceIsArray()) {
+      return {matches, details: {notResources: explains[0]}}
+    }
+    return {matches, details: {notResources: explains}}
+    // return requestMatchesNotResources(request, statement.notResources());
   }
-  return true;
+  return {matches: true, details: {}};
 }
 
 
@@ -42,8 +53,12 @@ export function requestMatchesStatementResources(request: AwsRequest, statement:
  * @param policyResources the resources to check against
  * @returns true if the request matches any of the resources, false otherwise
  */
-export function requestMatchesResources(request: AwsRequest, policyResources: Resource[]): boolean {
-  return policyResources.some(policyResource => singleResourceMatchesRequest(request, policyResource))
+export function requestMatchesResources(request: AwsRequest, policyResources: Resource[]): {matches: boolean, explains: ResourceExplain[]} {
+  const explains = policyResources.map(policyResource => singleResourceMatchesRequest(request, policyResource))
+  const matches = explains.some(explain => explain.matches)
+  return {matches, explains}
+  //TODO: convert this to get the array of resources and return them
+  // return policyResources.some(policyResource => singleResourceMatchesRequest(request, policyResource))
 }
 
 /**
@@ -53,8 +68,10 @@ export function requestMatchesResources(request: AwsRequest, policyResources: Re
  * @param policyResources the resources to check against
  * @returns true if the request does not match any of the resources, false otherwise
  */
-export function requestMatchesNotResources(request: AwsRequest, policyResources: Resource[]): boolean {
-  return !requestMatchesResources(request, policyResources)
+export function requestMatchesNotResources(request: AwsRequest, policyResources: Resource[]): {matches: boolean, explains: ResourceExplain[]} {
+  const {matches, explains} = requestMatchesResources(request, policyResources)
+  return {matches: !matches, explains}
+  // return !requestMatchesResources(request, policyResources)
 }
 
 /**
@@ -64,45 +81,79 @@ export function requestMatchesNotResources(request: AwsRequest, policyResources:
  * @param policyResource the resource to check against
  * @returns true if the request matches the resource, false otherwise
  */
-function singleResourceMatchesRequest(request: AwsRequest, policyResource: Resource): boolean {
+function singleResourceMatchesRequest(request: AwsRequest, policyResource: Resource): ResourceExplain {
   if(policyResource.isAllResources()) {
-    return true;
+    return {
+      resource: policyResource.value(),
+      matches: true,
+    };
   } else if(policyResource.isArnResource()) {
     if(!request.resource)  {
-      return false
+      return {
+        resource: policyResource.value(),
+        matches: false,
+        errors: ['Request does not have a resource'],
+      };
     }
 
     const resource = request.resource
     if(!convertResourceSegmentToRegex(policyResource.partition()).test(resource.partition())) {
-      return false
+      return {
+        resource: policyResource.value(),
+        matches: false,
+        errors: ['Partition does not match'],
+      }
     }
 
     if(!convertResourceSegmentToRegex(policyResource.service()).test(resource.service())) {
-      return false
+      return {
+        resource: policyResource.value(),
+        matches: false,
+        errors: ['Service does not match'],
+      }
     }
 
     if(!convertResourceSegmentToRegex(policyResource.region()).test(resource.region())) {
-      return false
+      return {
+        resource: policyResource.value(),
+        matches: false,
+        errors: ['Region does not match'],
+      }
     }
 
     if(!convertResourceSegmentToRegex(policyResource.account()).test(resource.account())) {
-      return false
+      return {
+        resource: policyResource.value(),
+        matches: false,
+        errors: ['Account does not match'],
+      }
     }
 
     //Wildcards and variables are not allowed in the product segment https://docs.aws.amazon.com/IAM/latest/UserGuide/reference-arns.html "Incorrect wildcard usage"
     const [policyProduct, policyResourceId] = getResourceSegments(policyResource.resource())
 
     if(!resource.resource().startsWith(policyProduct)) {
-      return false
+      return {
+        resource: policyResource.value(),
+        matches: false,
+        errors: ['Product does not match'],
+      }
     }
 
     const requestResourceId = resource.resource().slice(policyProduct.length)
 
     if(!convertIamStringToRegex(policyResourceId, request).test(requestResourceId)) {
-      return false
+      return {
+        resource: policyResource.value(),
+        matches: false,
+        errors: ['Resource does not match'],
+      }
     }
 
-    return true
+    return {
+      resource: policyResource.value(),
+      matches: true,
+    }
   } else {
     throw new Error('Unknown resource type');
   }

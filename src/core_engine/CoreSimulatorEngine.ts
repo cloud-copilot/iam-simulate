@@ -107,10 +107,12 @@ export function analyzeIdentityPolicies(identityPolicies: AnnotatedPolicy[], req
 
   for(const policy of identityPolicies) {
     for(const statement of policy.statements()) {
+      const {matches: resourceMatch, details: resourceDetails} = requestMatchesStatementResources(request, statement);
+      const {matches: actionMatch, details: actionDetails} = requestMatchesStatementActions(request, statement);
       const statementAnalysis: StatementAnalysis = {
         statement,
-        resourceMatch: requestMatchesStatementResources(request, statement),
-        actionMatch: requestMatchesStatementActions(request, statement),
+        resourceMatch,
+        actionMatch,
         conditionMatch: requestMatchesConditions(request, statement.conditions()),
         principalMatch: 'Match',
       }
@@ -153,10 +155,12 @@ export function analyzeServiceControlPolicies(serviceControlPolicies: ServiceCon
     }
     for(const policy of controlPolicy.policies) {
       for(const statement of policy.statements()) {
+        const {matches: resourceMatch, details: resourceDetails} = requestMatchesStatementResources(request, statement);
+        const {matches: actionMatch, details: actionDetails} = requestMatchesStatementActions(request, statement);
         const statementAnalysis: StatementAnalysis = {
           statement,
-          resourceMatch: requestMatchesStatementResources(request, statement),
-          actionMatch: requestMatchesStatementActions(request, statement),
+          resourceMatch,
+          actionMatch,
           conditionMatch: requestMatchesConditions(request, statement.conditions()),
           principalMatch: 'Match',
         }
@@ -213,18 +217,19 @@ export function analyzeResourcePolicy(resourcePolicy: AnnotatedPolicy | undefine
     return resourceAnalysis;
   }
 
-  // const analysis: StatementAnalysis[] = [];
   for(const statement of resourcePolicy.statements()) {
+    const {matches: resourceMatch, details: resourceDetails} = requestMatchesStatementResources(request, statement);
+    const {matches: actionMatch, details: actionDetails} = requestMatchesStatementActions(request, statement);
     const analysis: StatementAnalysis = {
       statement,
-      resourceMatch: requestMatchesStatementResources(request, statement),
-      actionMatch: requestMatchesStatementActions(request, statement),
+      resourceMatch: resourceMatch,
+      actionMatch,
       conditionMatch: requestMatchesConditions(request, statement.conditions()),
       principalMatch: requestMatchesStatementPrincipals(request, statement),
     }
-    if(identityStatementExplicitDeny(analysis)) {
+    if(identityStatementExplicitDeny(analysis) && analysis.principalMatch !== 'NoMatch') {
       resourceAnalysis.denyStatements.push(analysis);
-    } else if(identityStatementAllows(analysis)) {
+    } else if(identityStatementAllows(analysis) && analysis.principalMatch !== 'NoMatch') {
       resourceAnalysis.allowStatements.push(analysis);
     } else {
       resourceAnalysis.unmatchedStatements.push(analysis);

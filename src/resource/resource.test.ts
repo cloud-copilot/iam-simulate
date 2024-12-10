@@ -207,7 +207,7 @@ describe('requestMatchesResources', () => {
       const response = requestMatchesResources(request, (policy.statements()[0] as ResourceStatement).resources())
 
       //Then the request should match the resource statement
-      expect(response).toBe(rt.expectMatch)
+      expect(response.matches).toBe(rt.expectMatch)
     })
   }
 })
@@ -245,7 +245,7 @@ describe('requestMatchesNotResources', () => {
       const response = requestMatchesResources(request, (policy.statements()[0] as NotResourceStatement).notResources())
 
       //Then the request should match the resource statement
-      expect(response).toBe(rt.expectMatch)
+      expect(response.matches).toBe(rt.expectMatch)
     })
   }
 })
