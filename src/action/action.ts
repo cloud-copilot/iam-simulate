@@ -62,8 +62,14 @@ export function requestMatchesActions(request: AwsRequest, actions: Action[]): {
  * @returns true if the request does not match any of the actions, false if the request matches any of the actions
  */
 export function requestMatchesNotActions(request: AwsRequest, actions: Action[]): {matches: boolean, explains: ActionExplain[]} {
-  const {matches, explains} = requestMatchesActions(request, actions);
-  return {matches: !matches, explains};
+  const explains = actions.map(action => {
+    const explain = requestMatchesSingleAction(request, action)
+    explain.matches = !explain.matches
+    return explain
+  });
+
+  const matches = explains.some(explain => explain.matches);
+  return {matches, explains};
 }
 
 function requestMatchesSingleAction(request: AwsRequest, action: Action): ActionExplain {

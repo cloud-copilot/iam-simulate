@@ -65,7 +65,7 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(request, principalStatement);
 
       //Then it should return Match
-      expect(result).toBe('Match');
+      expect(result.matches).toBe('Match');
     })
 
     it('should return NoMatch for non-matching service principal', () => {
@@ -85,7 +85,7 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(request, principalStatement);
 
       //Then it should return NoMatch
-      expect(result).toBe('NoMatch');
+      expect(result.matches).toBe('NoMatch');
     })
   })
 
@@ -107,7 +107,7 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(request, principalStatement);
 
       //Then it should return Match
-      expect(result).toBe('Match');
+      expect(result.matches).toBe('Match');
     })
 
     it('should return NoMatch for non-matching canonical user principal', () => {
@@ -127,7 +127,7 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(request, principalStatement);
 
       //Then it should return NoMatch
-      expect(result).toBe('NoMatch');
+      expect(result.matches).toBe('NoMatch');
     })
   })
 
@@ -149,7 +149,7 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(request, principalStatement);
 
       //Then it should return Match
-      expect(result).toBe('Match');
+      expect(result.matches).toBe('Match');
     })
 
     it('should return NoMatch for non-matching federated principal', () => {
@@ -169,7 +169,7 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(request, principalStatement);
 
       //Then it should return NoMatch
-      expect(result).toBe('NoMatch');
+      expect(result.matches).toBe('NoMatch');
     })
   })
 
@@ -211,7 +211,7 @@ describe('requestMatchesPrincipalStatement', () => {
         const result = requestMatchesPrincipalStatement(request, principalStatement);
 
         //Then it should return AccountLevelMatch
-        expect(result).toBe('AccountLevelMatch');
+        expect(result.matches).toBe('AccountLevelMatch');
       })
 
       it('should return NoMatch for non-matching account principal', () => {
@@ -231,7 +231,7 @@ describe('requestMatchesPrincipalStatement', () => {
         const result = requestMatchesPrincipalStatement(request, principalStatement);
 
         //Then it should return NoMatch
-        expect(result).toBe('NoMatch');
+        expect(result.matches).toBe('NoMatch');
       })
     })
 
@@ -253,7 +253,7 @@ describe('requestMatchesPrincipalStatement', () => {
         const result = requestMatchesPrincipalStatement(request, principalStatement);
 
         //Then it should return AccountLevelMatch
-        expect(result).toBe('AccountLevelMatch');
+        expect(result.matches).toBe('AccountLevelMatch');
       })
 
       it('should return NoMatch for non-matching account principal', () => {
@@ -273,7 +273,7 @@ describe('requestMatchesPrincipalStatement', () => {
         const result = requestMatchesPrincipalStatement(request, principalStatement);
 
         //Then it should return NoMatch
-        expect(result).toBe('NoMatch');
+        expect(result.matches).toBe('NoMatch');
       })
     })
   })
@@ -296,7 +296,7 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(request, principalStatement);
 
       //Then it should return Match
-      expect(result).toBe('Match');
+      expect(result.matches).toBe('Match');
     })
     it('role arn matches', () => {
       //Given a policy principal statement
@@ -315,7 +315,7 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(request, principalStatement);
 
       //Then it should return Match
-      expect(result).toBe('Match');
+      expect(result.matches).toBe('Match');
     })
 
     it('neither session nor role arn matches', () => {
@@ -335,7 +335,7 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(request, principalStatement);
 
       //Then it should return NoMatch
-      expect(result).toBe('NoMatch');
+      expect(result.matches).toBe('NoMatch');
     })
   })
 
@@ -357,7 +357,7 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(request, principalStatement);
 
       //Then it should return Match
-      expect(result).toBe('Match');
+      expect(result.matches).toBe('Match');
     })
 
     it('should return NoMatch for non-matching AWS principal', () => {
@@ -377,7 +377,7 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(request, principalStatement);
 
       //Then it should return NoMatch
-      expect(result).toBe('NoMatch');
+      expect(result.matches).toBe('NoMatch');
     })
   })
 })
@@ -400,7 +400,7 @@ describe('requestMatchesPrincipal', () => {
     const result = requestMatchesPrincipal(request, principals);
 
     //Then it should return Match
-    expect(result).toBe('Match');
+    expect(result.matches).toBe('Match');
   })
 
   it('returns AccountLevelMatch for a matching account principal', () => {
@@ -420,7 +420,7 @@ describe('requestMatchesPrincipal', () => {
     const result = requestMatchesPrincipal(request, principals);
 
     //Then it should return AccountLevelMatch
-    expect(result).toBe('AccountLevelMatch');
+    expect(result.matches).toBe('AccountLevelMatch');
   })
 
   it('should return Match if there is a Match and an AccountLevelMatch', () => {
@@ -440,7 +440,7 @@ describe('requestMatchesPrincipal', () => {
     const result = requestMatchesPrincipal(request, principals);
 
     //Then it should return Match
-    expect(result).toBe('Match');
+    expect(result.matches).toBe('Match');
   })
 
   it('returns NoMatch for a non-matching principal', () => {
@@ -460,7 +460,7 @@ describe('requestMatchesPrincipal', () => {
     const result = requestMatchesPrincipal(request, principals);
 
     //Then it should return NoMatch
-    expect(result).toBe('NoMatch');
+    expect(result.matches).toBe('NoMatch');
   })
 })
 
@@ -482,7 +482,7 @@ describe('requestMatchesNotPrincipal', () => {
     const result = requestMatchesNotPrincipal(request, notPrincipals);
 
     //Then it should return NoMatch
-    expect(result).toBe('NoMatch');
+    expect(result.matches).toBe('NoMatch');
   })
 
   it('returns NoMatch for a matching account principal', () => {
@@ -502,7 +502,7 @@ describe('requestMatchesNotPrincipal', () => {
     const result = requestMatchesNotPrincipal(request, notPrincipals);
 
     //Then it should return NoMatch
-    expect(result).toBe('NoMatch');
+    expect(result.matches).toBe('NoMatch');
   })
 
   it('returns Match for a non-matching principal', () => {
@@ -541,7 +541,7 @@ describe('requestMatchesStatementPrincipals', () => {
     const result = requestMatchesStatementPrincipals(request, statement);
 
     //Then it should return Match
-    expect(result).toBe('Match');
+    expect(result.matches).toBe('Match');
   })
 
   it('should return no match if the principal does not match', () => {
@@ -561,7 +561,7 @@ describe('requestMatchesStatementPrincipals', () => {
     const result = requestMatchesStatementPrincipals(request, statement);
 
     //Then it should return NoMatch
-    expect(result).toBe('NoMatch');
+    expect(result.matches).toBe('NoMatch');
   })
 
   it('should return Match if the NotPrincipal does not match', () => {
@@ -581,7 +581,7 @@ describe('requestMatchesStatementPrincipals', () => {
     const result = requestMatchesStatementPrincipals(request, statement);
 
     //Then it should return Match
-    expect(result).toBe('Match');
+    expect(result.matches).toBe('Match');
   })
 
   it('should return NoMatch if the NotPrincipal matches', () => {
@@ -601,7 +601,7 @@ describe('requestMatchesStatementPrincipals', () => {
     const result = requestMatchesStatementPrincipals(request, statement);
 
     //Then it should return Match
-    expect(result).toBe('NoMatch');
+    expect(result.matches).toBe('NoMatch');
   })
 
   it('should throw an error if the statement has neither Principal nor NotPrincipal', () => {

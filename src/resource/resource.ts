@@ -57,8 +57,6 @@ export function requestMatchesResources(request: AwsRequest, policyResources: Re
   const explains = policyResources.map(policyResource => singleResourceMatchesRequest(request, policyResource))
   const matches = explains.some(explain => explain.matches)
   return {matches, explains}
-  //TODO: convert this to get the array of resources and return them
-  // return policyResources.some(policyResource => singleResourceMatchesRequest(request, policyResource))
 }
 
 /**
@@ -69,9 +67,13 @@ export function requestMatchesResources(request: AwsRequest, policyResources: Re
  * @returns true if the request does not match any of the resources, false otherwise
  */
 export function requestMatchesNotResources(request: AwsRequest, policyResources: Resource[]): {matches: boolean, explains: ResourceExplain[]} {
-  const {matches, explains} = requestMatchesResources(request, policyResources)
-  return {matches: !matches, explains}
-  // return !requestMatchesResources(request, policyResources)
+  const explains = policyResources.map(policyResource => {
+    const explain = singleResourceMatchesRequest(request, policyResource)
+    explain.matches = !explain.matches
+    return explain
+  })
+  const matches = explains.some(explain => explain.matches)
+  return {matches, explains}
 }
 
 /**

@@ -220,12 +220,13 @@ export function analyzeResourcePolicy(resourcePolicy: AnnotatedPolicy | undefine
   for(const statement of resourcePolicy.statements()) {
     const {matches: resourceMatch, details: resourceDetails} = requestMatchesStatementResources(request, statement);
     const {matches: actionMatch, details: actionDetails} = requestMatchesStatementActions(request, statement);
+    const {matches: principalMatch, details: principalDetails} = requestMatchesStatementPrincipals(request, statement);
     const analysis: StatementAnalysis = {
       statement,
       resourceMatch: resourceMatch,
       actionMatch,
       conditionMatch: requestMatchesConditions(request, statement.conditions()),
-      principalMatch: requestMatchesStatementPrincipals(request, statement),
+      principalMatch,
     }
     if(identityStatementExplicitDeny(analysis) && analysis.principalMatch !== 'NoMatch') {
       resourceAnalysis.denyStatements.push(analysis);

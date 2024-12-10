@@ -1,45 +1,46 @@
 export interface ActionExplain {
-  action: string;
+  action: string
   matches: boolean
 }
 
 export interface ResourceExplain {
-  resource: string;
-  resolvedValue?: string;
-  errors?: string[];
-  matches: boolean;
+  resource: string
+  resolvedValue?: string
+  errors?: string[]
+  matches: boolean
 }
 
 export interface PrincipalExplain {
-  principal: string;
-  matches: boolean;
-  roleForSessionArn: string;
+  principal: string
+  matches: 'Match' | 'NoMatch' | 'AccountLevelMatch'
+  roleForSessionArn?: string
+  errors?: string[]
 }
 
 export interface ConditionValueExplain {
-  value: string;
-  resolvedValue: string | string[];
-  matches: boolean;
-  errors: string[];
+  value: string
+  resolvedValue: string | string[]
+  matches: boolean
+  errors?: string[]
 }
 
 export interface ConditionExplain {
   operator: string;
   conditionKeyValue: string
-  resolvedConditionKeyValue?: string;
-  values: ConditionValueExplain | ConditionValueExplain[];
+  resolvedConditionKeyValue?: string
+  values: ConditionValueExplain | ConditionValueExplain[]
   unmatchedValues?: string[]
-  matches: boolean;
-  matchedBecauseMissing?: boolean;
-  failedBecauseMissing?: boolean;
+  matches: boolean
+  matchedBecauseMissing?: boolean
+  failedBecauseMissing?: boolean
 }
 
 export interface StatementExplain {
   request: {
-    action: string;
-    principal: string;
-    resource: string;
-    context: Record<string, string | string[]>;
+    action: string
+    principal: string
+    resource: string
+    context: Record<string, string | string[]>
   }
 
   matches: boolean
