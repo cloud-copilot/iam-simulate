@@ -147,7 +147,7 @@ export function printExplain(explain: StatementExplain) {
       console.log(`${buffers(2)}}`)
     }
 
-    console.log(`${buffer}"}`)
+    console.log(`${buffer}}`)
 
   }
 
