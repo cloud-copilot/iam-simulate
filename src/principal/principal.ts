@@ -101,15 +101,15 @@ export function requestMatchesNotPrincipal(request: AwsRequest, notPrincipal: Pr
   })
 
 
-  if(explains.some(exp => exp.matches === 'Match')) {
+  if(explains.some(exp => exp.matches === 'NoMatch')) {
     return {
-      matches: 'Match',
+      matches: 'NoMatch',
       explains
     }
   }
 
   return {
-    matches: 'NoMatch',
+    matches: 'Match',
     explains
   }
 

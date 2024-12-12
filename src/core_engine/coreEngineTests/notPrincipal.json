@@ -1,0 +1,120 @@
+[
+  {
+    "name": "Allowed when NotPrincipal is a different principal",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::mybucket/testobject",
+          "NotPrincipal": {
+            "AWS": "arn:aws:iam::123456789012:user/not-test-user"
+          }
+        }
+      ]
+    },
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Allowed when NotPrincipal is multiple different principals",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::mybucket/testobject",
+          "NotPrincipal": {
+            "AWS": ["arn:aws:iam::123456789012:user/not-test-user", "arn:aws:iam::123456789012:user/not-test-user-2"]
+          }
+        }
+      ]
+    },
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Denied when NotPrincipal is the same principal",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::mybucket/testobject",
+          "NotPrincipal": {
+            "AWS": "arn:aws:iam::123456789012:user/test-user"
+          }
+        }
+      ]
+    },
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Denied when NotPrincipal an array including the same principal",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::mybucket/testobject",
+          "NotPrincipal": {
+            "AWS": ["arn:aws:iam::123456789012:user/test-user", "arn:aws:iam::123456789012:user/not-test-user"]
+          }
+        }
+      ]
+    },
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  }
+
+
+]
