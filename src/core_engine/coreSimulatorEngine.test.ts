@@ -1,4 +1,4 @@
-import { loadAnnotatedPolicy } from '@cloud-copilot/iam-policy';
+import { loadPolicy } from '@cloud-copilot/iam-policy';
 import { readdirSync, readFileSync, statSync } from 'fs';
 import { join, resolve } from 'path';
 import { describe, expect, it } from "vitest";
@@ -48,14 +48,14 @@ describe('coreSimulatorEngine', () => {
           const {principal, resource, action, context} = testCase.request;
           const request = new AwsRequestImpl(principal, resource, action, new RequestContextImpl(context));
           // And Policies
-          const identityPolicies = testCase.identityPolicies.map((p: any) => loadAnnotatedPolicy(p));
+          const identityPolicies = testCase.identityPolicies.map((p: any) => loadPolicy(p));
           const serviceControlPolicies = (testCase.serviceControlPolicies || []).map((scp: any) => {
             return {
               orgIdentifier: scp.orgIdentifier,
-              policies: scp.policies.map((p: any) => loadAnnotatedPolicy(p))
+              policies: scp.policies.map((p: any) => loadPolicy(p))
             }
           })
-          const resourcePolicy = testCase.resourcePolicy ? loadAnnotatedPolicy(testCase.resourcePolicy) : undefined;
+          const resourcePolicy = testCase.resourcePolicy ? loadPolicy(testCase.resourcePolicy) : undefined;
           //In an authorization request
           const authorizationRequest: AuthorizationRequest = {
             request,

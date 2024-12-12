@@ -1,4 +1,4 @@
-import { AnnotatedPolicy, Statement } from "@cloud-copilot/iam-policy";
+import { Policy, Statement } from "@cloud-copilot/iam-policy";
 import { requestMatchesStatementActions } from "../action/action.js";
 import { requestMatchesConditions } from "../condition/condition.js";
 import { EvaluationResult, IdentityAnalysis, OuScpAnalysis, RequestAnalysis, ResourceAnalysis, ScpAnalysis } from "../evaluate.js";
@@ -22,7 +22,7 @@ export interface ServiceControlPolicies {
   /**
    * The policies that apply to this organizational unit.
    */
-  policies: AnnotatedPolicy[];
+  policies: Policy[];
 }
 
 /**
@@ -37,7 +37,7 @@ export interface AuthorizationRequest {
   /**
    * The identity policies that are applicable to the principal making the request.
    */
-  identityPolicies: AnnotatedPolicy[]
+  identityPolicies: Policy[]
 
   /**
    * The service control policies that apply to the principal making the request. In
@@ -48,7 +48,7 @@ export interface AuthorizationRequest {
   /**
    * The resource policy that applies to the resource being accessed.
    */
-  resourcePolicy: AnnotatedPolicy | undefined;
+  resourcePolicy: Policy | undefined;
 }
 
 const serviceEngines: Record<string, new () => ServiceAuthorizer> = {};
@@ -97,7 +97,7 @@ export function getServiceAuthorizer(request: AuthorizationRequest): ServiceAuth
  * @param request the request to analyze against
  * @returns an array of statement analysis results
  */
-export function analyzeIdentityPolicies(identityPolicies: AnnotatedPolicy[], request: AwsRequest): IdentityAnalysis {
+export function analyzeIdentityPolicies(identityPolicies: Policy[], request: AwsRequest): IdentityAnalysis {
 
   const identityAnalysis: IdentityAnalysis = {
     result: 'ImplicitlyDenied',
@@ -214,7 +214,7 @@ export function analyzeServiceControlPolicies(serviceControlPolicies: ServiceCon
  * @param request the request to analyze against
  * @returns an array of statement analysis results
  */
-export function analyzeResourcePolicy(resourcePolicy: AnnotatedPolicy | undefined, request: AwsRequest): ResourceAnalysis {
+export function analyzeResourcePolicy(resourcePolicy: Policy | undefined, request: AwsRequest): ResourceAnalysis {
   const resourceAnalysis: ResourceAnalysis = {
     result: 'NotApplicable',
     allowStatements: [],

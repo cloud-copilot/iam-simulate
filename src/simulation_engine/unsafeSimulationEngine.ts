@@ -1,4 +1,4 @@
-import { loadAnnotatedPolicy } from "@cloud-copilot/iam-policy";
+import { loadPolicy } from "@cloud-copilot/iam-policy";
 import { authorize, ServiceControlPolicies } from "../core_engine/coreSimulatorEngine.js";
 import { type EvaluationResult } from "../evaluate.js";
 import { AwsRequestImpl } from "../request/request.js";
@@ -15,10 +15,10 @@ import { SimulationOptions } from "./simulationOptions.js";
  * @returns The result of the simulation.
  */
 export function runUnsafeSimulation(simulation: Simulation, simulationOptions: Partial<SimulationOptions>): EvaluationResult {
-  const identityPolicies = Object.values(simulation.identityPolicies).map(p => loadAnnotatedPolicy(p.policy));
+  const identityPolicies = Object.values(simulation.identityPolicies).map(p => loadPolicy(p.policy));
   const serviceControlPolicies: ServiceControlPolicies[] = simulation.serviceControlPolicies.map((scp) => {
     const ouId = scp.orgIdentifier;
-    const policies = scp.policies.map(val => loadAnnotatedPolicy(val.policy));
+    const policies = scp.policies.map(val => loadPolicy(val.policy));
 
     return {
       orgIdentifier: ouId,
@@ -35,7 +35,7 @@ export function runUnsafeSimulation(simulation: Simulation, simulationOptions: P
     request,
     identityPolicies,
     serviceControlPolicies,
-    resourcePolicy: simulation.resourcePolicy ? loadAnnotatedPolicy(simulation.resourcePolicy) : undefined
+    resourcePolicy: simulation.resourcePolicy ? loadPolicy(simulation.resourcePolicy) : undefined
   });
 
   return analysis.result;

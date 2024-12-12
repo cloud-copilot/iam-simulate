@@ -1,5 +1,5 @@
 import { iamActionExists, iamServiceExists } from "@cloud-copilot/iam-data";
-import { AnnotatedPolicy, loadAnnotatedPolicy, validateIdentityPolicy, validateResourcePolicy, validateServiceControlPolicy, ValidationError } from "@cloud-copilot/iam-policy";
+import { loadPolicy, Policy, validateIdentityPolicy, validateResourcePolicy, validateServiceControlPolicy, ValidationError } from "@cloud-copilot/iam-policy";
 import { isConditionKeyArray } from "../context_keys/contextKeyTypes.js";
 import { normalizeContextKeyCase, typeForContextKey } from "../context_keys/contextKeys.js";
 import { authorize, ServiceControlPolicies } from "../core_engine/coreSimulatorEngine.js";
@@ -32,12 +32,12 @@ export interface SimulationResult {
  */
 export async function runSimulation(simulation: Simulation, simulationOptions: Partial<SimulationOptions>): Promise<SimulationResult> {
   const identityPolicyErrors: Record<string, ValidationError[]> = {};
-  const identityPolicies: AnnotatedPolicy[] = [];
+  const identityPolicies: Policy[] = [];
   simulation.identityPolicies.forEach((value) => {
     const {name, policy} = value;
     const validationErrors = validateIdentityPolicy(policy);
     if(validationErrors.length == 0) {
-      identityPolicies.push(loadAnnotatedPolicy(policy));
+      identityPolicies.push(loadPolicy(policy));
     } else {
       identityPolicyErrors[name] = validationErrors;
     }
@@ -46,7 +46,7 @@ export async function runSimulation(simulation: Simulation, simulationOptions: P
   const seviceControlPolicyErrors: Record<string, ValidationError[]> = {};
   const serviceControlPolicies: ServiceControlPolicies[] = simulation.serviceControlPolicies.map((scp) => {
     const ouId = scp.orgIdentifier;
-    const validPolicies: AnnotatedPolicy[] = [];
+    const validPolicies: Policy[] = [];
 
     scp.policies.forEach((value) => {
       const {name, policy} = value;
@@ -54,7 +54,7 @@ export async function runSimulation(simulation: Simulation, simulationOptions: P
       if(validationErrors.length > 0) {
         seviceControlPolicyErrors[name] = validationErrors;
       } else {
-        validPolicies.push(loadAnnotatedPolicy(policy));
+        validPolicies.push(loadPolicy(policy));
       }
     })
 
@@ -79,7 +79,7 @@ export async function runSimulation(simulation: Simulation, simulationOptions: P
     }
   }
 
-  const resourcePolicy = simulation.resourcePolicy ? loadAnnotatedPolicy(simulation.resourcePolicy) : undefined;
+  const resourcePolicy = simulation.resourcePolicy ? loadPolicy(simulation.resourcePolicy) : undefined;
 
   if(simulation.request.action.split(":").length != 2) {
     return {
