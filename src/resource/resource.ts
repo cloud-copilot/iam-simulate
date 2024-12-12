@@ -72,7 +72,7 @@ export function requestMatchesNotResources(request: AwsRequest, policyResources:
     explain.matches = !explain.matches
     return explain
   })
-  const matches = explains.some(explain => explain.matches)
+  const matches = !explains.some(explain => !explain.matches)
   return {matches, explains}
 }
 
