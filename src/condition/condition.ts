@@ -228,9 +228,10 @@ export function singleConditionMatchesRequest(request: AwsRequest, condition: Co
   return {
     operator: condition.operation().value(),
     conditionKeyValue: condition.conditionKey(),
-    values: valueExplains,
+    values: condition.valueIsArray() ? valueExplains : valueExplains[0],
     matches
   }
+
 }
 
 function testNull(condition: Condition, keyExists: boolean): ConditionExplain {
