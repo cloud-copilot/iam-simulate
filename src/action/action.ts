@@ -68,7 +68,7 @@ export function requestMatchesNotActions(request: AwsRequest, actions: Action[])
     return explain
   });
 
-  const matches = explains.some(explain => explain.matches);
+  const matches = !explains.some(explain => !explain.matches);
   return {matches, explains};
 }
 
