@@ -66,8 +66,21 @@ export async function runSimulation(simulation: Simulation, simulationOptions: P
 
   const resourcePolicyErrors = simulation.resourcePolicy ? validateResourcePolicy(simulation.resourcePolicy) : [];
 
+  const permissionBoundaries: Policy[] | undefined = simulation.permissionBoundaryPolicies ? [] : undefined;
+  const permissionBoundaryErrors: Record<string, ValidationError[]> = {};
+  simulation.permissionBoundaryPolicies?.map((pb) => {
+    const {name, policy} = pb;
+    const validationErrors = validateIdentityPolicy(policy);
+    if(validationErrors.length == 0) {
+      permissionBoundaries!.push(loadPolicy(policy));
+    } else {
+      permissionBoundaryErrors[name] = validationErrors;
+    }
+  })
+
   if(Object.keys(identityPolicyErrors).length > 0 ||
      Object.keys(seviceControlPolicyErrors).length > 0 ||
+     Object.keys(permissionBoundaryErrors).length > 0 ||
      resourcePolicyErrors.length > 0) {
     return {
       errors: {
@@ -149,7 +162,8 @@ export async function runSimulation(simulation: Simulation, simulationOptions: P
     ),
     identityPolicies,
     serviceControlPolicies,
-    resourcePolicy
+    resourcePolicy,
+    permissionBoundaries
   })
 
   return {

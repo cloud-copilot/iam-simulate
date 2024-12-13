@@ -25,6 +25,9 @@ export function runUnsafeSimulation(simulation: Simulation, simulationOptions: P
       policies: policies
     }
   })
+
+  const permissionBoundaries = simulation.permissionBoundaryPolicies?.map(val => loadPolicy(val.policy)) ?? undefined;
+
   const requestContext = new RequestContextImpl(simulation.request.contextVariables)
   const request = new AwsRequestImpl(simulation.request.principal, {
     resource: simulation.request.resource.resource,
@@ -35,7 +38,8 @@ export function runUnsafeSimulation(simulation: Simulation, simulationOptions: P
     request,
     identityPolicies,
     serviceControlPolicies,
-    resourcePolicy: simulation.resourcePolicy ? loadPolicy(simulation.resourcePolicy) : undefined
+    resourcePolicy: simulation.resourcePolicy ? loadPolicy(simulation.resourcePolicy) : undefined,
+    permissionBoundaries
   });
 
   return analysis.result;

@@ -14,5 +14,6 @@ export interface Simulation {
     orgIdentifier: string,
     policies: {name: string, policy: any}[]
   }[];
-  resourcePolicy?: any;
+  resourcePolicy?: any
+  permissionBoundaryPolicies? : {name: string, policy: any}[]
 }
