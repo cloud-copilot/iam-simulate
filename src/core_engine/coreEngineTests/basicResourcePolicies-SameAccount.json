@@ -101,7 +101,7 @@
     }
   },
   {
-    "name": "Allowed when resource policy allows for account root arn",
+    "name": "Denied when resource policy allows for account root arn but no identity policy",
     "request": {
       "action": "s3:GetObject",
       "resource": {
@@ -126,11 +126,11 @@
       ]
     },
     "expected": {
-      "response": "Allowed"
+      "response": "ImplicitlyDenied"
     }
   },
   {
-    "name": "Allowed when resource policy allows for account number",
+    "name": "Denied when resource policy allows for account number but no identity policy",
     "request": {
       "action": "s3:GetObject",
       "resource": {
@@ -155,7 +155,7 @@
       ]
     },
     "expected": {
-      "response": "Allowed"
+      "response": "ImplicitlyDenied"
     }
   },
   {

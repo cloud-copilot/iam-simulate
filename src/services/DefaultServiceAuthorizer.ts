@@ -91,7 +91,7 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
 
         Need to add some tests for this.
       */
-      if(resourcePolicyResult === 'Allowed' || resourcePolicyResult === 'AllowedForAccount' || identityStatementResult === 'Allowed') {
+      if(resourcePolicyResult === 'Allowed' || identityStatementResult === 'Allowed') {
         return {
           result: 'Allowed',
           ...baseResult
