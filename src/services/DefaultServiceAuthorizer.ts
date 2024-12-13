@@ -120,15 +120,11 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
 
     /**
      * Add checks for:
-     * * boundary policies
-     * * session policies (maybe these are just part of identity policies?)
+     * * session policies
      * * resource control policies
      * * root user
      * * service linked roles
-
-
      * * vpc endpoint policies
-
      */
   }
 }
