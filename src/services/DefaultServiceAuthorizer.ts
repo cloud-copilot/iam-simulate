@@ -1,5 +1,5 @@
 import { RequestAnalysis } from "../evaluate.js";
-import { isAssumedRoleArn, isIamUserArn } from "../util.js";
+import { isAssumedRoleArn, isFederatedUserArn, isIamUserArn } from "../util.js";
 import { ServiceAuthorizationRequest, ServiceAuthorizer } from "./ServiceAuthorizer.js";
 
 /**
@@ -61,10 +61,12 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
          *
          * If the request is from an assumed role ARN AND the resource policy allows the assumed role (session) ARN = ALLOW
          * If the request is from an IAM user ARN AND the resource policy allows the IAM user ARN = ALLOW
+         * If the request is from a federated user ARN AND the resource policy allows the federated user ARN = ALLOW
          * The request is allowed: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html
          */
         if(resourcePolicyResult === 'Allowed') {
-          if(isAssumedRoleArn(request.request.principal.value()) || isIamUserArn(request.request.principal.value())) {
+          const principal = request.request.principal.value()
+          if(isAssumedRoleArn(principal) || isIamUserArn(principal) || isFederatedUserArn(principal)) {
             if(request.resourceAnalysis.allowStatements.some(statement => statement.principalMatch === 'Match')){
               return {
                 result: 'Allowed',
@@ -79,7 +81,16 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
         }
       }
 
-      //If principal is a role session and Role policy allows session then allow
+
+      /*
+        TODO: Implicit denies in identity policies
+        I think if the identity policy has an implicit deny for assumed roles or federated users,
+        then the resource policy must have the federerated or assumed role ARN exactly.
+
+        That doesn't seem right though. I know many cases where the resource policy has the role ARN
+
+        Need to add some tests for this.
+      */
       if(resourcePolicyResult === 'Allowed' || resourcePolicyResult === 'AllowedForAccount' || identityStatementResult === 'Allowed') {
         return {
           result: 'Allowed',
