@@ -1,7 +1,7 @@
 import { Principal, Statement } from "@cloud-copilot/iam-policy";
 import { PrincipalExplain, StatementExplain } from "../explain/statementExplain.js";
 import { AwsRequest } from "../request/request.js";
-import { isAssumedRoleArn } from "../util.js";
+import { isAssumedRoleArn, isFederatedUserArn } from "../util.js";
 
 //Wildcards are not allowed in the principal element https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html
 // The only exception is the "*" wildcard, which you can use to match all principals, including anonymous principals.
@@ -45,7 +45,7 @@ IAM Identity Center principals // Ignore this for now.
 //Look at the service name and see if it matches the string
 */
 
-export type PrincipalMatchResult = 'Match' | 'NoMatch' | 'AccountLevelMatch' | 'SessionRoleMatch'
+export type PrincipalMatchResult = 'Match' | 'NoMatch' | 'AccountLevelMatch' | 'SessionRoleMatch' | 'SessionUserMatch'
 
 /**
  * Check to see if a request matches a Principal element in an IAM policy statement
@@ -59,6 +59,13 @@ export function requestMatchesPrincipal(request: AwsRequest, principal: Principa
   if(explains.some(exp => exp.matches === 'Match')) {
     return {
       matches: 'Match',
+      explains
+    }
+  }
+
+  if(explains.some(exp => exp.matches === 'SessionUserMatch')) {
+    return {
+      matches: 'SessionUserMatch',
       explains
     }
   }
@@ -100,7 +107,7 @@ export function requestMatchesNotPrincipal(request: AwsRequest, notPrincipal: Pr
      *
      * We need to test this.
      */
-    if(explain.matches === 'Match' || explain.matches === 'AccountLevelMatch' || explain.matches === 'SessionRoleMatch') {
+    if(explain.matches === 'Match' || explain.matches === 'AccountLevelMatch' || explain.matches === 'SessionRoleMatch' || explain.matches === 'SessionUserMatch') {
       explain.matches = 'NoMatch'
     } else {
       explain.matches = 'Match'
@@ -168,12 +175,6 @@ export function requestMatchesPrincipalStatement(request: AwsRequest, principalS
   }
 
   if(principalStatement.isFederatedPrincipal()) {
-    /*
-      TODO: Do we need to check for the user that is federated? https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html
-
-      IAM federated user sessions – An IAM federated user session is a session created by calling GetFederationToken. When a federated user makes a request, the principal making the request is the federated user ARN and not the ARN of the IAM user who federated. Within the same account, resource-based policies that grant permissions to a federated user ARN grant permissions directly to the session. Permissions granted directly to a session are not limited by an implicit deny in an identity-based policy, a permissions boundary, or session policy.
-      However, if a resource-based policy grants permission to the ARN of the IAM user who federated, then requests made by the federated user during the session are limited by an implicit deny in a permission boundary or session policy.
-    */
     if(principalStatement.federated() === request.principal.value()) {
       return {
         matches: 'Match',
@@ -217,6 +218,16 @@ export function requestMatchesPrincipalStatement(request: AwsRequest, principalS
           roleForSessionArn: roleArn,
         }
       }
+    } else if(isFederatedUserArn(request.principal.value())) {
+      const sessionArn = request.principal.value()
+      const userArn = userArnFromFederatedUserArn(sessionArn)
+      if(principalStatement.arn() === userArn) {
+        return {
+          matches: 'SessionUserMatch',
+          principal: principalStatement.value(),
+          userForSessionArn: userArn,
+        }
+      }
     }
 
     if(principalStatement.arn() === request.principal.value()) {
@@ -245,6 +256,20 @@ export function roleArnFromAssumedRoleArn(assumedRoleArn: string): string {
   const rolePathAndName = resourceParts.slice(1, -1).join('/')
   return `arn:aws:iam::${stsParts[4]}:role/${rolePathAndName}`
 }
+
+/**
+ * Get a user ARN from a federated user ARN
+ *
+ * @param federatedUserArn the federated user ARN
+ * @returns the user ARN for the federated user ARN
+ */
+export function userArnFromFederatedUserArn(federatedUserArn: string): string {
+  const stsParts = federatedUserArn.split(':')
+  const resource = stsParts.at(-1)!
+  const username = resource.slice(resource.indexOf('/') + 1)
+  return `arn:aws:iam::${stsParts[4]}:user/${username}`
+}
+
 
 /**
  * Check if a request matches the Resource or NotResource elements of a statement.

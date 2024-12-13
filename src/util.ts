@@ -321,3 +321,15 @@ const userArnRegex = /^arn:aws:iam::\d{12}:user\/.*$/
 export function isIamUserArn(principal: string): boolean {
   return userArnRegex.test(principal)
 }
+
+const federatedUserArnRegex = /^arn:aws:sts::\d{12}:federated-user\/.*$/
+
+/**
+ * Test if a principal string is a federated user ARN
+ *
+ * @param principal the principal string to test
+ * @returns true if the principal is a federated user ARN, false otherwise
+ */
+export function isFederatedUserArn(principal: string): boolean {
+  return federatedUserArnRegex.test(principal)
+}

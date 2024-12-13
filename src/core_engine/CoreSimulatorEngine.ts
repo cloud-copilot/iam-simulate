@@ -233,6 +233,8 @@ export function analyzeResourcePolicy(resourcePolicy: Policy | undefined, reques
     return resourceAnalysis;
   }
 
+  const principalMatchOptions: PrincipalMatchResult[] = ['Match', 'SessionRoleMatch', 'SessionUserMatch'];
+
   for(const statement of resourcePolicy.statements()) {
     const {matches: resourceMatch, details: resourceDetails} = requestMatchesStatementResources(request, statement);
     const {matches: actionMatch, details: actionDetails} = requestMatchesStatementActions(request, statement);
@@ -256,11 +258,11 @@ export function analyzeResourcePolicy(resourcePolicy: Policy | undefined, reques
     }
   }
 
-  if(resourceAnalysis.denyStatements.some(s => s.principalMatch === 'Match' || s.principalMatch === 'SessionRoleMatch')) {
+  if(resourceAnalysis.denyStatements.some(s => principalMatchOptions.includes(s.principalMatch))) {
     resourceAnalysis.result = 'ExplicitlyDenied'
   } else if(resourceAnalysis.denyStatements.some(s => s.principalMatch === 'AccountLevelMatch')) {
     resourceAnalysis.result = 'DeniedForAccount'
-  } else if(resourceAnalysis.allowStatements.some(s => s.principalMatch === 'Match' || s.principalMatch === 'SessionRoleMatch')) {
+  } else if(resourceAnalysis.allowStatements.some(s => principalMatchOptions.includes(s.principalMatch))) {
     resourceAnalysis.result = 'Allowed'
   } else if(resourceAnalysis.allowStatements.some(s => s.principalMatch === 'AccountLevelMatch')) {
     resourceAnalysis.result = 'AllowedForAccount'

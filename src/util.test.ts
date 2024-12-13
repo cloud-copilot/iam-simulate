@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { AwsRequest, AwsRequestImpl } from './request/request.js'
 import { RequestContextImpl } from './requestContext.js'
-import { convertIamStringToRegex, getResourceTypesForAction, getVariablesFromString, isAssumedRoleArn, isIamUserArn } from './util.js'
+import { convertIamStringToRegex, getResourceTypesForAction, getVariablesFromString, isAssumedRoleArn, isFederatedUserArn, isIamUserArn } from './util.js'
 
 function testRequestWithContext(context: any, validContextVariables?: string[]): AwsRequest {
   validContextVariables = validContextVariables || []
@@ -331,6 +331,30 @@ describe('isIamUserArn', () => {
 
     //When we check if it is an IAM user ARN
     const result = isIamUserArn(roleArn)
+
+    //Then it should return false
+    expect(result).toBe(false)
+  })
+})
+
+describe('isFederatedUserArn', () => {
+  it('should return true for federated user ARN', () => {
+    //Given a federated user ARN
+    const federatedUserArn = 'arn:aws:sts::123456789012:federated-user/user-name'
+
+    //When we check if it is a federated user ARN
+    const result = isFederatedUserArn(federatedUserArn)
+
+    //Then it should return true
+    expect(result).toBe(true)
+  })
+
+  it('should return false for non-federated user ARN', () => {
+    //Given a non-federated user ARN
+    const roleArn = 'arn:aws:sts::123456789012:assumed-role/role-name/session-name'
+
+    //When we check if it is a federated user ARN
+    const result = isFederatedUserArn(roleArn)
 
     //Then it should return false
     expect(result).toBe(false)

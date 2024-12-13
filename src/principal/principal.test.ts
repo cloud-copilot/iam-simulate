@@ -2,7 +2,7 @@ import { loadPolicy, NotPrincipalStatement, PrincipalStatement } from '@cloud-co
 import { describe, expect, it } from 'vitest';
 import { AwsRequestImpl } from '../request/request.js';
 import { RequestContextImpl } from '../requestContext.js';
-import { requestMatchesNotPrincipal, requestMatchesPrincipal, requestMatchesPrincipalStatement, requestMatchesStatementPrincipals, roleArnFromAssumedRoleArn } from './principal.js';
+import { requestMatchesNotPrincipal, requestMatchesPrincipal, requestMatchesPrincipalStatement, requestMatchesStatementPrincipals, roleArnFromAssumedRoleArn, userArnFromFederatedUserArn } from './principal.js';
 
 const defaultResource = {accountId: '', resource: ''};
 
@@ -29,6 +29,31 @@ describe('roleArnFromAssumedRoleArn', () => {
     expect(result).toBe('arn:aws:iam::123456789012:role/admin/global-admin');
   })
 })
+
+describe('userArnFromFederatedUserArn', () => {
+  it('should return the user ARN from a federated user ARN', () => {
+    //Given a federated user ARN
+    const federatedUserArn = 'arn:aws:sts::123456789012:federated-user/user-a';
+
+    //When we get the user ARN from the federated user ARN
+    const result = userArnFromFederatedUserArn(federatedUserArn);
+
+    //Then it should return the user ARN
+    expect(result).toBe('arn:aws:iam::123456789012:user/user-a');
+  })
+
+  it('should return the user ARN from a federated user ARN with a path', () => {
+    //Given a federated user ARN
+    const federatedUserArn = 'arn:aws:sts::123456789012:federated-user/admin/global-admin';
+
+    //When we get the user ARN from the federated user ARN
+    const result = userArnFromFederatedUserArn(federatedUserArn);
+
+    //Then it should return the user ARN
+    expect(result).toBe('arn:aws:iam::123456789012:user/admin/global-admin');
+  })
+})
+
 
 describe('requestMatchesPrincipalStatement', () => {
   describe('service principal', () => {
