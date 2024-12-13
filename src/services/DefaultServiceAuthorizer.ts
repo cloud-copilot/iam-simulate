@@ -87,7 +87,7 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
         I think if the identity policy has an implicit deny for assumed roles or federated users,
         then the resource policy must have the federerated or assumed role ARN exactly.
 
-        That doesn't seem right though. I know many cases where the resource policy has the role ARN
+        That doesn't seem right though. I know many cases where the resource policy has the role ARN and it works
 
         Need to add some tests for this.
       */
