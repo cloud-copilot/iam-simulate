@@ -77,106 +77,16 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
 
     /**
      * Add checks for:
+     * * boundary policies
+     * * session policies (maybe these are just part of identity policies?)
+     * * resource control policies
      * * root user
      * * service linked roles
-     * * resource control policies
-     * * boundary policies
+
+
      * * vpc endpoint policies
-     * * session policies (maybe these are just part of identity policies?)
+
      */
   }
-
-  // /**
-  //  * Determine the result of the SCP analysis.
-  //  *
-  //  * @param request The request to authorize.
-  //  * @returns The result of the SCP analysis.
-  //  */
-  // public serviceControlPolicyResult(request: ServiceAuthorizationRequest): EvaluationResult {
-
-
-  //   //CAN I MOVE THIS TO THE CORE SIMULATOR ENGINE?
-
-  //   const orgAllows = request.scpAnalysis.map((scpAnalysis) => {
-  //     return scpAnalysis.statementAnalysis.some((statement) => {
-  //       return identityStatementAllows(statement)
-  //     })
-  //   })
-
-  //   if(orgAllows.includes(false)) {
-  //     return 'ImplicitlyDenied'
-  //   }
-
-  //   const anyScpDeny = request.scpAnalysis.some((scpAnalysis) => {
-  //     return scpAnalysis.statementAnalysis.some((statement) => {
-  //       return identityStatementExplicitDeny(statement)
-  //     })
-  //   })
-
-  //   if(anyScpDeny) {
-  //     return 'ExplicitlyDenied'
-  //   }
-
-  //   return 'Allowed'
-  // }
-
-  // /**
-  //  * Evaluate the identity statements to determine the result.
-  //  *
-  //  * @param request The request to authorize.
-  //  * @returns The result of the identity statement analysis.
-  //  */
-  // public identityStatementResult(request: ServiceAuthorizationRequest): EvaluationResult {
-  //   const explicitDeny = request.identityAnalysis.some(s => identityStatementExplicitDeny(s));
-  //   if(explicitDeny) {
-  //     return 'ExplicitlyDenied';
-  //   }
-
-  //   const explicitAllow = request.identityAnalysis.some(s => identityStatementAllows(s));
-  //   const possibleDeny = request.identityAnalysis.some(s => identityStatementUknownDeny(s));
-  //   if(explicitAllow) {
-  //     return possibleDeny ? 'Unknown' : 'Allowed';
-  //   }
-
-  //   const possibleAllow = request.identityAnalysis.some(s => identityStatementUknownAllow(s));
-  //   if(possibleAllow) {
-  //     return 'Unknown';
-  //   }
-
-  //   return 'ImplicitlyDenied'
-  // }
-
-  // /**
-  //  * Evaluate the resource policy to determine the result.
-  //  *
-  //  * @param request the request to authorize
-  //  * @returns the result of the resource policy analysis
-  //  */
-  // public resourcePolicyResult(request: ServiceAuthorizationRequest): ResourceEvaluationResult {
-  //   if(!request.resourceAnalysis) {
-  //     return 'NotApplicable'
-  //   }
-
-  //   const denyStatements = request.resourceAnalysis.filter(s => identityStatementExplicitDeny(s));
-  //   if(denyStatements.some(s => s.principalMatch === 'Match')) {
-  //     return 'ExplicitlyDenied'
-  //   }
-  //   if(denyStatements.some(s => s.principalMatch === 'AccountLevelMatch')) {
-  //     return 'DeniedForAccount'
-  //   }
-
-  //   const allowStatements = request.resourceAnalysis.filter(s => identityStatementAllows(s));
-  //   if(allowStatements.some(s => s.principalMatch === 'Match')) {
-  //     return 'Allowed'
-  //   }
-  //   if(allowStatements.some(s => s.principalMatch === 'AccountLevelMatch')) {
-  //     return 'AllowedForAccount'
-  //   }
-
-  //   return 'ImplicityDenied'
-
-  // }
-
-
 }
 
