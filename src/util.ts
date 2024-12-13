@@ -297,3 +297,15 @@ export function getVariablesFromString(value: string): string[] {
   }
   return []
 }
+
+const assumedRoleArnRegex = /^arn:aws:sts::\d{12}:assumed-role\/.*$/
+
+/**
+ * Tests if a principal string is an assumed role ARN
+ *
+ * @param principal the principal string to test
+ * @returns true if the principal is an assumed role ARN, false otherwise
+ */
+export function isAssumedRoleArn(principal: string): boolean {
+  return assumedRoleArnRegex.test(principal)
+}

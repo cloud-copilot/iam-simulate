@@ -86,5 +86,5 @@ export function statementMatches(analysis: Pick<StatementAnalysis, 'actionMatch'
   return analysis.resourceMatch &&
     analysis.actionMatch &&
     analysis.conditionMatch === 'Match' &&
-    (analysis.principalMatch === 'Match' || analysis.principalMatch === 'AccountLevelMatch');
+    (analysis.principalMatch === 'Match' || analysis.principalMatch === 'AccountLevelMatch' || analysis.principalMatch === 'SessionRoleMatch');
 }

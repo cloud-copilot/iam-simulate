@@ -56,12 +56,15 @@ describe('coreSimulatorEngine', () => {
             }
           })
           const resourcePolicy = testCase.resourcePolicy ? loadPolicy(testCase.resourcePolicy) : undefined;
+          const permissionBoundaries = testCase.permissionBoundaries ? testCase.permissionBoundaries.map((p: any) => loadPolicy(p)) : undefined;
+
           //In an authorization request
           const authorizationRequest: AuthorizationRequest = {
             request,
             identityPolicies,
             serviceControlPolicies,
-            resourcePolicy
+            resourcePolicy,
+            permissionBoundaries
           };
 
           // When the request is authorized

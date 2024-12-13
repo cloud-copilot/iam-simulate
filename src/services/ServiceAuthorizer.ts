@@ -6,6 +6,7 @@ export interface ServiceAuthorizationRequest {
   identityAnalysis: IdentityAnalysis;
   scpAnalysis: ScpAnalysis;
   resourceAnalysis: ResourceAnalysis;
+  permissionBoundaryAnalysis: IdentityAnalysis | undefined;
 }
 
 export interface ServiceAuthorizer {

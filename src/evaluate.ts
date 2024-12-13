@@ -55,4 +55,6 @@ export interface RequestAnalysis {
   resourceAnalysis?: ResourceAnalysis
 
   scpAnalysis?: ScpAnalysis
+
+  permissionBoundaryAnalysis?: IdentityAnalysis | undefined
 }

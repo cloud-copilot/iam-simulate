@@ -12,7 +12,7 @@ export interface ResourceExplain {
 
 export interface PrincipalExplain {
   principal: string
-  matches: 'Match' | 'NoMatch' | 'AccountLevelMatch'
+  matches: 'Match' | 'NoMatch' | 'AccountLevelMatch' | 'SessionRoleMatch'
   roleForSessionArn?: string
   errors?: string[]
 }

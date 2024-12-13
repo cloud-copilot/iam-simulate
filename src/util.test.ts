@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { AwsRequest, AwsRequestImpl } from './request/request.js'
 import { RequestContextImpl } from './requestContext.js'
-import { convertIamStringToRegex, getResourceTypesForAction, getVariablesFromString } from './util.js'
+import { convertIamStringToRegex, getResourceTypesForAction, getVariablesFromString, isAssumedRoleArn } from './util.js'
 
 function testRequestWithContext(context: any, validContextVariables?: string[]): AwsRequest {
   validContextVariables = validContextVariables || []
@@ -285,5 +285,30 @@ describe("getResourceTypesForAction", () => {
 
     //Then the result should be returned
     expect(result).toEqual([])
+  })
+})
+
+
+describe('isAssumedRoleArn', () => {
+  it('should return true for assumed role ARN', () => {
+    //Given an assumed role ARN
+    const assumedRoleArn = 'arn:aws:sts::123456789012:assumed-role/role-name/session-name';
+
+    //When we check if it is an assumed role ARN
+    const result = isAssumedRoleArn(assumedRoleArn);
+
+    //Then it should return true
+    expect(result).toBe(true);
+  })
+
+  it('should return false for non-assumed role ARN', () => {
+    //Given a non-assumed role ARN
+    const userArn = 'arn:aws:iam::123456789012:user/user-name'
+
+    //When we check if it is an assumed role ARN
+    const result = isAssumedRoleArn(userArn)
+
+    //Then it should return false
+    expect(result).toBe(false)
   })
 })

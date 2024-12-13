@@ -2,24 +2,9 @@ import { loadPolicy, NotPrincipalStatement, PrincipalStatement } from '@cloud-co
 import { describe, expect, it } from 'vitest';
 import { AwsRequestImpl } from '../request/request.js';
 import { RequestContextImpl } from '../requestContext.js';
-import { isAssumedRoleArn, requestMatchesNotPrincipal, requestMatchesPrincipal, requestMatchesPrincipalStatement, requestMatchesStatementPrincipals, roleArnFromAssumedRoleArn } from './principal.js';
+import { requestMatchesNotPrincipal, requestMatchesPrincipal, requestMatchesPrincipalStatement, requestMatchesStatementPrincipals, roleArnFromAssumedRoleArn } from './principal.js';
 
-describe('isAssumedRoleArn', () => {
-  it('should return true for assumed role ARN', () => {
-    //Given an assumed role ARN
-    const assumedRoleArn = 'arn:aws:sts::123456789012:assumed-role/role-name/session-name';
-
-    //When we check if it is an assumed role ARN
-    const result = isAssumedRoleArn(assumedRoleArn);
-
-    //Then it should return true
-    expect(result).toBe(true);
-  })
-
-  it('should return false for non-assumed role ARN', () => {
-    expect(isAssumedRoleArn('arn:aws:iam::123456789012:user/user-name')).toBe(false)
-  })
-})
+const defaultResource = {accountId: '', resource: ''};
 
 describe('roleArnFromAssumedRoleArn', () => {
   it('should return the role ARN from an assumed role ARN', () => {
@@ -58,7 +43,7 @@ describe('requestMatchesPrincipalStatement', () => {
       const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0];
 
       //And a request with a matching principal
-      const request = new AwsRequestImpl('s3.amazonaws.com', undefined, 's3:GetBucket', new RequestContextImpl({}));
+      const request = new AwsRequestImpl('s3.amazonaws.com', defaultResource, 's3:GetBucket', new RequestContextImpl({}));
       // const request = new RequestPrincipalImpl('s3.amazonaws.com');
 
       //When we check if the request matches the principal statement
@@ -79,7 +64,7 @@ describe('requestMatchesPrincipalStatement', () => {
       const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0];
 
       //And a request with a non-matching principal
-      const request = new AwsRequestImpl('sqs.amazonaws.com', undefined, 's3:GetBucket', new RequestContextImpl({}));
+      const request = new AwsRequestImpl('sqs.amazonaws.com', defaultResource, 's3:GetBucket', new RequestContextImpl({}));
 
       //When we check if the request matches the principal statement
       const result = requestMatchesPrincipalStatement(request, principalStatement);
@@ -121,7 +106,7 @@ describe('requestMatchesPrincipalStatement', () => {
       const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0];
 
       //And a request with a non-matching principal
-      const request = new AwsRequestImpl('9999999999999999999999999999999999999999999999999999', undefined, 's3:GetBucket', new RequestContextImpl({}));
+      const request = new AwsRequestImpl('9999999999999999999999999999999999999999999999999999', defaultResource, 's3:GetBucket', new RequestContextImpl({}));
 
       //When we check if the request matches the principal statement
       const result = requestMatchesPrincipalStatement(request, principalStatement);
@@ -143,7 +128,7 @@ describe('requestMatchesPrincipalStatement', () => {
       const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0];
 
       //And a request with a matching principal
-      const request = new AwsRequestImpl('actions.github.com', undefined, 'sts:AssumeRole', new RequestContextImpl({}));
+      const request = new AwsRequestImpl('actions.github.com', defaultResource, 'sts:AssumeRole', new RequestContextImpl({}));
 
       //When we check if the request matches the principal statement
       const result = requestMatchesPrincipalStatement(request, principalStatement);
@@ -163,7 +148,7 @@ describe('requestMatchesPrincipalStatement', () => {
       const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0];
 
       //And a request with a non-matching principal
-      const request = new AwsRequestImpl('actions.github.com', undefined, 'sts:AssumeRole', new RequestContextImpl({}));
+      const request = new AwsRequestImpl('actions.github.com', defaultResource, 'sts:AssumeRole', new RequestContextImpl({}));
 
       //When we check if the request matches the principal statement
       const result = requestMatchesPrincipalStatement(request, principalStatement);
@@ -185,7 +170,7 @@ describe('requestMatchesPrincipalStatement', () => {
       const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0];
 
       //And a request with any principal
-      const request = new AwsRequestImpl('arn:aws:iam::123456789012:user/user-name', undefined, 's3:GetBucket', new RequestContextImpl({}));
+      const request = new AwsRequestImpl('arn:aws:iam::123456789012:user/user-name', defaultResource, 's3:GetBucket', new RequestContextImpl({}));
 
       //When we check if the request matches the principal statement
       const result = requestMatchesPrincipalStatement(request, principalStatement);
@@ -205,7 +190,7 @@ describe('requestMatchesPrincipalStatement', () => {
         const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0];
 
         //And a request with a matching principal
-        const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/John', undefined, 's3:GetBucket', new RequestContextImpl({}));
+        const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/John', defaultResource, 's3:GetBucket', new RequestContextImpl({}));
 
         //When we check if the request matches the principal statement
         const result = requestMatchesPrincipalStatement(request, principalStatement);
@@ -225,7 +210,7 @@ describe('requestMatchesPrincipalStatement', () => {
         const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0];
 
         //And a request with a non-matching principal
-        const request = new AwsRequestImpl('arn:aws:iam::999999999999:user/Paul', undefined, 's3:GetBucket', new RequestContextImpl({}));
+        const request = new AwsRequestImpl('arn:aws:iam::999999999999:user/Paul', defaultResource, 's3:GetBucket', new RequestContextImpl({}));
 
         //When we check if the request matches the principal statement
         const result = requestMatchesPrincipalStatement(request, principalStatement);
@@ -247,7 +232,7 @@ describe('requestMatchesPrincipalStatement', () => {
         const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0];
 
         //And a request with a matching principal
-        const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/George', undefined, 's3:GetBucket', new RequestContextImpl({}));
+        const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/George', defaultResource, 's3:GetBucket', new RequestContextImpl({}));
 
         //When we check if the request matches the principal statement
         const result = requestMatchesPrincipalStatement(request, principalStatement);
@@ -267,7 +252,7 @@ describe('requestMatchesPrincipalStatement', () => {
         const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0];
 
         //And a request with a non-matching principal
-        const request = new AwsRequestImpl('arn:aws:iam::999999999999:user/MojoJojo', undefined, 's3:GetBucket', new RequestContextImpl({}));
+        const request = new AwsRequestImpl('arn:aws:iam::999999999999:user/MojoJojo', defaultResource, 's3:GetBucket', new RequestContextImpl({}));
 
         //When we check if the request matches the principal statement
         const result = requestMatchesPrincipalStatement(request, principalStatement);
@@ -290,7 +275,7 @@ describe('requestMatchesPrincipalStatement', () => {
       const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0];
 
       //And a request with a matching principal
-      const request = new AwsRequestImpl('arn:aws:sts::555555555555:assumed-role/role-name/session-name', undefined, 's3:GetBucket', new RequestContextImpl({}));
+      const request = new AwsRequestImpl('arn:aws:sts::555555555555:assumed-role/role-name/session-name', defaultResource, 's3:GetBucket', new RequestContextImpl({}));
 
       //When we check if the request matches the principal statement
       const result = requestMatchesPrincipalStatement(request, principalStatement);
@@ -298,6 +283,7 @@ describe('requestMatchesPrincipalStatement', () => {
       //Then it should return Match
       expect(result.matches).toBe('Match');
     })
+
     it('role arn matches', () => {
       //Given a policy principal statement
       const policy = loadPolicy({
@@ -309,13 +295,13 @@ describe('requestMatchesPrincipalStatement', () => {
       const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0];
 
       //And a request with a matching principal
-      const request = new AwsRequestImpl('arn:aws:sts::555555555555:assumed-role/super-admin/session-name', undefined, 's3:GetBucket', new RequestContextImpl({}));
+      const request = new AwsRequestImpl('arn:aws:sts::555555555555:assumed-role/super-admin/session-name', defaultResource, 's3:GetBucket', new RequestContextImpl({}));
 
       //When we check if the request matches the principal statement
       const result = requestMatchesPrincipalStatement(request, principalStatement);
 
       //Then it should return Match
-      expect(result.matches).toBe('Match');
+      expect(result.matches).toBe('SessionRoleMatch');
     })
 
     it('neither session nor role arn matches', () => {
@@ -329,7 +315,7 @@ describe('requestMatchesPrincipalStatement', () => {
       const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0];
 
       //And a request with a non-matching principal
-      const request = new AwsRequestImpl('arn:aws:sts::555555555555:assumed-role/normie-admin/session-name', undefined, 's3:GetBucket', new RequestContextImpl({}));
+      const request = new AwsRequestImpl('arn:aws:sts::555555555555:assumed-role/normie-admin/session-name', defaultResource, 's3:GetBucket', new RequestContextImpl({}));
 
       //When we check if the request matches the principal statement
       const result = requestMatchesPrincipalStatement(request, principalStatement);
@@ -351,7 +337,7 @@ describe('requestMatchesPrincipalStatement', () => {
       const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0];
 
       //And a request with a matching principal
-      const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/Larry', undefined, 's3:GetBucket', new RequestContextImpl({}));
+      const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/Larry', defaultResource, 's3:GetBucket', new RequestContextImpl({}));
 
       //When we check if the request matches the principal statement
       const result = requestMatchesPrincipalStatement(request, principalStatement);
@@ -371,7 +357,7 @@ describe('requestMatchesPrincipalStatement', () => {
       const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0];
 
       //And a request with a non-matching principal
-      const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/Curly', undefined, 's3:GetBucket', new RequestContextImpl({}));
+      const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/Curly', defaultResource, 's3:GetBucket', new RequestContextImpl({}));
 
       //When we check if the request matches the principal statement
       const result = requestMatchesPrincipalStatement(request, principalStatement);
@@ -394,7 +380,7 @@ describe('requestMatchesPrincipal', () => {
     const principals = (policy.statements()[0] as PrincipalStatement).principals();
 
     //And a request with a matching principal
-    const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/Larry', undefined, 's3:GetBucket', new RequestContextImpl({}));
+    const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/Larry', defaultResource, 's3:GetBucket', new RequestContextImpl({}));
 
     //When we check if the request matches the principal
     const result = requestMatchesPrincipal(request, principals);
@@ -414,7 +400,7 @@ describe('requestMatchesPrincipal', () => {
     const principals = (policy.statements()[0] as PrincipalStatement).principals();
 
     //And a request with a matching principal
-    const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/Larry', undefined, 's3:GetBucket', new RequestContextImpl({}));
+    const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/Larry', defaultResource, 's3:GetBucket', new RequestContextImpl({}));
 
     //When we check if the request matches the principal
     const result = requestMatchesPrincipal(request, principals);
@@ -434,7 +420,7 @@ describe('requestMatchesPrincipal', () => {
     const principals = (policy.statements()[0] as PrincipalStatement).principals();
 
     //And a request with a matching principal
-    const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/Larry', undefined, 's3:GetBucket', new RequestContextImpl({}));
+    const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/Larry', defaultResource, 's3:GetBucket', new RequestContextImpl({}));
 
     //When we check if the request matches the principal
     const result = requestMatchesPrincipal(request, principals);
@@ -454,7 +440,7 @@ describe('requestMatchesPrincipal', () => {
     const principals = (policy.statements()[0] as PrincipalStatement).principals();
 
     //And a request with a non-matching principal
-    const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/Curly', undefined, 's3:GetBucket', new RequestContextImpl({}));
+    const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/Curly', defaultResource, 's3:GetBucket', new RequestContextImpl({}));
 
     //When we check if the request matches the principal
     const result = requestMatchesPrincipal(request, principals);
@@ -476,7 +462,7 @@ describe('requestMatchesNotPrincipal', () => {
     const notPrincipals = (policy.statements()[0] as NotPrincipalStatement).notPrincipals();
 
     //And a request with a matching principal
-    const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/Larry', undefined, 's3:GetBucket', new RequestContextImpl({}));
+    const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/Larry', defaultResource, 's3:GetBucket', new RequestContextImpl({}));
 
     //When we check if the request matches the principal
     const result = requestMatchesNotPrincipal(request, notPrincipals);
@@ -496,7 +482,7 @@ describe('requestMatchesNotPrincipal', () => {
     const notPrincipals = (policy.statements()[0] as NotPrincipalStatement).notPrincipals();
 
     //And a request with a matching principal
-    const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/Larry', undefined, 's3:GetBucket', new RequestContextImpl({}));
+    const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/Larry', defaultResource, 's3:GetBucket', new RequestContextImpl({}));
 
     //When we check if the request matches the principal
     const result = requestMatchesNotPrincipal(request, notPrincipals);
@@ -516,7 +502,7 @@ describe('requestMatchesNotPrincipal', () => {
     const notPrincipals = (policy.statements()[0] as NotPrincipalStatement).notPrincipals();
 
     //And a request with a non-matching principal
-    const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/Curly', undefined, 's3:GetBucket', new RequestContextImpl({}));
+    const request = new AwsRequestImpl('arn:aws:iam::555555555555:user/Curly', defaultResource, 's3:GetBucket', new RequestContextImpl({}));
 
     //When we check if the request matches the principal
     const result = requestMatchesNotPrincipal(request, notPrincipals);

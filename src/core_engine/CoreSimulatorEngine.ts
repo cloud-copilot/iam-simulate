@@ -49,6 +49,11 @@ export interface AuthorizationRequest {
    * The resource policy that applies to the resource being accessed.
    */
   resourcePolicy: Policy | undefined;
+
+  /**
+   * The permission boundaries that apply to the principal making the request.
+   */
+  permissionBoundaries: Policy[] | undefined;
 }
 
 const serviceEngines: Record<string, new () => ServiceAuthorizer> = {};
@@ -63,6 +68,7 @@ const serviceEngines: Record<string, new () => ServiceAuthorizer> = {};
  */
 export function authorize(request: AuthorizationRequest): RequestAnalysis {
   const identityAnalysis = analyzeIdentityPolicies(request.identityPolicies, request.request);
+  const permissionBoundaryAnalysis = analyzePermissionBoundaryPolicies(request.permissionBoundaries, request.request);
   const scpAnalysis = analyzeServiceControlPolicies(request.serviceControlPolicies, request.request);
   const resourceAnalysis = analyzeResourcePolicy(request.resourcePolicy, request.request);
 
@@ -71,7 +77,8 @@ export function authorize(request: AuthorizationRequest): RequestAnalysis {
     request: request.request,
     identityAnalysis,
     scpAnalysis,
-    resourceAnalysis
+    resourceAnalysis,
+    permissionBoundaryAnalysis
   });
 }
 
@@ -249,11 +256,11 @@ export function analyzeResourcePolicy(resourcePolicy: Policy | undefined, reques
     }
   }
 
-  if(resourceAnalysis.denyStatements.some(s => s.principalMatch === 'Match')) {
+  if(resourceAnalysis.denyStatements.some(s => s.principalMatch === 'Match' || s.principalMatch === 'SessionRoleMatch')) {
     resourceAnalysis.result = 'ExplicitlyDenied'
   } else if(resourceAnalysis.denyStatements.some(s => s.principalMatch === 'AccountLevelMatch')) {
     resourceAnalysis.result = 'DeniedForAccount'
-  } else if(resourceAnalysis.allowStatements.some(s => s.principalMatch === 'Match')) {
+  } else if(resourceAnalysis.allowStatements.some(s => s.principalMatch === 'Match' || s.principalMatch === 'SessionRoleMatch')) {
     resourceAnalysis.result = 'Allowed'
   } else if(resourceAnalysis.allowStatements.some(s => s.principalMatch === 'AccountLevelMatch')) {
     resourceAnalysis.result = 'AllowedForAccount'
@@ -263,6 +270,16 @@ export function analyzeResourcePolicy(resourcePolicy: Policy | undefined, reques
 
   return resourceAnalysis;
 }
+
+
+export function analyzePermissionBoundaryPolicies(permissionBoundaries: Policy[] | undefined, request: AwsRequest): IdentityAnalysis | undefined {
+  if(!permissionBoundaries) {
+    return undefined
+  }
+
+  return analyzeIdentityPolicies(permissionBoundaries, request);
+}
+
 
 function makeStatementExplain(statement: Statement, overallMatch: boolean, details: Partial<StatementExplain>): StatementExplain {
   return {
