@@ -309,3 +309,15 @@ const assumedRoleArnRegex = /^arn:aws:sts::\d{12}:assumed-role\/.*$/
 export function isAssumedRoleArn(principal: string): boolean {
   return assumedRoleArnRegex.test(principal)
 }
+
+const userArnRegex = /^arn:aws:iam::\d{12}:user\/.*$/
+
+/**
+ * Test if a principal string is an IAM user ARN
+ *
+ * @param principal the principal string to test
+ * @returns true if the principal is an IAM user ARN, false otherwise
+ */
+export function isIamUserArn(principal: string): boolean {
+  return userArnRegex.test(principal)
+}

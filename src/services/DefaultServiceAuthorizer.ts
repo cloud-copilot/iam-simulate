@@ -1,5 +1,5 @@
 import { RequestAnalysis } from "../evaluate.js";
-import { isAssumedRoleArn } from "../util.js";
+import { isAssumedRoleArn, isIamUserArn } from "../util.js";
 import { ServiceAuthorizationRequest, ServiceAuthorizer } from "./ServiceAuthorizer.js";
 
 /**
@@ -57,16 +57,19 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
 
       if(permissionBoundaryResult === 'ImplicitlyDenied') {
         /**
-         * If the permission boundary is an implicit deny AND
-         * the request is from an assumed role ARN AND
-         * the resource policy allows the assumed role ARN
+         * If the permission boundary is an implicit deny
+         *
+         * If the request is from an assumed role ARN AND the resource policy allows the assumed role (session) ARN = ALLOW
+         * If the request is from an IAM user ARN AND the resource policy allows the IAM user ARN = ALLOW
          * The request is allowed: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html
          */
-        if(resourcePolicyResult === 'Allowed' && isAssumedRoleArn(request.request.principal.value())) {
-          if(request.resourceAnalysis.allowStatements.some(statement => statement.principalMatch === 'Match')){
-            return {
-              result: 'Allowed',
-              ...baseResult
+        if(resourcePolicyResult === 'Allowed') {
+          if(isAssumedRoleArn(request.request.principal.value()) || isIamUserArn(request.request.principal.value())) {
+            if(request.resourceAnalysis.allowStatements.some(statement => statement.principalMatch === 'Match')){
+              return {
+                result: 'Allowed',
+                ...baseResult
+              }
             }
           }
         }

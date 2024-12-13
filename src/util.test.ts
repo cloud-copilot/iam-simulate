@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { AwsRequest, AwsRequestImpl } from './request/request.js'
 import { RequestContextImpl } from './requestContext.js'
-import { convertIamStringToRegex, getResourceTypesForAction, getVariablesFromString, isAssumedRoleArn } from './util.js'
+import { convertIamStringToRegex, getResourceTypesForAction, getVariablesFromString, isAssumedRoleArn, isIamUserArn } from './util.js'
 
 function testRequestWithContext(context: any, validContextVariables?: string[]): AwsRequest {
   validContextVariables = validContextVariables || []
@@ -307,6 +307,30 @@ describe('isAssumedRoleArn', () => {
 
     //When we check if it is an assumed role ARN
     const result = isAssumedRoleArn(userArn)
+
+    //Then it should return false
+    expect(result).toBe(false)
+  })
+})
+
+describe('isIamUserArn', () => {
+  it('should return true for IAM user ARN', () => {
+    //Given an IAM user ARN
+    const userArn = 'arn:aws:iam::123456789012:user/user-name'
+
+    //When we check if it is an IAM user ARN
+    const result = isIamUserArn(userArn)
+
+    //Then it should return true
+    expect(result).toBe(true)
+  })
+
+  it('should return false for non-IAM user ARN', () => {
+    //Given a non-IAM user ARN
+    const roleArn = 'arn:aws:sts::123456789012:assumed-role/role-name/session-name'
+
+    //When we check if it is an IAM user ARN
+    const result = isIamUserArn(roleArn)
 
     //Then it should return false
     expect(result).toBe(false)
