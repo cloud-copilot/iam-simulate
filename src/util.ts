@@ -61,12 +61,14 @@ export function convertIamString(value: string, request: AwsRequest, replaceOpti
     const {value: requestValue, error: requestValueError} = getContextSingleValue(request, variableName)
 
     if(requestValue) {
+      //TODO: Maybe escpae the * in the resolved value to ${*}
       return options.convertToRegex ? escapeRegexCharacters(requestValue) : requestValue
     } else if(defaultValue) {
       /*
         TODO: What happens in a request if a multi value context key is used in a string and there
         is a default value? Will it use the default value or will it fail the condition test?
       */
+     //TODO: Maybe escpae the * in the resolved value to ${*}
       return options.convertToRegex ? escapeRegexCharacters(defaultValue) : defaultValue
     } else {
       if(requestValueError == 'missing') {

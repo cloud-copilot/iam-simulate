@@ -5,7 +5,7 @@ import { BaseConditionOperator } from "./BaseConditionOperator.js"
 
 export interface BaseOperatorTest {
   name: string
-  requestContext?: { [key: string]: string }
+  requestContext?: { [key: string]: string | string[] }
   policyValues: string[]
   testValue: string
   expected: boolean,
@@ -32,7 +32,7 @@ export function testOperator(name: string, tests: BaseOperatorTest[], operator: 
           if(test.explains) {
             for(const explain of test.explains) {
               const found = result.explains.find(e => e.value === explain.value)
-              expect(found).toBeDefined()
+              expect(found, `Missing explain for ${explain.value}`).toBeDefined()
               expect(found?.matches, `${explain.value} match`).toBe(explain.matches)
               if(explain.resolvedValue) {
                 expect(found?.resolvedValue, `${explain.value} resolved value`).toBe(explain.resolvedValue)
