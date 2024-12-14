@@ -1,14 +1,35 @@
+import { ConditionValueExplain } from "../../explain/statementExplain.js";
 import { convertIamString } from "../../util.js";
 import { BaseConditionOperator } from "../BaseConditionOperator.js";
 
 export const StringEqualsIgnoreCase: BaseConditionOperator = {
   name: 'StringEqualsIgnoreCase',
   matches: (request, keyValue, policyValues) => {
-    const patterns = policyValues.map(value => {
+    const explains: ConditionValueExplain[] = policyValues.map((value) => {
       const {pattern, errors} = convertIamString(value, request, {replaceWildcards: false})
-      return new RegExp(pattern, 'i')
+      if(errors && errors.length > 0) {
+        return {
+          value,
+          matches: false,
+          errors
+        }
+      }
+
+      const resolvedValue = convertIamString(value, request, {replaceWildcards: false, convertToRegex: false})
+      const matches = new RegExp(pattern, 'i').test(keyValue)
+      return {
+        value,
+        matches,
+        resolvedValue: resolvedValue !== value ? resolvedValue : undefined,
+      }
     })
-    return patterns.some(pattern => pattern.test(keyValue))
+
+
+    const overallMatch = explains.some(explain => explain.matches)
+    return {
+      matches: overallMatch,
+      explains
+    }
   },
   allowsVariables: true,
   allowsWildcards: false

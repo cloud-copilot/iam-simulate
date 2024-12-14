@@ -5,7 +5,6 @@ import { BaseConditionOperator } from "../BaseConditionOperator.js";
 export const StringEquals: BaseConditionOperator = {
   name: 'StringEquals',
   matches: (request, keyValue, policyValues) => {
-
     const explains: ConditionValueExplain[] = policyValues.map((value) => {
       const {pattern, errors} = convertIamString(value, request, {replaceWildcards: false})
       if(errors && errors.length > 0) {
