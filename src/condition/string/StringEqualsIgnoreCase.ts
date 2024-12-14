@@ -1,6 +1,7 @@
 import { ConditionValueExplain } from "../../explain/statementExplain.js";
 import { convertIamString } from "../../util.js";
 import { BaseConditionOperator } from "../BaseConditionOperator.js";
+import { resolvedValue } from "../conditionUtil.js";
 
 export const StringEqualsIgnoreCase: BaseConditionOperator = {
   name: 'StringEqualsIgnoreCase',
@@ -15,12 +16,11 @@ export const StringEqualsIgnoreCase: BaseConditionOperator = {
         }
       }
 
-      const resolvedValue = convertIamString(value, request, {replaceWildcards: false, convertToRegex: false})
       const matches = new RegExp(pattern, 'i').test(keyValue)
       return {
         value,
         matches,
-        resolvedValue: resolvedValue !== value ? resolvedValue : undefined,
+        resolvedValue: resolvedValue(value, request),
       }
     })
 

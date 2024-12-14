@@ -3,7 +3,7 @@ import { AwsRequest } from './request/request.js'
 
 const matchesNothing = new RegExp('a^')
 
-interface StringReplaceOptions {
+export interface StringReplaceOptions {
   replaceWildcards: boolean
   convertToRegex: boolean
 }

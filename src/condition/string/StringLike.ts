@@ -1,13 +1,11 @@
 import { ConditionValueExplain } from "../../explain/statementExplain.js";
 import { convertIamString } from "../../util.js";
 import { BaseConditionOperator } from "../BaseConditionOperator.js";
+import { resolvedValue } from "../conditionUtil.js";
 
 export const StringLike: BaseConditionOperator = {
   name: 'StringLike',
   matches: (request, keyValue, policyValues) => {
-    // const patterns = policyValues.map(value => convertIamString(value, request, {replaceWildcards: true}).pattern)
-    // return patterns.some(pattern => pattern.test(keyValue))
-
     const explains: ConditionValueExplain[] = policyValues.map((value) => {
       const {pattern, errors} = convertIamString(value, request, {replaceWildcards: true})
       if(errors && errors.length > 0) {
@@ -18,12 +16,11 @@ export const StringLike: BaseConditionOperator = {
         }
       }
 
-      const resolvedValue = convertIamString(value, request, {replaceWildcards: false, convertToRegex: false})
       const matches = pattern.test(keyValue)
       return {
         value,
         matches,
-        resolvedValue: resolvedValue !== value ? resolvedValue : undefined,
+        resolvedValue: resolvedValue(value, request),
       }
     })
 
