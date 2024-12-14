@@ -103,7 +103,8 @@ export function singleConditionMatchesRequest(request: AwsRequest, condition: Co
       }
       //Do the loop
       const anyMatch = keyValue.values.some(value => {
-        return baseOperation(request, value, policyValues)
+        const baseMatch = baseOperation(request, value, policyValues)
+        return typeof baseMatch === 'boolean' ? baseMatch : baseMatch.matches
       })
 
       return {
@@ -147,6 +148,8 @@ export function singleConditionMatchesRequest(request: AwsRequest, condition: Co
       }
       //Do the loop
       const anyNotMatch = keyValue.values.some(value => {
+        const baseMatch = baseOperation(request, value, policyValues)
+        return typeof baseMatch === 'boolean' ? !baseMatch : !baseMatch.matches
         //TODO: Need to add explains for each value
         return !baseOperation(request, value, policyValues)
       })
@@ -207,9 +210,9 @@ export function singleConditionMatchesRequest(request: AwsRequest, condition: Co
 
   const valueExplains = policyValues.map(value => {
     const valueMatch = baseOperation(request, keyValue.value, [value])
-    const explain:ConditionValueExplain = {
+    const explain: ConditionValueExplain = {
       value,
-      matches: valueMatch
+      matches: typeof valueMatch === 'boolean' ? valueMatch : valueMatch.matches
     }
     if(isNotOperator) {
       explain.negativeMatchingValues = [value]

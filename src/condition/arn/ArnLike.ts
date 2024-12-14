@@ -1,5 +1,5 @@
 import { AwsRequest } from "../../request/request.js";
-import { convertIamStringToRegex, isNotDefined, splitArnParts } from "../../util.js";
+import { convertIamString, isNotDefined, splitArnParts } from "../../util.js";
 import { BaseConditionOperator } from "../BaseConditionOperator.js";
 
 export const ArnLike: BaseConditionOperator = {
@@ -41,7 +41,7 @@ function arnMatches(policyArn: string, requestArn: string, request: AwsRequest):
   }
 
   const replaceAndMatch = (policyPart: string, requestPart: string): boolean => {
-    const pattern = convertIamStringToRegex(policyPart, request, {replaceWildcards: true})
+    const {pattern, errors} = convertIamString(policyPart, request, {replaceWildcards: true})
     return pattern.test(requestPart)
   }
 

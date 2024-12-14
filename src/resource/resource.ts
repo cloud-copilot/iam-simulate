@@ -1,7 +1,7 @@
 import { Resource, Statement } from "@cloud-copilot/iam-policy";
 import { ResourceExplain, StatementExplain } from "../explain/statementExplain.js";
 import { AwsRequest } from "../request/request.js";
-import { convertIamStringToRegex, getResourceSegments } from "../util.js";
+import { convertIamString, getResourceSegments } from "../util.js";
 
 //TODO: Make a check to see if the action is a wildcard only action. This will have to happen outside of these functions.
 
@@ -143,8 +143,9 @@ function singleResourceMatchesRequest(request: AwsRequest, policyResource: Resou
     }
 
     const requestResourceId = resource.resource().slice(policyProduct.length)
+    const {pattern, errors} = convertIamString(policyResourceId, request)
 
-    if(!convertIamStringToRegex(policyResourceId, request).test(requestResourceId)) {
+    if(!pattern.test(requestResourceId)) {
       return {
         resource: policyResource.value(),
         matches: false,

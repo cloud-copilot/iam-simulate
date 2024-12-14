@@ -90,7 +90,7 @@ export function authorize(request: AuthorizationRequest): RequestAnalysis {
  * @returns the service authorizer for the request
  */
 export function getServiceAuthorizer(request: AuthorizationRequest): ServiceAuthorizer {
-  const serviceName = request.request.action.service().toLowerCase();
+  const serviceName = request.request.resource.service()
   if(serviceEngines[serviceName]) {
     return new serviceEngines[serviceName]();
   }
