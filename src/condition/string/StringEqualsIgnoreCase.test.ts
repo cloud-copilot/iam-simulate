@@ -81,7 +81,23 @@ const stringEqualsIgnoreCaseTests: BaseOperatorTest[] = [
         matches: false
       }
     ]
+  },
+  {
+    name: 'should return replacement errors',
+    requestContext: {"aws:PrincipalOrgPaths": ["123", "456"]},
+    policyValues: ['test${aws:PrincipalOrgPaths}'],
+    testValue: 'test123',
+    expected: false,
+    explains: [
+      {
+        value: 'test${aws:PrincipalOrgPaths}',
+        matches: false,
+        errors: ['{aws:PrincipalOrgPaths} is a multi value context key, and cannot be used for replacement. This will never match']
+
+      }
+    ]
   }
+
 ]
 
 testOperator('StringEqualsIgnoreCase', stringEqualsIgnoreCaseTests, StringEqualsIgnoreCase)
