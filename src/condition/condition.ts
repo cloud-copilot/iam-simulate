@@ -47,10 +47,6 @@ for(const operator of allOperators) {
 
 export function requestMatchesConditions(request: AwsRequest, conditions: Condition[]): { matches: ConditionMatchResult, details: Pick<StatementExplain, 'conditions'> } {
   const results = conditions.map(condition => singleConditionMatchesRequest(request, condition))
-  // const unknowns = results.filter(result => result === 'Unknown')
-  // if(unknowns.length > 0) {
-  //   return 'Unknown'
-  // }
   const nonMatch = results.some(result => !result.matches)
   return {
     matches: nonMatch ? 'NoMatch' : 'Match',
@@ -58,10 +54,6 @@ export function requestMatchesConditions(request: AwsRequest, conditions: Condit
       conditions: results
     }
   }
-  // if(noMatches.length > 0 ) {
-  //   return
-  // }
-  // return 'Match'
 }
 
 export function singleConditionMatchesRequest(request: AwsRequest, condition: Condition): ConditionExplain {
@@ -91,8 +83,6 @@ export function singleConditionMatchesRequest(request: AwsRequest, condition: Co
       }
 
       if(!baseOperation) {
-        //TODO: This should return a nomatch rather than throw an error
-        // throw new Error(`Unknown base operation: ${condition.operation().baseOperator()}`)
         return {
           operator: condition.operation().value(),
           conditionKeyValue: condition.conditionKey(),
@@ -103,8 +93,8 @@ export function singleConditionMatchesRequest(request: AwsRequest, condition: Co
       }
       //Do the loop
       const anyMatch = keyValue.values.some(value => {
-        const baseMatch = baseOperation(request, value, policyValues)
-        return typeof baseMatch === 'boolean' ? baseMatch : baseMatch.matches
+        const {matches, explains} = baseOperation(request, value, policyValues)
+        return matches
       })
 
       return {
@@ -148,10 +138,8 @@ export function singleConditionMatchesRequest(request: AwsRequest, condition: Co
       }
       //Do the loop
       const anyNotMatch = keyValue.values.some(value => {
-        const baseMatch = baseOperation(request, value, policyValues)
-        return typeof baseMatch === 'boolean' ? !baseMatch : !baseMatch.matches
-        //TODO: Need to add explains for each value
-        return !baseOperation(request, value, policyValues)
+        const {matches, explains} = baseOperation(request, value, policyValues)
+        return !matches
       })
 
       return {
@@ -160,7 +148,6 @@ export function singleConditionMatchesRequest(request: AwsRequest, condition: Co
         values: [],
         matches: !anyNotMatch
       }
-      //return anyNotMatch ? 'NoMatch' : 'Match'
     } else {
       throw new Error(`Unknown set operator: ${setOperator}`)
     }
@@ -179,7 +166,6 @@ export function singleConditionMatchesRequest(request: AwsRequest, condition: Co
         matches: true,
         matchedBecauseMissing: true
       }
-      // return 'Match'
     }
   }
 
@@ -193,12 +179,9 @@ export function singleConditionMatchesRequest(request: AwsRequest, condition: Co
       failedBecauseMissing: !keyValue,
       failedBecauseArray: keyValue?.isArrayValue(),
     }
-    // return 'NoMatch'
   }
 
   if(!baseOperation) {
-    //TODO: This should return a nomatch rather than throw an error
-    // throw new Error(`Unknown base operation: ${condition.operation().baseOperator()}`)
     return {
       operator: condition.operation().value(),
       conditionKeyValue: condition.conditionKey(),
@@ -208,31 +191,13 @@ export function singleConditionMatchesRequest(request: AwsRequest, condition: Co
     }
   }
 
-  const valueExplains = policyValues.map(value => {
-    const valueMatch = baseOperation(request, keyValue.value, [value])
-    const explain: ConditionValueExplain = {
-      value,
-      matches: typeof valueMatch === 'boolean' ? valueMatch : valueMatch.matches
-    }
-    if(isNotOperator) {
-      explain.negativeMatchingValues = [value]
-    } else {
-      explain.matchingValues = [value]
-    }
-    return explain
-  })
-
-  let matches = valueExplains.some(explain => explain.matches)
-
-  if(isNotOperator) {
-    matches = valueExplains.every(explain => explain.matches)
-  }
+  const {matches, explains} = baseOperation(request, keyValue.value, policyValues)
 
   return {
+    matches,
     operator: condition.operation().value(),
     conditionKeyValue: condition.conditionKey(),
-    values: condition.valueIsArray() ? valueExplains : valueExplains[0],
-    matches
+    values: condition.valueIsArray() ? explains : explains[0]
   }
 
 }
