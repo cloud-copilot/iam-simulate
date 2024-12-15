@@ -1,7 +1,7 @@
 import { BaseOperatorTest, testOperator } from "../baseConditionperatorTests.js";
-import { ArnLike } from "./ArnLike.js";
+import { ArnNotLike } from "./ArnNotLike.js";
 
-const ArnLikeTests: BaseOperatorTest[] = [
+const ArnNotLikeTests: BaseOperatorTest[] = [
   {
     name: 'should return false if not a valid request arn',
     requestContext: {'aws:username': 'Bob'},
@@ -32,56 +32,10 @@ const ArnLikeTests: BaseOperatorTest[] = [
     ]
   },
   {
-    name: 'should return true if a match',
+    name: 'should return false if a match',
     requestContext: {},
     policyValues: ['arn:aws:ec2:us-east-1:123456789012:instance/i-12345'],
     testValue: 'arn:aws:ec2:us-east-1:123456789012:instance/i-12345',
-    expected: true,
-    explains: [
-      {
-        matches: true,
-        value: 'arn:aws:ec2:us-east-1:123456789012:instance/i-12345',
-      }
-    ]
-  },
-  {
-    name: 'should return true if any match',
-    requestContext: {},
-    policyValues: [
-      'arn:aws:ec2:us-east-1:123456789012:instance/i-12345',
-      'arn:aws:ec2:us-east-1:123456789012:instance/i-98765'
-    ],
-    testValue: 'arn:aws:ec2:us-east-1:123456789012:instance/i-12345',
-    expected: true,
-    explains: [
-      {
-        matches: true,
-        value: 'arn:aws:ec2:us-east-1:123456789012:instance/i-12345',
-      },
-      {
-        matches: false,
-        value: 'arn:aws:ec2:us-east-1:123456789012:instance/i-98765',
-      }
-    ]
-  },
-  {
-    name: 'should return true if a match with no region or account id',
-    requestContext: {},
-    policyValues: ['arn:aws:s3:::my_corporate_bucket'],
-    testValue: 'arn:aws:s3:::my_corporate_bucket',
-    expected: true,
-    explains: [
-      {
-        matches: true,
-        value: 'arn:aws:s3:::my_corporate_bucket',
-      }
-    ]
-  },
-  {
-    name: 'is case sensitive',
-    requestContext: {},
-    policyValues: ['arn:aws:ec2:us-east-1:123456789012:instance/i-12345'],
-    testValue: 'arn:aws:ec2:us-east-1:123456789012:INSTANCE/I-12345',
     expected: false,
     explains: [
       {
@@ -91,14 +45,73 @@ const ArnLikeTests: BaseOperatorTest[] = [
     ]
   },
   {
-    name: 'should match wildcards in every segment',
+    name: 'should return true if values do not match',
     requestContext: {},
-    policyValues: ['arn:???:*:*:*:*'],
+    policyValues: ['arn:aws:ec2:us-east-1:123456789012:instance/i-98765'],
     testValue: 'arn:aws:ec2:us-east-1:123456789012:instance/i-12345',
     expected: true,
     explains: [
       {
         matches: true,
+        value: 'arn:aws:ec2:us-east-1:123456789012:instance/i-98765',
+      }
+    ]
+  },
+  {
+    name: 'should return false if any match',
+    requestContext: {},
+    policyValues: [
+      'arn:aws:ec2:us-east-1:123456789012:instance/i-12345',
+      'arn:aws:ec2:us-east-1:123456789012:instance/i-98765'
+    ],
+    testValue: 'arn:aws:ec2:us-east-1:123456789012:instance/i-12345',
+    expected: false,
+    explains: [
+      {
+        matches: false,
+        value: 'arn:aws:ec2:us-east-1:123456789012:instance/i-12345',
+      },
+      {
+        matches: true,
+        value: 'arn:aws:ec2:us-east-1:123456789012:instance/i-98765',
+      }
+    ]
+  },
+  {
+    name: 'should return false if a match with no region or account id',
+    requestContext: {},
+    policyValues: ['arn:aws:s3:::my_corporate_bucket'],
+    testValue: 'arn:aws:s3:::my_corporate_bucket',
+    expected: false,
+    explains: [
+      {
+        matches: false,
+        value: 'arn:aws:s3:::my_corporate_bucket',
+      }
+    ]
+  },
+  {
+    name: 'is case sensitive',
+    requestContext: {},
+    policyValues: ['arn:aws:ec2:us-east-1:123456789012:instance/i-12345'],
+    testValue: 'arn:aws:ec2:us-east-1:123456789012:INSTANCE/I-12345',
+    expected: true,
+    explains: [
+      {
+        matches: true,
+        value: 'arn:aws:ec2:us-east-1:123456789012:instance/i-12345',
+      }
+    ]
+  },
+  {
+    name: 'should match wildcards in every segment',
+    requestContext: {},
+    policyValues: ['arn:???:*:*:*:*'],
+    testValue: 'arn:aws:ec2:us-east-1:123456789012:instance/i-12345',
+    expected: false,
+    explains: [
+      {
+        matches: false,
         value: 'arn:???:*:*:*:*'
       }
     ]
@@ -108,10 +121,10 @@ const ArnLikeTests: BaseOperatorTest[] = [
     requestContext: {'aws:username': 'Bob'},
     policyValues: ['arn:aws:iam::123456789012:user/${aws:username}'],
     testValue: 'arn:aws:iam::123456789012:user/Bob',
-    expected: true,
+    expected: false,
     explains: [
       {
-        matches: true,
+        matches: false,
         value: 'arn:aws:iam::123456789012:user/${aws:username}',
         resolvedValue: 'arn:aws:iam::123456789012:user/Bob'
       }
@@ -133,4 +146,4 @@ const ArnLikeTests: BaseOperatorTest[] = [
   }
 ]
 
-testOperator('ArnLike', ArnLikeTests, ArnLike)
+testOperator('ArnNotLike', ArnNotLikeTests, ArnNotLike)
