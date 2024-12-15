@@ -1,3 +1,4 @@
+import { ConditionValueExplain } from "../../explain/statementExplain.js"
 import { isNotDefined } from "../../util.js"
 
 /**
@@ -28,11 +29,27 @@ export function parseNumber(value: string): number | undefined {
  * @param check
  * @returns
  */
-export function checkIfNumeric(policyValue: string, testValue: string, check: (policyValue: number, testValue: number) => boolean): boolean {
+export function checkIfNumeric(policyValue: string, testValue: string, check: (policyValue: number, testValue: number) => boolean): ConditionValueExplain {
   const policyNumber = parseNumber(policyValue)
   const testNumber = parseNumber(testValue)
-  if(isNotDefined(policyNumber) || isNotDefined(testNumber)) {
-    return false
+  if(isNotDefined(policyNumber)) {
+    return {
+      value: policyValue,
+      matches: false,
+      errors: [`${policyValue} is not a number`]
+    }
   }
-  return check(policyNumber, testNumber)
+  if(isNotDefined(testNumber)) {
+    return {
+      value: policyValue,
+      matches: false,
+      errors: [`request value '${testValue}' is not a number`]
+    }
+  }
+
+  const matches = check(policyNumber, testNumber)
+  return {
+    value: policyValue,
+    matches,
+  }
 }
