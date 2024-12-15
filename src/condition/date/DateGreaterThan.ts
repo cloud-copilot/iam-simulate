@@ -6,11 +6,16 @@ export const DateGreaterThan: BaseConditionOperator = {
   name: 'DateGreaterThan',
 
   matches: (request, keyValue, policyValues) => {
-    return policyValues.some(policyValue => {
+    const explains = policyValues.map(policyValue => {
       return checkIfDate(policyValue, keyValue, (policyEpoch, requestEpoch) => {
         return policyEpoch < requestEpoch
       })
     })
+
+    return {
+      matches: explains.some(explain => explain.matches),
+      explains
+    }
   },
   allowsVariables: false,
   allowsWildcards: false

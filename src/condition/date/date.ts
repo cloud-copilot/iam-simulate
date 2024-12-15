@@ -1,3 +1,4 @@
+import { ConditionValueExplain } from "../../explain/statementExplain.js"
 import { isDefined, isNotDefined } from "../../util.js"
 
 /**
@@ -20,8 +21,6 @@ export function parseDate(value: string): number | undefined {
     return dateNumber
   }
 
-
-
   return undefined
 }
 
@@ -33,11 +32,27 @@ export function parseDate(value: string): number | undefined {
  * @param check
  * @returns
  */
-export function checkIfDate(policyValue: string, testValue: string, check: (policyValue: number, testValue: number) => boolean): boolean {
-  const policyNumber = parseDate(policyValue)
-  const testNumber = parseDate(testValue)
-  if(isNotDefined(policyNumber) || isNotDefined(testNumber)) {
-    return false
+export function checkIfDate(policyValue: string, testValue: string, check: (policyValue: number, testValue: number) => boolean): ConditionValueExplain {
+  const policyDate = parseDate(policyValue)
+  const testDate = parseDate(testValue)
+  if(isNotDefined(policyDate)) {
+    return {
+      value: policyValue,
+      matches: false,
+      errors: [`${policyValue} is not a date`]
+    }
   }
-  return check(policyNumber, testNumber)
+  if(isNotDefined(testDate)) {
+    return {
+      value: policyValue,
+      matches: false,
+      errors: [`request value '${testValue}' is not a date`]
+    }
+  }
+
+  const matches = check(policyDate, testDate)
+  return {
+    value: policyValue,
+    matches,
+  }
 }
