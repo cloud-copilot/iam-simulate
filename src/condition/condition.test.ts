@@ -575,37 +575,34 @@ describe('singleConditionMatchesRequest', () => {
       expect(response.matches).toEqual(true)
     })
   })
+
+  it('should throw an error if the set operator is not found', () => {
+    //Given a condition with a set operator that does not exist
+    const policy = loadPolicy({
+      Version: '2012-10-17',
+      Statement: [{
+        Effect: 'Allow',
+        Action: '*',
+        Resource: '*',
+        Condition: {
+          "ForSomeValues:StringEquals": {
+            'aws:username': 'test'
+          }
+        }
+      }]
+    })
+    const condition = policy.statements()[0].conditions()[0]
+
+    //And a request
+    const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({}))
+
+    //When the request is checked against the condition
+    expect(() => singleConditionMatchesRequest(request, condition)).toThrow()
+
+  })
 })
 
 describe('requestMatchesConditions', () => {
-  // it('should return Unknown if any condition returns Unknown', () => {
-  //   // Given a request
-  //   const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:username': 'test'}))
-  //   // And a condition that returns Unknown
-  //   const policy = loadPolicy({
-  //     Version: '2012-10-17',
-  //     Statement: [{
-  //       Effect: 'Allow',
-  //       Action: '*',
-  //       Resource: '*',
-  //       Condition: {
-  //         FakeConditionOperator: {
-  //           'aws:username': 'test'
-  //         },
-  //         StringEquals: {
-  //           'aws:username': 'test'
-  //         }
-  //       }
-  //     }]
-  //   })
-
-  //   const conditions = policy.statements()[0].conditions()
-  //   // When the request is checked against the conditions
-  //   const response = requestMatchesConditions(request, conditions)
-
-  //   // Then the result should be 'Unknown'
-  //   expect(response).toEqual('Unknown')
-  // })
 
   it('should return NoMatch if any condition returns false', () => {
     // Given a request
@@ -664,4 +661,201 @@ describe('requestMatchesConditions', () => {
     // Then the result should be 'Unknown'
     expect(response.matches).toEqual('Match')
   })
+})
+
+
+describe('forAllValuesMatch', () => {
+  describe('positive operators', () => {
+    it('should have an array of matching values for a single policy value and return non matching values', () => {
+      //Given a condition using ForAllValues:StringLike
+      const policy = loadPolicy({
+        Version: '2012-10-17',
+        Statement: [{
+          Effect: 'Allow',
+          Action: '*',
+          Resource: '*',
+          Condition: {
+            'ForAllValues:StringLike': {
+              'aws:RequestTags': [
+                'A*', 'B*'
+              ]
+            }
+          }
+        }]
+      })
+      const condition = policy.statements()[0].conditions()[0]
+
+      //And a request with multiple values for that key
+      const contextKeys = {'aws:RequestTags': [
+        'Apple',
+        'Apricot',
+        'Banana',
+        'Blueberry',
+        'Cherry',
+        'Cranberry'
+      ]}
+      const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl(contextKeys))
+
+      //When the request is checked against the condition
+      const result = singleConditionMatchesRequest(request, condition)
+
+      //Then the result should not match
+      expect(result.matches).toEqual(false)
+      //And there should be matching values for each value in the policy
+      expect(result.values).toEqual([
+        {value: 'A*', matches: false, matchingValues: ['Apple', 'Apricot']},
+        {value: 'B*', matches: false, matchingValues: ['Banana', 'Blueberry']}
+      ])
+
+      //And the unmatched values should be the values that did not match
+      expect(result.unmatchedValues).toEqual(['Cherry', 'Cranberry'])
+    })
+  })
+
+  describe('negative operators', () => {
+    it('should have an array of negative matching values for a single policy value and return non matching values', () => {
+      //Given a condition using ForAllValues:StringNotLike
+      const policy = loadPolicy({
+        Version: '2012-10-17',
+        Statement: [{
+          Effect: 'Allow',
+          Action: '*',
+          Resource: '*',
+          Condition: {
+            'ForAllValues:StringNotLike': {
+              'aws:RequestTags': [
+                'A*', 'B*'
+              ]
+            }
+          }
+        }]
+      })
+      const condition = policy.statements()[0].conditions()[0]
+
+      //And a request with multiple values for that key
+      const contextKeys = {'aws:RequestTags': [
+        'Apple',
+        'Apricot',
+        'Banana',
+        'Blueberry',
+        'Cherry',
+        'Cranberry'
+      ]}
+      const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl(contextKeys))
+
+      //When the request is checked against the condition
+      const result = singleConditionMatchesRequest(request, condition)
+
+      // Then the result should not match
+      expect(result.matches).toEqual(false)
+      //And there should be matching values for each value in the policy
+      expect(result.values).toEqual([
+        {value: 'A*', matches: false, negativeMatchingValues: ['Apple', 'Apricot']},
+        {value: 'B*', matches: false, negativeMatchingValues: ['Banana', 'Blueberry']}
+      ])
+
+      // And the unmatched values should be the values that did not match
+      expect(result.unmatchedValues).toEqual(['Cherry', 'Cranberry'])
+
+    })
+  })
+})
+
+describe('forAnyValueMatch', () => {
+  describe('positive operators', () => {
+    it('should return an array of matching values for each value in the policy and return non matching values', () => {
+      //Given a condition using ForAnyValue:StringLike
+      const policy = loadPolicy({
+        Version: '2012-10-17',
+        Statement: [{
+          Effect: 'Allow',
+          Action: '*',
+          Resource: '*',
+          Condition: {
+            'ForAnyValue:StringLike': {
+              'aws:RequestTags': [
+                'A*', 'B*'
+              ]
+            }
+          }
+        }]
+      })
+
+      const condition = policy.statements()[0].conditions()[0]
+      //And a request with multiple values for that key
+      const contextKeys = {'aws:RequestTags': [
+        'Apple',
+        'Apricot',
+        'Banana',
+        'Blueberry',
+        'Cherry',
+        'Cranberry'
+      ]}
+      const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl(contextKeys))
+
+      //When the request is checked against the condition
+      const result = singleConditionMatchesRequest(request, condition)
+
+      //Then the result should match
+      expect(result.matches).toEqual(true)
+
+      //And there should be matching values for each value in the policy
+      expect(result.values).toEqual([
+        {value: 'A*', matches: true, matchingValues: ['Apple', 'Apricot']},
+        {value: 'B*', matches: true, matchingValues: ['Banana', 'Blueberry']}
+      ])
+
+      //And the unmatched values should be the values that did not match
+      expect(result.unmatchedValues).toEqual(['Cherry', 'Cranberry'])
+    })
+  })
+
+  describe('negative operators', () => {
+    it('should return an array of matching values for each value in the policy and return non matching values', () => {
+      //Given a condition using ForAnyValue:StringNotLike
+      const policy = loadPolicy({
+        Version: '2012-10-17',
+        Statement: [{
+          Effect: 'Allow',
+          Action: '*',
+          Resource: '*',
+          Condition: {
+            'ForAnyValue:StringNotLike': {
+              'aws:RequestTags': [
+                'A*', 'B*'
+              ]
+            }
+          }
+        }]
+      })
+
+      const condition = policy.statements()[0].conditions()[0]
+      //And a request with multiple values for that key
+      const contextKeys = {'aws:RequestTags': [
+        'Apple',
+        'Apricot',
+        'Banana',
+        'Blueberry',
+        'Cherry',
+        'Cranberry'
+      ]}
+      const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl(contextKeys))
+
+      //When the request is checked against the condition
+      const result = singleConditionMatchesRequest(request, condition)
+
+      //Then the result should match
+      expect(result.matches).toEqual(true)
+
+      //And there should be matching values for each value in the policy
+      expect(result.values).toEqual([
+        {value: 'A*', matches: true, matchingValues: ['Banana', 'Blueberry', 'Cherry', 'Cranberry']},
+        {value: 'B*', matches: true, matchingValues: ['Apple', 'Apricot', 'Cherry', 'Cranberry']}
+      ])
+
+      //And the unmatched values should be the values that did not match
+      expect(result.unmatchedValues).toEqual(['Cherry', 'Cranberry'])
+    })
+  })
+
 })

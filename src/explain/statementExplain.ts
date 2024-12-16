@@ -22,8 +22,8 @@ export interface ConditionValueExplain {
   value: string
   resolvedValue?: string
   matches: boolean
-  // matchingValues?: string[]
-  // negativeMatchingValues?: string[]
+  matchingValues?: string[]
+  negativeMatchingValues?: string[]
   errors?: string[]
 }
 

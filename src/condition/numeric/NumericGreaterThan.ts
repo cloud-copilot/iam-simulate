@@ -16,5 +16,6 @@ export const NumericGreaterThan: BaseConditionOperator = {
     }
   },
   allowsVariables: false,
-  allowsWildcards: false
+  allowsWildcards: false,
+  isNegative: false
 }

@@ -6,4 +6,5 @@ export interface BaseConditionOperator {
   matches: (request: AwsRequest, keyValue: string, policyValues: string[]) => { matches: boolean, explains: ConditionValueExplain[] }
   allowsVariables: boolean
   allowsWildcards: boolean
+  isNegative: boolean
 }

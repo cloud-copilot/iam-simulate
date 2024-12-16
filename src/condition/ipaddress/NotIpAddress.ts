@@ -14,5 +14,6 @@ export const NotIpAddress: BaseConditionOperator = {
     }
   },
   allowsVariables: false,
-  allowsWildcards: false
+  allowsWildcards: false,
+  isNegative: true
 }

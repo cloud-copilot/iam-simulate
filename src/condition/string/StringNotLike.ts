@@ -25,7 +25,7 @@ export const StringNotLike: BaseConditionOperator = {
       })
 
 
-      const overallMatch = explains.some(explain => explain.matches)
+      const overallMatch = !explains.some(explain => !explain.matches)
       return {
         matches: overallMatch,
         explains
@@ -33,5 +33,6 @@ export const StringNotLike: BaseConditionOperator = {
 
     },
   allowsVariables: true,
-  allowsWildcards: true
+  allowsWildcards: true,
+  isNegative: true
 }

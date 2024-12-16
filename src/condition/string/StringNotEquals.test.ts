@@ -42,6 +42,23 @@ const stringNotEqualsTests: BaseOperatorTest[] = [
     ]
   },
   {
+    name: 'should return false any value is a match',
+    requestContext: {},
+    policyValues: ['test1', 'test2'],
+    testValue: 'test1',
+    expected: false,
+    explains: [
+      {
+        value: 'test1',
+        matches: false
+      },
+      {
+        value: 'test2',
+        matches: true
+      }
+    ]
+  },
+  {
     name: 'should replace variables and return false if a match',
     requestContext: {'aws:username': 'Bob'},
     policyValues: ['arn:aws:iam::123456789012:user/${aws:username}'],
@@ -54,7 +71,6 @@ const stringNotEqualsTests: BaseOperatorTest[] = [
         resolvedValue: 'arn:aws:iam::123456789012:user/Bob'
       }
     ]
-
   },
   {
     name: 'should return replacement errors',

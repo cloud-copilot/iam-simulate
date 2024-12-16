@@ -23,5 +23,6 @@ export const BinaryEquals: BaseConditionOperator = {
     }
   },
   allowsVariables: true,
-  allowsWildcards: false
+  allowsWildcards: false,
+  isNegative: false
 }

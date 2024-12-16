@@ -60,6 +60,22 @@ const numericNotEqualsTests: BaseOperatorTest[] = [
         errors: [`request value 'a' is not a number`]
       }
     ]
+  },
+  {
+    name: 'should return false if any value is a match',
+    policyValues: ['10', '20'],
+    testValue: '10',
+    expected: false,
+    explains: [
+      {
+        matches: false,
+        value: '10',
+      },
+      {
+        matches: true,
+        value: '20',
+      }
+    ]
   }
 ]
 

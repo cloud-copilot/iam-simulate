@@ -33,5 +33,6 @@ export const StringLike: BaseConditionOperator = {
 
   },
   allowsVariables: true,
-  allowsWildcards: true
+  allowsWildcards: true,
+  isNegative: false
 }

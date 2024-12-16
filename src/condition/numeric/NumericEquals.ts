@@ -17,5 +17,6 @@ export const NumericEquals: BaseConditionOperator = {
     }
   },
   allowsVariables: false,
-  allowsWildcards: false
+  allowsWildcards: false,
+  isNegative: false
 }

@@ -1,17 +1,6 @@
 import { StatementExplain } from "./statementExplain.js";
 
 const explain1: StatementExplain = {
-  // request: {
-  //   action: 's3:GetObject',
-  //   principal: 'arn:aws:iam::123456789012:user/Bob',
-  //   resource: 'arn:aws:s3:::examplebucket/123.txt',
-  //   context: {
-  //     'aws:SecureTransport': 'true',
-  //     's3:ExistingObjectTag/Department': 'Engineering',
-  //     'aws:PrincipalTag/Department': 'Engineering'
-  //   }
-  // },
-
   identifier: 'Statement1',
   matches: true,
 
@@ -46,8 +35,6 @@ const explain1: StatementExplain = {
     }
   ],
 
-
-
   conditions: [
     {
       conditionKeyValue: 'aws:SecureTransport',
@@ -61,6 +48,129 @@ const explain1: StatementExplain = {
           errors: []
       },
     }, {
+      conditionKeyValue: 's3:PrincipalTag/Department',
+      resolvedConditionKeyValue: 'Engineering',
+      operator: 'StringEquals',
+      matches: true,
+      values: [
+        {
+          value: 'Engineering',
+          resolvedValue: 'Engineering',
+          matches: true,
+          errors: []
+        },
+        {
+          value: 'Quality',
+          resolvedValue: 'Engineering',
+          matches: false,
+          errors: []
+        }
+      ]
+    }
+  ]
+}
+
+
+const explain2: StatementExplain = {
+  identifier: 'Statement2',
+  matches: true,
+
+  effect: 'Allow',
+  actions: [
+    {
+      action: 's3:Put*',
+      matches: true
+    }
+  ],
+
+  resources: [
+    {
+      resource: 'arn:aws:s3:::examplebucket/*',
+      errors: [],
+      matches: true
+    }
+  ],
+
+  conditions: [
+    {
+      conditionKeyValue: 's3:RequestObjectTagKeys',
+      operator: 'ForAllValues:StringLike',
+      matches: true,
+      unmatchedValues: ['Color', 'Size'],
+      values:[
+        {
+          value: 'A*',
+          matches: true,
+          matchingValues: ['Apple', 'Apricot']
+        },
+        {
+          value: 'B*',
+          matches: true,
+          matchingValues: ['Banana', 'Blueberry']
+        }
+
+      ],
+    },
+    {
+      conditionKeyValue: 's3:RequestObjectTagKeys',
+      operator: 'ForAllValues:StringNotLike',
+      matches: true,
+      unmatchedValues: ['Color', 'Size'],
+      values:[
+        {
+          value: 'A*',
+          matches: true,
+          // matchingValues: ['Color', 'Size', 'Banana', 'Blueberry'],
+          negativeMatchingValues: ['Apple', 'Apricot']
+        },
+        {
+          value: 'B*',
+          matches: true,
+          // matchingValues: ['Color', 'Size', 'Apple', 'Apricot'],
+          negativeMatchingValues: ['Banana', 'Blueberry']
+        }
+
+      ],
+    },
+    {
+      conditionKeyValue: 's3:RequestObjectTagKeys',
+      operator: 'ForAnyValue:StringLike',
+      matches: true,
+      unmatchedValues: ['Color', 'Size'],
+      values:[
+        {
+          value: 'A*',
+          matches: true,
+          matchingValues: ['Apple', 'Apricot']
+        },
+        {
+          value: 'B*',
+          matches: true,
+          matchingValues: ['Banana', 'Blueberry']
+        }
+
+      ],
+    },
+    {
+      conditionKeyValue: 's3:RequestObjectTagKeys',
+      operator: 'ForAnyValue:StringNotLike',
+      matches: true,
+      unmatchedValues: ['Color', 'Size'],
+      values:[
+        {
+          value: 'A*',
+          matches: true,
+          matchingValues: ['Color', 'Size', 'Banana', 'Blueberry'],
+        },
+        {
+          value: 'B*',
+          matches: true,
+          matchingValues: ['Color', 'Size', 'Apple', 'Apricot'],
+        }
+
+      ],
+    },
+    {
       conditionKeyValue: 's3:PrincipalTag/Department',
       resolvedConditionKeyValue: 'Engineering',
       operator: 'StringEquals',

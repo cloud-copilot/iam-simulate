@@ -129,6 +129,25 @@ const notIpAddressTests: BaseOperatorTest[] = [
         value: '192.168.0.0/16'
       }
     ]
+  },
+  {
+    name: 'should return false if any value is a match',
+    policyValues: [
+      '192.168.0.0/8',
+      '10.10.0.0/16'
+    ],
+    testValue: '192.168.0.17',
+    expected: false,
+    explains: [
+      {
+        matches: false,
+        value: '192.168.0.0/8'
+      },
+      {
+        matches: true,
+        value: '10.10.0.0/16'
+      }
+    ]
   }
 ]
 

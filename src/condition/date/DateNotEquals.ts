@@ -16,5 +16,6 @@ export const DateNotEquals: BaseConditionOperator = {
     }
   },
   allowsVariables: false,
-  allowsWildcards: false
+  allowsWildcards: false,
+  isNegative: true
 }

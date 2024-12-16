@@ -81,6 +81,23 @@ const stringNotLikeTests: BaseOperatorTest[] = [
         errors: ['{aws:username} not found in request context, and no default value provided. This will never match']
       }
     ]
+  },
+  {
+    name: 'should return false if the request matches any of the policy values',
+    requestContext: {},
+    policyValues: ['A*', 'B*'],
+    testValue: 'Apple',
+    expected: false,
+    explains: [
+      {
+        value: 'A*',
+        matches: false,
+      },
+      {
+        value: 'B*',
+        matches: true
+      }
+    ]
   }
 ]
 

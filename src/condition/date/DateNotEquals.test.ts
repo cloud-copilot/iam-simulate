@@ -60,6 +60,22 @@ const dateNotEqualsTests: BaseOperatorTest[] = [
         errors: [`request value 'a' is not a date`]
       }
     ]
+  },
+  {
+    name: 'should return false if any value is a match',
+    policyValues: ['2023-12-25', '2024-01-01'],
+    testValue: '2024-01-01',
+    expected: false,
+    explains: [
+      {
+        matches: true,
+        value: '2023-12-25'
+      },
+      {
+        matches: false,
+        value: '2024-01-01'
+      }
+    ]
   }
 ]
 

@@ -18,5 +18,6 @@ export const DateGreaterThanEquals: BaseConditionOperator = {
     }
   },
   allowsVariables: false,
-  allowsWildcards: false
+  allowsWildcards: false,
+  isNegative: false
 }

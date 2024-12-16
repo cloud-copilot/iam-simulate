@@ -14,5 +14,6 @@ export const ArnNotLike: BaseConditionOperator = {
     }
   },
   allowsVariables: true,
-  allowsWildcards: true
+  allowsWildcards: true,
+  isNegative: true
 }

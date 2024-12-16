@@ -31,5 +31,6 @@ export const StringNotEqualsIgnoreCase: BaseConditionOperator = {
       }
     },
   allowsVariables: true,
-  allowsWildcards: false
+  allowsWildcards: false,
+  isNegative: true
 }

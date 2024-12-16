@@ -88,6 +88,18 @@ const ipAddressTests: BaseOperatorTest[] = [
     ]
   },
   {
+    name: 'V6: should be true if the request value is not a valid address',
+    policyValues: ['2001:0db8::/32'],
+    testValue: '123456789',
+    expected: false,
+    explains: [
+      {
+        matches: false,
+        value: '2001:0db8::/32'
+      }
+    ]
+  },
+  {
     name: 'V6: should be false if the IP address is not within the CIDR block',
     policyValues: ['2001:0db8::/32'],
     testValue: '2001:0db9:7335::8a2e:0370:85a3',
@@ -129,7 +141,6 @@ const ipAddressTests: BaseOperatorTest[] = [
         value: '192.168.0.0/16'
       }
     ]
-
   }
 ]
 

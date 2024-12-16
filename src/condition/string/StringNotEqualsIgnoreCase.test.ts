@@ -69,6 +69,23 @@ const stringNotEqualsIgnoreCaseTests: BaseOperatorTest[] = [
         errors: ['{aws:username} not found in request context, and no default value provided. This will never match']
       }
     ]
+  },
+  {
+    name: 'should return false if any value is a match',
+    requestContext: {},
+    policyValues: ['test1', 'test2'],
+    testValue: 'TEST1',
+    expected: false,
+    explains: [
+      {
+        value: 'test1',
+        matches: false
+      },
+      {
+        value: 'test2',
+        matches: true
+      }
+    ]
   }
 
 ]
