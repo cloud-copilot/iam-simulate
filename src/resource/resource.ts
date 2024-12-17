@@ -3,8 +3,6 @@ import { ResourceExplain, StatementExplain } from "../explain/statementExplain.j
 import { AwsRequest } from "../request/request.js";
 import { convertIamString, getResourceSegments } from "../util.js";
 
-//TODO: Make a check to see if the action is a wildcard only action. This will have to happen outside of these functions.
-
 /**
  * Convert a resource segment to a regular expression. This is without variables.
  *
@@ -144,18 +142,23 @@ function singleResourceMatchesRequest(request: AwsRequest, policyResource: Resou
 
     const requestResourceId = resource.resource().slice(policyProduct.length)
     const {pattern, errors} = convertIamString(policyResourceId, request)
+    const resolvedResourceId = convertIamString(policyResourceId, request, {convertToRegex: false, replaceWildcards: false})
+    const resolvedResource = policyResource.value().slice(0, policyResource.value().length - policyResourceId.length) + resolvedResourceId
+    const resolvedValue = resolvedResource === policyResource.value() ? undefined : resolvedResource
 
     if(!pattern.test(requestResourceId)) {
       return {
         resource: policyResource.value(),
         matches: false,
-        errors: ['Resource does not match'],
+        errors,
+        resolvedValue
       }
     }
 
     return {
       resource: policyResource.value(),
       matches: true,
+      resolvedValue
     }
   } else {
     throw new Error('Unknown resource type');

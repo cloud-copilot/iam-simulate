@@ -207,7 +207,6 @@ export function forAllValuesMatch(request: AwsRequest,
     // return 'NoMatch'
   }
   if(!baseOperation) {
-    //TODO: This should return a nomatch rather than throw an error
     return {
       operator: condition.operation().value(),
       conditionKeyValue: condition.conditionKey(),
