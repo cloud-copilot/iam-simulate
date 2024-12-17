@@ -1,3 +1,5 @@
+export type ExplainPrincipalMatch = 'Match' | 'NoMatch' | 'AccountLevelMatch' | 'SessionRoleMatch' | 'SessionUserMatch'
+
 export interface ActionExplain {
   action: string
   matches: boolean
@@ -12,7 +14,7 @@ export interface ResourceExplain {
 
 export interface PrincipalExplain {
   principal: string
-  matches: 'Match' | 'NoMatch' | 'AccountLevelMatch' | 'SessionRoleMatch' | 'SessionUserMatch'
+  matches: ExplainPrincipalMatch
   roleForSessionArn?: string
   userForSessionArn?: string
   errors?: string[]
@@ -48,6 +50,11 @@ export interface StatementExplain {
   //   resource: string
   //   context: Record<string, string | string[]>
   // }
+
+  actionMatch: boolean
+  resourceMatch: boolean
+  principalMatch: ExplainPrincipalMatch
+  conditionMatch: boolean
 
   matches: boolean
   identifier: string

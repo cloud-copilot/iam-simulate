@@ -3,6 +3,10 @@ import { StatementExplain } from "./statementExplain.js";
 const explain1: StatementExplain = {
   identifier: 'Statement1',
   matches: true,
+  actionMatch: true,
+  resourceMatch: true,
+  principalMatch: 'Match',
+  conditionMatch: true,
 
   effect: 'Allow',
   actions: [
@@ -74,6 +78,10 @@ const explain1: StatementExplain = {
 const explain2: StatementExplain = {
   identifier: 'Statement2',
   matches: true,
+  actionMatch: true,
+  resourceMatch: true,
+  principalMatch: 'Match',
+  conditionMatch: true,
 
   effect: 'Allow',
   actions: [

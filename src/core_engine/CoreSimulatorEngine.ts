@@ -1,8 +1,8 @@
 import { Policy, Statement } from "@cloud-copilot/iam-policy";
 import { requestMatchesStatementActions } from "../action/action.js";
-import { requestMatchesConditions } from "../condition/condition.js";
+import { ConditionMatchResult, requestMatchesConditions } from "../condition/condition.js";
 import { EvaluationResult, IdentityAnalysis, OuScpAnalysis, RequestAnalysis, ResourceAnalysis, ScpAnalysis } from "../evaluate.js";
-import { StatementExplain } from "../explain/statementExplain.js";
+import { ExplainPrincipalMatch, StatementExplain } from "../explain/statementExplain.js";
 import { PrincipalMatchResult, requestMatchesStatementPrincipals } from "../principal/principal.js";
 import { AwsRequest } from "../request/request.js";
 import { requestMatchesStatementResources } from "../resource/resource.js";
@@ -126,7 +126,7 @@ export function analyzeIdentityPolicies(identityPolicies: Policy[], request: Aws
         actionMatch,
         conditionMatch,
         principalMatch,
-        explain: makeStatementExplain(statement, overallMatch, {...resourceDetails, ...actionDetails, ...conditionDetails})
+        explain: makeStatementExplain(statement, overallMatch, actionMatch, principalMatch, resourceMatch, conditionMatch, {...resourceDetails, ...actionDetails, ...conditionDetails})
       }
 
       if(identityStatementExplicitDeny(statementAnalysis)) {
@@ -178,7 +178,7 @@ export function analyzeServiceControlPolicies(serviceControlPolicies: ServiceCon
           actionMatch,
           conditionMatch,
           principalMatch,
-          explain: makeStatementExplain(statement, overallMatch, {...resourceDetails, ...actionDetails, ...conditionDetails})
+          explain: makeStatementExplain(statement, overallMatch, actionMatch, principalMatch, resourceMatch, conditionMatch,{...resourceDetails, ...actionDetails, ...conditionDetails})
         }
 
         if(identityStatementAllows(statementAnalysis)) {
@@ -247,7 +247,7 @@ export function analyzeResourcePolicy(resourcePolicy: Policy | undefined, reques
       actionMatch,
       conditionMatch,
       principalMatch,
-      explain: makeStatementExplain(statement, overallMatch, {...resourceDetails, ...actionDetails, ...principalDetails, ...conditionDetails})
+      explain: makeStatementExplain(statement, overallMatch, actionMatch, principalMatch, resourceMatch, conditionMatch,{...resourceDetails, ...actionDetails, ...principalDetails, ...conditionDetails})
     }
     if(identityStatementExplicitDeny(analysis) && analysis.principalMatch !== 'NoMatch') {
       resourceAnalysis.denyStatements.push(analysis);
@@ -283,11 +283,15 @@ export function analyzePermissionBoundaryPolicies(permissionBoundaries: Policy[]
 }
 
 
-function makeStatementExplain(statement: Statement, overallMatch: boolean, details: Partial<StatementExplain>): StatementExplain {
+function makeStatementExplain(statement: Statement, overallMatch: boolean, actionMatch: boolean, principalMatch: ExplainPrincipalMatch, resourceMatch: boolean, conditionMatch: ConditionMatchResult,  details: Partial<StatementExplain>): StatementExplain {
   return {
     effect: statement.effect(),
     identifier: statement.sid() || statement.index().toString(),
     matches: overallMatch,
+    actionMatch,
+    principalMatch,
+    resourceMatch,
+    conditionMatch: conditionMatch === 'Match',
     ...details
   }
 }
