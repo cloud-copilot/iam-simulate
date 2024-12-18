@@ -130,10 +130,14 @@ export function singleValueMatch(request: AwsRequest,
     //Check if it exists, return true if it doesn't
     //Double check what happens here if the key is not a valid key or is of the wrong type
     if(!keyValue) {
+      const valueExplains: ConditionValueExplain[] = condition.conditionValues().map(value => ({
+        value,
+        matches: true
+      }))
       return {
         operator: condition.operation().value(),
         conditionKeyValue: condition.conditionKey(),
-        values: [],
+        values: condition.valueIsArray() ? valueExplains : valueExplains[0],
         matches: true,
         matchedBecauseMissing: true,
         resolvedConditionKeyValue: keyValue

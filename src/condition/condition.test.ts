@@ -32,7 +32,7 @@ describe('singleConditionMatchesRequest', () => {
     expect(result.resolvedConditionKeyValue).toEqual(undefined)
   })
 
-  it('should return Match if the base operation is negative and the key does not exist', () => {
+  it('should return Match if the base operation is negative and the key does not exist, single value', () => {
     //Given a request
     const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({}))
     //And a condition that test for an operation that does not exist
@@ -56,6 +56,39 @@ describe('singleConditionMatchesRequest', () => {
     //Then the result should be 'Match'
     expect(response.matches).toEqual(true)
     expect(response.resolvedConditionKeyValue).toEqual(undefined)
+    expect(response.matchedBecauseMissing).toEqual(true)
+    expect(response.values).toEqual({value: 'test', matches: true})
+  })
+
+  it('should return Match if the base operation is negative and the key does not exist, array', () => {
+    //Given a request
+    const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({}))
+    //And a condition that test for an operation that does not exist
+    const policy = loadPolicy({
+      Version: '2012-10-17',
+      Statement: [{
+        Effect: 'Allow',
+        Action: '*',
+        Resource: '*',
+        Condition: {
+          StringNotEquals: {
+            'aws:username': ['test1', 'test2']
+          }
+        }
+      }]
+    })
+    const condition = policy.statements()[0].conditions()[0]
+    //When the request is checked against the condition
+    const response = singleConditionMatchesRequest(request, condition)
+
+    //Then the result should be 'Match'
+    expect(response.matches).toEqual(true)
+    expect(response.resolvedConditionKeyValue).toEqual(undefined)
+    expect(response.matchedBecauseMissing).toEqual(true)
+    expect(response.values).toEqual([
+      {value: 'test1', matches: true},
+      {value: 'test2', matches: true}
+    ])
   })
 
   it('should return NoMatch if the operation is single value but the key is an array', () => {
