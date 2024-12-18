@@ -56,10 +56,11 @@ for(const operator of allOperators) {
 export function requestMatchesConditions(request: AwsRequest, conditions: Condition[]): { matches: ConditionMatchResult, details: Pick<StatementExplain, 'conditions'> } {
   const results = conditions.map(condition => singleConditionMatchesRequest(request, condition))
   const nonMatch = results.some(result => !result.matches)
+
   return {
     matches: nonMatch ? 'NoMatch' : 'Match',
     details: {
-      conditions: results
+      conditions: results.length == 0 ? undefined : results
     }
   }
 }

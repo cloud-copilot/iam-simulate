@@ -1,4 +1,4 @@
-import { loadPolicy } from "@cloud-copilot/iam-policy";
+import { Condition, loadPolicy } from "@cloud-copilot/iam-policy";
 import { describe, expect, it } from "vitest";
 import { AwsRequest, AwsRequestImpl } from "../request/request.js";
 import { RequestContextImpl } from "../requestContext.js";
@@ -660,6 +660,24 @@ describe('requestMatchesConditions', () => {
 
     // Then the result should be 'Unknown'
     expect(response.matches).toEqual('Match')
+  })
+
+  it('should return undefined for details if there are no conditions', () => {
+    //Given an empty array of conditions
+    const conditions: Condition[] = []
+
+    //And a request
+    const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:username': 'test'}))
+
+    //When the request is checked against the conditions
+    const response = requestMatchesConditions(request, conditions)
+
+    //Then it should be a match
+    expect(response.matches).toEqual('Match')
+    //And there should be no details
+    expect(response.details.conditions).toEqual(undefined)
+
+
   })
 })
 
