@@ -117,6 +117,71 @@ describe('singleConditionMatchesRequest', () => {
     //Then the result should be 'NoMatch'
     expect(response.matches).toEqual(false)
     expect(response.resolvedConditionKeyValue).toEqual(undefined)
+    expect(response.failedBecauseArray).toEqual(true)
+    expect(response.values).toEqual(
+      {value: 'test', matches: false}
+    )
+  })
+
+  it('should return NoMatch if the operation is a single value, the operator is positive, and the value is missing', () => {
+    //Given a request
+    const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({}))
+    //And a single valued condition test for that key
+    const policy = loadPolicy({
+      Version: '2012-10-17',
+      Statement: [{
+        Effect: 'Allow',
+        Action: '*',
+        Resource: '*',
+        Condition: {
+          StringEquals: {
+            'aws:PrincipalOrgId': 'o-123456'
+          }
+        }
+      }]
+    })
+
+    const condition = policy.statements()[0].conditions()[0]
+
+    //When the request is checked against the condition
+    const response = singleConditionMatchesRequest(request, condition)
+
+    //Then the result should be 'Match'
+    expect(response.matches).toEqual(false)
+    expect(response.failedBecauseMissing).toEqual(true)
+    expect(response.values).toEqual({value: 'o-123456', matches: false})
+  })
+
+  it('should return NoMatch if the operation is a single value, the operator is positive, and the value is missing - array', () => {
+    //Given a request
+    const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({}))
+    //And a single valued condition test for that key
+    const policy = loadPolicy({
+      Version: '2012-10-17',
+      Statement: [{
+        Effect: 'Allow',
+        Action: '*',
+        Resource: '*',
+        Condition: {
+          StringEquals: {
+            'aws:PrincipalOrgId': ['o-123456', 'o-654321']
+          }
+        }
+      }]
+    })
+
+    const condition = policy.statements()[0].conditions()[0]
+
+    //When the request is checked against the condition
+    const response = singleConditionMatchesRequest(request, condition)
+
+    //Then the result should be 'Match'
+    expect(response.matches).toEqual(false)
+    expect(response.failedBecauseMissing).toEqual(true)
+    expect(response.values).toEqual([
+      {value: 'o-123456', matches: false},
+      {value: 'o-654321', matches: false}
+    ])
   })
 
   it('should return Match if the operation is a single value, the key is a single value, and they match', () => {

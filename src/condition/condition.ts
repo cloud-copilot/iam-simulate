@@ -147,10 +147,14 @@ export function singleValueMatch(request: AwsRequest,
 
   if(!keyValue || !keyValue.isStringValue()) {
     //Set operator is required for a multi-value key
+    const valueExplains: ConditionValueExplain[] = condition.conditionValues().map(value => ({
+      value,
+      matches: false
+    }))
     return {
       operator: condition.operation().value(),
       conditionKeyValue: condition.conditionKey(),
-      values: [],
+      values: condition.valueIsArray() ? valueExplains : valueExplains[0],
       matches: false,
       failedBecauseMissing: !keyValue,
       failedBecauseArray: keyValue?.isArrayValue(),
@@ -158,10 +162,15 @@ export function singleValueMatch(request: AwsRequest,
   }
 
   if(!baseOperation) {
+    const valueExplains: ConditionValueExplain[] = condition.conditionValues().map(value => ({
+      value,
+      matches: false
+    }))
+
     return {
       operator: condition.operation().value(),
       conditionKeyValue: condition.conditionKey(),
-      values: [],
+      values: condition.valueIsArray() ? valueExplains : valueExplains[0],
       matches: false,
       missingOperator: true
     }
