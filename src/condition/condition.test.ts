@@ -1,14 +1,8 @@
 import { Condition, loadPolicy } from "@cloud-copilot/iam-policy";
 import { describe, expect, it } from "vitest";
-import { AwsRequest, AwsRequestImpl } from "../request/request.js";
+import { AwsRequestImpl } from "../request/request.js";
 import { RequestContextImpl } from "../requestContext.js";
 import { requestMatchesConditions, singleConditionMatchesRequest } from "./condition.js";
-
-function testRequestWithContext(context: any, validContextVariables?: string[]): AwsRequest {
-  validContextVariables = validContextVariables || []
-  //For now we assume that all values passed into the context are valid
-  return new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl(context))
-}
 
 describe('singleConditionMatchesRequest', () => {
   it('should return no match if the base operation is not found', () => {
@@ -35,6 +29,7 @@ describe('singleConditionMatchesRequest', () => {
 
     //Then the result should not match
     expect(result.matches).toEqual(false)
+    expect(result.resolvedConditionKeyValue).toEqual(undefined)
   })
 
   it('should return Match if the base operation is negative and the key does not exist', () => {
@@ -60,6 +55,7 @@ describe('singleConditionMatchesRequest', () => {
 
     //Then the result should be 'Match'
     expect(response.matches).toEqual(true)
+    expect(response.resolvedConditionKeyValue).toEqual(undefined)
   })
 
   it('should return NoMatch if the operation is single value but the key is an array', () => {
@@ -87,6 +83,7 @@ describe('singleConditionMatchesRequest', () => {
 
     //Then the result should be 'NoMatch'
     expect(response.matches).toEqual(false)
+    expect(response.resolvedConditionKeyValue).toEqual(undefined)
   })
 
   it('should return Match if the operation is a single value, the key is a single value, and they match', () => {
@@ -114,6 +111,7 @@ describe('singleConditionMatchesRequest', () => {
 
     //Then the result should be 'Match'
     expect(response.matches).toEqual(true)
+    expect(response.resolvedConditionKeyValue).toEqual('o-123456')
   })
 
   it('should return NoMatch if the operation is a single value, the key is a single value, and they do not match', () => {
@@ -141,6 +139,7 @@ describe('singleConditionMatchesRequest', () => {
 
     //Then the result should be 'NoMatch'
     expect(response.matches).toEqual(false)
+    expect(response.resolvedConditionKeyValue).toEqual('o-123456')
   })
 
   describe('ForAnyValue', () => {
@@ -167,6 +166,7 @@ describe('singleConditionMatchesRequest', () => {
 
       //Then the result should be 'NoMatch'
       expect(response.matches).toEqual(false)
+      expect(response.resolvedConditionKeyValue).toEqual(undefined)
     })
 
     it('should return NoMatch if none of the values match', () => {
@@ -192,6 +192,7 @@ describe('singleConditionMatchesRequest', () => {
 
       //Then the result should be 'NoMatch'
       expect(response.matches).toEqual(false)
+      expect(response.resolvedConditionKeyValue).toEqual(undefined)
     })
 
     it('should return Match if any of the values match', () => {
@@ -217,6 +218,7 @@ describe('singleConditionMatchesRequest', () => {
 
       //Then the result should be 'Match'
       expect(response.matches).toEqual(true)
+      expect(response.resolvedConditionKeyValue).toEqual(undefined)
     })
 
     it('should return Match if all of the values match', () => {
@@ -242,6 +244,7 @@ describe('singleConditionMatchesRequest', () => {
 
       //Then the result should be 'Match'
       expect(response.matches).toEqual(true)
+      expect(response.resolvedConditionKeyValue).toEqual(undefined)
     })
 
     it('should return no match if the base operation is not found', () => {
@@ -268,6 +271,7 @@ describe('singleConditionMatchesRequest', () => {
 
       //Then it should not be a match
       expect(result.matches).toEqual(false)
+      expect(result.resolvedConditionKeyValue).toEqual(undefined)
     })
   })
 
@@ -295,6 +299,12 @@ describe('singleConditionMatchesRequest', () => {
 
       //Then the result should be 'Match'
       expect(response.matches).toEqual(true)
+      expect(response.resolvedConditionKeyValue).toEqual(undefined)
+      expect(response.matchedBecauseMissing).toEqual(true)
+      expect(response.values).toEqual([
+        {value: 'A', matches: true},
+        {value: 'B', matches: true}
+      ])
     })
 
     it('should return no match if none of the values match', () => {
@@ -320,6 +330,11 @@ describe('singleConditionMatchesRequest', () => {
 
       //Then the result should be 'NoMatch'
       expect(response.matches).toEqual(false)
+      expect(response.resolvedConditionKeyValue).toEqual(undefined)
+      expect(response.values).toEqual([
+        {value: 'A', matches: false},
+        {value: 'B', matches: false}
+      ])
     })
 
     it('should return no match if some of the values match but not all', () => {
@@ -345,6 +360,7 @@ describe('singleConditionMatchesRequest', () => {
 
       //Then the result should be 'NoMatch'
       expect(response.matches).toEqual(false)
+      expect(response.resolvedConditionKeyValue).toEqual(undefined)
     })
 
     it('should return Match if all of the values match', () => {
@@ -370,6 +386,7 @@ describe('singleConditionMatchesRequest', () => {
 
       //Then the result should be 'Match'
       expect(response.matches).toEqual(true)
+      expect(response.resolvedConditionKeyValue).toEqual(undefined)
     })
 
     it('should return no match if the value is not an array', () => {
@@ -395,6 +412,12 @@ describe('singleConditionMatchesRequest', () => {
 
       //Then the result should be 'NoMatch'
       expect(response.matches).toEqual(false)
+      expect(response.resolvedConditionKeyValue).toEqual(undefined)
+      expect(response.failedBecauseNotArray).toEqual(true)
+      expect(response.values).toEqual([
+        {value: 'o-abcdefg', matches: false},
+        {value: 'o-zyxwvu', matches: false}
+      ])
     })
 
     it('should return no match if the base operation is not found', () => {
@@ -421,6 +444,12 @@ describe('singleConditionMatchesRequest', () => {
 
       //Then the should not be a match
       expect(result.matches).toEqual(false)
+      expect(result.resolvedConditionKeyValue).toEqual(undefined)
+      expect(result.missingOperator).toEqual(true)
+      expect(result.values).toEqual([
+        {value: 'A', matches: false},
+        {value: 'B', matches: false}
+      ])
     })
   })
 
@@ -448,6 +477,8 @@ describe('singleConditionMatchesRequest', () => {
 
       //Then the result should be 'Match'
       expect(response.matches).toEqual(true)
+      expect(response.resolvedConditionKeyValue).toEqual(undefined)
+      expect(response.values).toEqual({value: 'true', matches: true})
     })
 
     it('should return NoMatch if the key exists and the policy has true', () => {
@@ -473,6 +504,8 @@ describe('singleConditionMatchesRequest', () => {
 
       //Then the result should be 'NoMatch'
       expect(response.matches).toEqual(false)
+      expect(response.resolvedConditionKeyValue).toEqual(undefined)
+      expect(response.values).toEqual({value: 'true', matches: false})
     })
 
     it('should return NoMatch if the key does not exist and the policy has false', () => {
@@ -498,6 +531,8 @@ describe('singleConditionMatchesRequest', () => {
 
       //Then the result should be 'Match'
       expect(response.matches).toEqual(false)
+      expect(response.resolvedConditionKeyValue).toEqual(undefined)
+      expect(response.values).toEqual({value: 'false', matches: false})
     })
 
     it('should return Match if the key exists and the policy has false', () => {
@@ -523,6 +558,8 @@ describe('singleConditionMatchesRequest', () => {
 
       //Then the result should be 'Match'
       expect(response.matches).toEqual(true)
+      expect(response.resolvedConditionKeyValue).toEqual(undefined)
+      expect(response.values).toEqual({value: 'false', matches: true})
     })
 
     it('should treat treat ForAllValues:Null the same as Null', () => {
@@ -548,6 +585,8 @@ describe('singleConditionMatchesRequest', () => {
 
       //Then the result should be 'Match'
       expect(response.matches).toEqual(true)
+      expect(response.resolvedConditionKeyValue).toEqual(undefined)
+      expect(response.values).toEqual({value: 'true', matches: true})
     })
 
     it('should treat ForAnyValue:Null the same as Null', () => {
@@ -573,6 +612,8 @@ describe('singleConditionMatchesRequest', () => {
 
       //Then the result should be 'Match'
       expect(response.matches).toEqual(true)
+      expect(response.resolvedConditionKeyValue).toEqual(undefined)
+      expect(response.values).toEqual({value: 'true', matches: true})
     })
   })
 
@@ -598,12 +639,10 @@ describe('singleConditionMatchesRequest', () => {
 
     //When the request is checked against the condition
     expect(() => singleConditionMatchesRequest(request, condition)).toThrow()
-
   })
 })
 
 describe('requestMatchesConditions', () => {
-
   it('should return NoMatch if any condition returns false', () => {
     // Given a request
     const request = new AwsRequestImpl('', {resource: '', accountId: ''}, '', new RequestContextImpl({'aws:username': 'test'}))
@@ -631,6 +670,7 @@ describe('requestMatchesConditions', () => {
 
     // Then the result should be 'Unknown'
     expect(response.matches).toEqual('NoMatch')
+    expect(response.details.conditions?.at(1)?.resolvedConditionKeyValue).toEqual('test')
   })
 
   it('should return Match if all conditions return true', () => {
@@ -676,8 +716,6 @@ describe('requestMatchesConditions', () => {
     expect(response.matches).toEqual('Match')
     //And there should be no details
     expect(response.details.conditions).toEqual(undefined)
-
-
   })
 })
 
@@ -727,6 +765,7 @@ describe('forAllValuesMatch', () => {
 
       //And the unmatched values should be the values that did not match
       expect(result.unmatchedValues).toEqual(['Cherry', 'Cranberry'])
+      expect(result.resolvedConditionKeyValue).toEqual(undefined)
     })
   })
 
@@ -774,7 +813,7 @@ describe('forAllValuesMatch', () => {
 
       // And the unmatched values should be the values that did not match
       expect(result.unmatchedValues).toEqual(['Cherry', 'Cranberry'])
-
+      expect(result.resolvedConditionKeyValue).toEqual(undefined)
     })
   })
 })
@@ -825,6 +864,7 @@ describe('forAnyValueMatch', () => {
 
       //And the unmatched values should be the values that did not match
       expect(result.unmatchedValues).toEqual(['Cherry', 'Cranberry'])
+      expect(result.resolvedConditionKeyValue).toEqual(undefined)
     })
   })
 
@@ -873,6 +913,7 @@ describe('forAnyValueMatch', () => {
 
       //And the unmatched values should be the values that did not match
       expect(result.unmatchedValues).toEqual(['Cherry', 'Cranberry'])
+      expect(result.resolvedConditionKeyValue).toEqual(undefined)
     })
   })
 

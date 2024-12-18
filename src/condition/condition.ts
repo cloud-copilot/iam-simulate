@@ -116,7 +116,7 @@ function testNull(condition: Condition, keyExists: boolean): ConditionExplain {
   return {
     operator: condition.operation().value(),
     conditionKeyValue: condition.conditionKey(),
-    values: conditionValues,
+    values: condition.valueIsArray() ? conditionValues : conditionValues[0],
     matches: conditionValues.some(value => value.matches)
   }
 }
@@ -135,7 +135,8 @@ export function singleValueMatch(request: AwsRequest,
         conditionKeyValue: condition.conditionKey(),
         values: [],
         matches: true,
-        matchedBecauseMissing: true
+        matchedBecauseMissing: true,
+        resolvedConditionKeyValue: keyValue
       }
     }
   }
@@ -168,7 +169,8 @@ export function singleValueMatch(request: AwsRequest,
     matches,
     operator: condition.operation().value(),
     conditionKeyValue: condition.conditionKey(),
-    values: condition.valueIsArray() ? explains : explains[0]
+    values: condition.valueIsArray() ? explains : explains[0],
+    resolvedConditionKeyValue: keyValue.value
   }
 }
 
@@ -186,11 +188,21 @@ export function forAllValuesMatch(request: AwsRequest,
                                   condition: Condition,
                                   keyValue: ContextKey | undefined,
                                   baseOperation: BaseConditionOperator): ConditionExplain {
+
+  const matchingValueExplains: ConditionValueExplain[] = condition.conditionValues().map(value => ({
+    value,
+    matches: true,
+  }))
+  const notMatchingValueExplains: ConditionValueExplain[] = condition.conditionValues().map(value => ({
+    value,
+    matches: false,
+  }))
+
   if(!keyValue) {
     return {
       operator: condition.operation().value(),
       conditionKeyValue: condition.conditionKey(),
-      values: [],
+      values: matchingValueExplains,
       matches: true,
       matchedBecauseMissing: true
     }
@@ -200,7 +212,7 @@ export function forAllValuesMatch(request: AwsRequest,
     return {
       operator: condition.operation().value(),
       conditionKeyValue: condition.conditionKey(),
-      values: [],
+      values: notMatchingValueExplains,
       matches: false,
       failedBecauseMissing: !keyValue,
       failedBecauseNotArray: !!keyValue && !keyValue.isArrayValue()
@@ -211,7 +223,7 @@ export function forAllValuesMatch(request: AwsRequest,
     return {
       operator: condition.operation().value(),
       conditionKeyValue: condition.conditionKey(),
-      values: [],
+      values: notMatchingValueExplains,
       matches: false,
       missingOperator: true
     }
@@ -279,11 +291,17 @@ export function forAnyValueMatch(request: AwsRequest,
                                  condition: Condition,
                                  keyValue: ContextKey | undefined,
                                  baseOperation: BaseConditionOperator): ConditionExplain {
+
+  const failedValueExplains: ConditionValueExplain[] = condition.conditionValues().map(value => ({
+    value,
+    matches: false,
+  } as ConditionValueExplain))
+
   if(!keyValue || !keyValue.isArrayValue()) {
     return {
       operator: condition.operation().value(),
       conditionKeyValue: condition.conditionKey(),
-      values: [],
+      values: failedValueExplains,
       matches: false,
       failedBecauseMissing: !keyValue,
       failedBecauseNotArray: keyValue && !keyValue.isArrayValue()
@@ -295,7 +313,7 @@ export function forAnyValueMatch(request: AwsRequest,
     return {
       operator: condition.operation().value(),
       conditionKeyValue: condition.conditionKey(),
-      values: [],
+      values: failedValueExplains,
       matches: false,
       missingOperator: true
     }
