@@ -36,6 +36,11 @@ export async function isActualContextKey(key: string): Promise<boolean> {
 async function isActualContextKeyWithVariable(key: string): Promise<boolean> {
   const slashLocation = key.indexOf("/");
   const prefix = key.slice(0, slashLocation);
+  const rest = key.slice(slashLocation + 1);
+
+  if(rest.length === 0) {
+    return false
+  }
 
   const globalKey = getVariableGlobalConditionKeyByPrefix(prefix);
   if(globalKey) {
