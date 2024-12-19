@@ -410,6 +410,22 @@ const notResourceTests: ResourceTest[] = [
         matches: true
       }
     ]
+  },
+  {
+    name: 'should not match if a variable is missing',
+    resourceStatements: ["arn:aws:ec2:us-east-1:123456789012:instance/${aws:PrincipalTag/Foo}"],
+    resource: {
+      resource: "arn:aws:ec2:us-east-1:123456789012:instance/bar",
+      accountId: "123456789012"
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: "arn:aws:ec2:us-east-1:123456789012:instance/${aws:PrincipalTag/Foo}",
+        matches: false,
+        errors: ["{aws:PrincipalTag/Foo} not found in request context, and no default value provided. This will never match"]
+      }
+    ]
   }
 ]
 

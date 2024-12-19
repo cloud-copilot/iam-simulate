@@ -67,7 +67,9 @@ export function requestMatchesResources(request: AwsRequest, policyResources: Re
 export function requestMatchesNotResources(request: AwsRequest, policyResources: Resource[]): {matches: boolean, explains: ResourceExplain[]} {
   const explains = policyResources.map(policyResource => {
     const explain = singleResourceMatchesRequest(request, policyResource)
-    explain.matches = !explain.matches
+    if(!explain.errors) {
+      explain.matches = !explain.matches
+    }
     return explain
   })
   const matches = !explains.some(explain => !explain.matches)
