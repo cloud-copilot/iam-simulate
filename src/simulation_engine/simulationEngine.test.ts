@@ -186,13 +186,17 @@ describe('normalizeSimulationParameters', () => {
     }
 
     //When we normalize the simulation parameters
-    const normalizedSimulation = await normalizeSimulationParameters(simulation)
+    const { validContextValues, ignoredContextKeys } =
+      await normalizeSimulationParameters(simulation)
 
     //Then the result should only contain the parameters allowed for the action
-    expect(normalizedSimulation).toEqual({
+    expect(validContextValues).toEqual({
       's3:RequestObjectTagKeys': ['tag1', 'tag2'],
       's3:ResourceAccount': '123456789012'
     })
+
+    //And the result should contain the ignored context keys
+    expect(ignoredContextKeys).toEqual(['s3:DataAccessPointArn'])
   })
 
   it('should correct incorrect capitalization', async () => {
@@ -216,13 +220,16 @@ describe('normalizeSimulationParameters', () => {
     }
 
     //When we normalize the simulation parameters
-    const normalizedSimulation = await normalizeSimulationParameters(simulation)
+    const { validContextValues, ignoredContextKeys } =
+      await normalizeSimulationParameters(simulation)
 
     //Then the result correct the capitalization of the keys
-    expect(Object.keys(normalizedSimulation).sort()).toEqual([
+    expect(Object.keys(validContextValues).sort()).toEqual([
       's3:RequestObjectTagKeys',
       's3:ResourceAccount'
     ])
+    //And the result should contain the ignored context keys
+    expect(ignoredContextKeys).toEqual([])
   })
 
   it('should put single values in an array if the condition key is an array', async () => {
@@ -245,12 +252,16 @@ describe('normalizeSimulationParameters', () => {
     }
 
     //When we normalize the simulation parameters
-    const normalizedSimulation = await normalizeSimulationParameters(simulation)
+    const { validContextValues, ignoredContextKeys } =
+      await normalizeSimulationParameters(simulation)
 
     //Then the result should put the single value in an array
-    expect(normalizedSimulation).toEqual({
+    expect(validContextValues).toEqual({
       's3:RequestObjectTagKeys': ['tag1']
     })
+
+    //And the result should contain the ignored context keys
+    expect(ignoredContextKeys).toEqual([])
   })
 
   it('should pull the first value from an array if the condition key is a single value', async () => {
@@ -273,12 +284,16 @@ describe('normalizeSimulationParameters', () => {
     }
 
     //When we normalize the simulation parameters
-    const normalizedSimulation = await normalizeSimulationParameters(simulation)
+    const { validContextValues, ignoredContextKeys } =
+      await normalizeSimulationParameters(simulation)
 
     //Then the result should only contain the first value
-    expect(normalizedSimulation).toEqual({
+    expect(validContextValues).toEqual({
       's3:ResourceAccount': '123456789012'
     })
+
+    //And the result should contain the ignored context keys
+    expect(ignoredContextKeys).toEqual([])
   })
 
   it('should return context keys with variables in them', async () => {
@@ -294,19 +309,24 @@ describe('normalizeSimulationParameters', () => {
           accountId: '123456789012'
         },
         contextVariables: {
-          'aws:RequestTag/Boom': 'Town'
+          'aws:RequestTag/Boom': 'Town',
+          'aws:AccountTags/Bad': 'News'
         },
         principal: 'arn:aws:iam::123456789012:user/Alice'
       }
     }
 
     //When we normalize the simulation parameters
-    const normalizedSimulation = await normalizeSimulationParameters(simulation)
+    const { validContextValues, ignoredContextKeys } =
+      await normalizeSimulationParameters(simulation)
 
     //Then the result should put the single value in an array
-    expect(normalizedSimulation).toEqual({
+    expect(validContextValues).toEqual({
       'aws:RequestTag/Boom': 'Town'
     })
+
+    //And the result should contain the ignored context keys
+    expect(ignoredContextKeys).toEqual(['aws:AccountTags/Bad'])
   })
 })
 
@@ -350,6 +370,7 @@ describe('runSimulation', () => {
     //Then the result should contain an error
     expect(result.errors!.message).toEqual('policy.errors')
     expect(result.errors!.seviceControlPolicyErrors!['Gandalf'].length).toEqual(1)
+    expect(result.ignoredContextKeys).toBeUndefined()
   })
 
   it('should return resource policy errors', async () => {
@@ -382,6 +403,7 @@ describe('runSimulation', () => {
     //Then the result should contain an error
     expect(result.errors!.message).toEqual('policy.errors')
     expect(result.errors!.resourcePolicyErrors!.length).toEqual(1)
+    expect(result.ignoredContextKeys).toBeUndefined()
   })
 
   it('should return identity policy errors', async () => {
@@ -418,6 +440,7 @@ describe('runSimulation', () => {
     //Then the result should contain an error
     expect(result.errors!.message).toEqual('policy.errors')
     expect(result.errors!.identityPolicyErrors!['sauron'].length).toEqual(1)
+    expect(result.ignoredContextKeys).toBeUndefined()
   })
 
   it('should return an error for a mal formatted action', async () => {
@@ -442,6 +465,7 @@ describe('runSimulation', () => {
 
     //Then the result should contain an error
     expect(result.errors!.message).toEqual('invalid.action')
+    expect(result.ignoredContextKeys).toBeUndefined()
   })
 
   it('should return an error for a non existent service', async () => {
@@ -466,6 +490,7 @@ describe('runSimulation', () => {
 
     //Then the result should contain an error
     expect(result.errors!.message).toEqual('invalid.service')
+    expect(result.ignoredContextKeys).toBeUndefined()
   })
 
   it('should return an error for a non existent action', async () => {
@@ -490,6 +515,7 @@ describe('runSimulation', () => {
 
     //Then the result should contain an error
     expect(result.errors!.message).toEqual('invalid.action')
+    expect(result.ignoredContextKeys).toBeUndefined()
   })
 
   it('should return an error if a wildcard only action is not a wildcard', async () => {
@@ -523,6 +549,7 @@ describe('runSimulation', () => {
 
     //Then the result should contain an error
     expect(result.errors!.message).toEqual('must.use.wildcard')
+    expect(result.ignoredContextKeys).toBeUndefined()
   })
 
   it('should return an error if the resource does not mantch an resource type', async () => {
@@ -547,6 +574,7 @@ describe('runSimulation', () => {
 
     //Then the result should contain an error
     expect(result.errors!.message).toEqual('no.resource.types')
+    expect(result.ignoredContextKeys).toBeUndefined()
   })
 
   it('should return an error if the resource matches multiple resource types', async () => {
@@ -571,6 +599,7 @@ describe('runSimulation', () => {
 
     //Then the result should contain an error
     expect(result.errors!.message).toEqual('multiple.resource.types')
+    expect(result.ignoredContextKeys).toBeUndefined()
   })
 
   it('should run a valid simulation', async () => {
@@ -633,6 +662,7 @@ describe('runSimulation', () => {
     //Then there should be no errors
     expect(result.errors).toBeUndefined()
     expect(result.analysis?.result).toEqual('Allowed')
+    expect(result.ignoredContextKeys).toEqual([])
   })
 
   it('should work with ForAnyValue:StringEquals', async () => {
@@ -675,5 +705,69 @@ describe('runSimulation', () => {
 
     expect(result.errors).toBeUndefined()
     expect(result.analysis?.result).toEqual('Allowed')
+    expect(result.ignoredContextKeys).toEqual([])
+  })
+
+  it('should return ignored context keys', async () => {
+    //Given a valid simulation
+    const simulation: Simulation = {
+      identityPolicies: [
+        {
+          name: 'readbuckets',
+          policy: {
+            Statement: {
+              Effect: 'Allow',
+              Action: 's3:GetObject',
+              Resource: 'arn:aws:s3:::examplebucket/*'
+            }
+          }
+        }
+      ],
+      serviceControlPolicies: [
+        {
+          orgIdentifier: 'ou-123456',
+          policies: [
+            {
+              name: 'allowall',
+              policy: {
+                Statement: {
+                  Effect: 'Allow',
+                  Action: '*',
+                  Resource: '*'
+                }
+              }
+            }
+          ]
+        }
+      ],
+      resourcePolicy: {
+        Statement: {
+          Effect: 'Allow',
+          Action: 's3:GetObject',
+          Resource: 'arn:aws:s3:::examplebucket/*',
+          Principal: 'arn:aws:iam::123456789012:user/Alice'
+        }
+      },
+      request: {
+        action: 's3:GetObject',
+        resource: {
+          resource: 'arn:aws:s3:::examplebucket/1234',
+          accountId: '123456789012'
+        },
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        contextVariables: {
+          's3:RequestObjectTagKeys': ['tag1', 'tag2'],
+          's3:ResourceAccount': '123456789012',
+          's3:DataAccessPointArn': 'arn:aws:s3:us-west-2:123456789012:accesspoint/my-access-point'
+        }
+      }
+    }
+
+    //When the simulation is run
+    const result = await runSimulation(simulation, {})
+
+    //Then there should be no errors
+    expect(result.errors).toBeUndefined()
+    expect(result.ignoredContextKeys).toEqual(['s3:DataAccessPointArn'])
   })
 })

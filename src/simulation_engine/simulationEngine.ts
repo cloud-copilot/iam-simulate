@@ -28,6 +28,17 @@ export interface SimulationErrors {
 export interface SimulationResult {
   errors?: SimulationErrors
   analysis?: RequestAnalysis
+
+  /**
+   * Any context keys provided in the request that were filtered out before
+   * policy evaluation because they do not apply to the action/resource type.
+   *
+   * This will only be present if the request passes validation to reach the
+   * policy evaluation stage.
+   *
+   * If no context keys were ignored, this will be present and an empty array.
+   */
+  ignoredContextKeys?: string[]
 }
 
 /**
@@ -167,7 +178,7 @@ export async function runSimulation(
     }
   }
 
-  const contextValues = await normalizeSimulationParameters(simulation)
+  const { validContextValues, ignoredContextKeys } = await normalizeSimulationParameters(simulation)
 
   const simulationResult = authorize({
     request: new AwsRequestImpl(
@@ -177,7 +188,7 @@ export async function runSimulation(
         accountId: simulation.request.resource.accountId
       },
       simulation.request.action,
-      new RequestContextImpl(contextValues)
+      new RequestContextImpl(validContextValues)
     ),
     identityPolicies,
     serviceControlPolicies,
@@ -186,13 +197,15 @@ export async function runSimulation(
   })
 
   return {
-    analysis: simulationResult
+    analysis: simulationResult,
+    ignoredContextKeys
   }
 }
 
-export async function normalizeSimulationParameters(
-  simulation: Simulation
-): Promise<Record<string, string | string[]>> {
+export async function normalizeSimulationParameters(simulation: Simulation): Promise<{
+  validContextValues: Record<string, string | string[]>
+  ignoredContextKeys: string[]
+}> {
   const [service, action] = simulation.request.action.split(':')
   const resourceArn = simulation.request.resource.resource
   const contextVariablesForAction = new Set(
@@ -200,7 +213,8 @@ export async function normalizeSimulationParameters(
   )
 
   //Get the types of the context variables and set a string or array of strings based on that.
-  const allowedContextKeys: Record<string, string | string[]> = {}
+  const validContextValues: Record<string, string | string[]> = {}
+  const ignoredContextKeys: string[] = []
   for (const key of Object.keys(simulation.request.contextVariables)) {
     const value = simulation.request.contextVariables[key]
     const lowerCaseKey = key.toLowerCase()
@@ -212,18 +226,31 @@ export async function normalizeSimulationParameters(
       const normalizedKey = await normalizeContextKeyCase(key)
 
       if (isConditionKeyArray(conditionType)) {
-        allowedContextKeys[normalizedKey] = [value].flat()
+        validContextValues[normalizedKey] = [value].flat()
       } else if (Array.isArray(value)) {
-        allowedContextKeys[normalizedKey] = value[0]
+        validContextValues[normalizedKey] = value[0]
       } else {
-        allowedContextKeys[normalizedKey] = value
+        validContextValues[normalizedKey] = value
       }
+    } else {
+      ignoredContextKeys.push(key)
     }
   }
 
-  return allowedContextKeys
+  return {
+    validContextValues,
+    ignoredContextKeys
+  }
 }
 
+/**
+ * Evaluates a context key with a variable such as `aws:PrincipalTag/Foo` to see
+ * if it matches any of the context variables in the allowed variables set.
+ *
+ * @param lowerCaseKey The lower case key to check for a match.
+ * @param contextVariables The set of context variables to check against.
+ * @returns True if the key has a variable match, false otherwise.
+ */
 function listHasVariableKeyMatch(lowerCaseKey: string, contextVariables: Set<string>): boolean {
   const firstSlashIndex = lowerCaseKey.indexOf('/')
   if (firstSlashIndex === -1) {
