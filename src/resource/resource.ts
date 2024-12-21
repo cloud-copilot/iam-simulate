@@ -145,8 +145,7 @@ function singleResourceMatchesRequest(
     }
 
     //Wildcards and variables are not allowed in the product segment https://docs.aws.amazon.com/IAM/latest/UserGuide/reference-arns.html "Incorrect wildcard usage"
-    const [policyProduct, policyResourceId] = getResourceSegments(policyResource.resource())
-
+    const [policyProduct, policyResourceId] = getResourceSegments(policyResource)
     if (!resource.resource().startsWith(policyProduct)) {
       return {
         resource: policyResource.value(),

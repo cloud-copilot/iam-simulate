@@ -44,7 +44,8 @@ const resourceTests: ResourceTest[] = [
     explains: [
       {
         resource: 'arn:aws:s3:::my_corporate_bucket',
-        matches: false
+        matches: false,
+        errors: ['Partition does not match']
       }
     ]
   },
@@ -89,7 +90,8 @@ const resourceTests: ResourceTest[] = [
     explains: [
       {
         resource: 'arn:aws:s3:::my_corporate_bucket',
-        matches: false
+        matches: false,
+        errors: ['Service does not match']
       }
     ]
   },
@@ -119,7 +121,8 @@ const resourceTests: ResourceTest[] = [
     explains: [
       {
         resource: 'arn:aws:ec2:us-east-1:123456789012:instance/12345',
-        matches: false
+        matches: false,
+        errors: ['Region does not match']
       }
     ]
   },
@@ -149,7 +152,8 @@ const resourceTests: ResourceTest[] = [
     explains: [
       {
         resource: 'arn:aws:ec2:us-east-1:123456789012:instance/12345',
-        matches: false
+        matches: false,
+        errors: ['Account does not match']
       }
     ]
   },
@@ -194,7 +198,8 @@ const resourceTests: ResourceTest[] = [
     explains: [
       {
         resource: 'arn:aws:ec2:us-east-1:123456789012:*/12345',
-        matches: false
+        matches: false,
+        errors: ['Product does not match']
       }
     ]
   },
@@ -224,6 +229,52 @@ const resourceTests: ResourceTest[] = [
     explains: [
       {
         resource: 'arn:aws:ec2:us-east-1:123456789012:*:12345',
+        matches: false,
+        errors: ['Product does not match']
+      }
+    ]
+  },
+  {
+    name: 'should return no match if the s3 bucket name is different',
+    resourceStatements: ['arn:aws:s3:::my_corporate_bucket'],
+    resource: {
+      resource: 'arn:aws:s3:::wildly_different_bucket',
+      accountId: '123456789012'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:s3:::my_corporate_bucket',
+        matches: false
+      }
+    ]
+  },
+  {
+    name: 'should return no match on an s3 object if the bucket is different',
+    resourceStatements: ['arn:aws:s3:::my_corporate_bucket/*'],
+    resource: {
+      resource: 'arn:aws:s3:::other_bucket/secret.txt',
+      accountId: '123456789012'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:s3:::my_corporate_bucket/*',
+        matches: false
+      }
+    ]
+  },
+  {
+    name: 'should return no match on an s3 object if the bucket is the same but the object is different',
+    resourceStatements: ['arn:aws:s3:::my_corporate_bucket/foo/*'],
+    resource: {
+      resource: 'arn:aws:s3:::my_corporate_bucket/bar/secret.txt',
+      accountId: '123456789012'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:s3:::my_corporate_bucket/foo/*',
         matches: false
       }
     ]
@@ -312,7 +363,7 @@ const resourceTests: ResourceTest[] = [
   {
     name: 'should match if only one value matches',
     resourceStatements: [
-      'ars:aws:s3:::government_secrets',
+      'arn:aws:s3:::government_secrets',
       'arn:aws:ec2:us-east-1:123456789012:instance/${aws:PrincipalTag/Foo}'
     ],
     resource: {
@@ -325,8 +376,9 @@ const resourceTests: ResourceTest[] = [
     },
     explains: [
       {
-        resource: 'ars:aws:s3:::government_secrets',
-        matches: false
+        resource: 'arn:aws:s3:::government_secrets',
+        matches: false,
+        errors: ['Service does not match']
       },
       {
         resource: 'arn:aws:ec2:us-east-1:123456789012:instance/${aws:PrincipalTag/Foo}',
@@ -353,6 +405,8 @@ function validateExplains(expected: ResourceExplain[], actual: ResourceExplain[]
     }
     if (explain.errors) {
       expect(found?.errors, `${explain.resource} errors`).toEqual(explain.errors.sort())
+    } else {
+      expect(found?.errors, `${explain.resource} errors`).toBeUndefined()
     }
   }
 }

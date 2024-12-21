@@ -1,4 +1,5 @@
 import { iamActionDetails, iamResourceTypeDetails, ResourceType } from '@cloud-copilot/iam-data'
+import { Resource } from '@cloud-copilot/iam-policy'
 import { AwsRequest } from './request/request.js'
 
 const matchesNothing = new RegExp('a^')
@@ -179,8 +180,8 @@ export interface ArnParts {
   region: string | undefined
   accountId: string | undefined
   resource: string | undefined
-  resourceType: string | undefined
-  resourcePath: string | undefined
+  // resourceType: string | undefined
+  // resourcePath: string | undefined
 }
 
 /**
@@ -197,35 +198,37 @@ export function splitArnParts(arn: string): ArnParts {
   const accountId = parts.at(4)
   const resource = parts.slice(5).join(':')
 
-  let resourceType = undefined
-  let resourcePath = undefined
-  if (resource?.includes('/') || resource?.includes(':')) {
-    const [resourceTypeSegment, resourcePathSegment] = getResourceSegments(resource)
-    resourceType = resourceTypeSegment
-    resourcePath = resourcePathSegment
-  }
-
   return {
     partition,
     service,
     region,
     accountId,
-    resource,
-    resourceType,
-    resourcePath
+    resource
   }
 }
 
 /**
- * Splits a resource into two segments. The first segment is the product segment and the second segment is the resource id segment.
- * This could be split by a colon or a slash, so it checks for both.
+ * Get the product/id segments of the resource portion of an ARN.
+ * The first segment is the product segment and the second segment is the resource id segment.
+ * This could be split by a colon or a slash, so it checks for both. It also checks for S3 buckets/objects.
  *
- * @param resource The resource to split
+ * @param resource The resource to get the resource segments. Must be an ARN resource.
  * @returns a tuple with the first segment being the product segment (including the separator) and the second segment being the resource id.
  */
-export function getResourceSegments(resource: string): [string, string] {
-  const slashIndex = resource.indexOf('/')
-  const colonIndex = resource.indexOf(':')
+export function getResourceSegments(resource: Resource): [string, string] {
+  if (!resource.isArnResource()) {
+    throw new Error(`Resource ${resource.value()} is not an ARN resource`)
+  }
+
+  const resourceString = resource.resource()
+
+  // This is terrible, and I hate it
+  if (resource.service() === 's3' && resource.account() === '' && resource.region() === '') {
+    return ['', resourceString]
+  }
+
+  const slashIndex = resourceString.indexOf('/')
+  const colonIndex = resourceString.indexOf(':')
 
   let splitIndex = slashIndex
   if (slashIndex != -1 && colonIndex != -1) {
@@ -238,7 +241,7 @@ export function getResourceSegments(resource: string): [string, string] {
     throw new Error(`Unable to split resource ${resource}`)
   }
 
-  return [resource.slice(0, splitIndex), resource.slice(splitIndex)]
+  return [resourceString.slice(0, splitIndex), resourceString.slice(splitIndex)]
 }
 
 /**
