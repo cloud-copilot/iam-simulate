@@ -136,6 +136,7 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
      * * root user
      * * service linked roles
      * * vpc endpoint policies
+     * * organization APIs and delegated admin policy
      */
   }
 }
