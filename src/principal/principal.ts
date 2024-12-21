@@ -1,11 +1,10 @@
-import { Principal, Statement } from "@cloud-copilot/iam-policy";
-import { PrincipalExplain, StatementExplain } from "../explain/statementExplain.js";
-import { AwsRequest } from "../request/request.js";
-import { isAssumedRoleArn, isFederatedUserArn } from "../util.js";
+import { Principal, Statement } from '@cloud-copilot/iam-policy'
+import { PrincipalExplain, StatementExplain } from '../explain/statementExplain.js'
+import { AwsRequest } from '../request/request.js'
+import { isAssumedRoleArn, isFederatedUserArn } from '../util.js'
 
 //Wildcards are not allowed in the principal element https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html
 // The only exception is the "*" wildcard, which you can use to match all principals, including anonymous principals.
-
 
 /*
 //AWS account and root user
@@ -45,7 +44,12 @@ IAM Identity Center principals // Ignore this for now.
 //Look at the service name and see if it matches the string
 */
 
-export type PrincipalMatchResult = 'Match' | 'NoMatch' | 'AccountLevelMatch' | 'SessionRoleMatch' | 'SessionUserMatch'
+export type PrincipalMatchResult =
+  | 'Match'
+  | 'NoMatch'
+  | 'AccountLevelMatch'
+  | 'SessionRoleMatch'
+  | 'SessionUserMatch'
 
 /**
  * Check to see if a request matches a Principal element in an IAM policy statement
@@ -54,30 +58,35 @@ export type PrincipalMatchResult = 'Match' | 'NoMatch' | 'AccountLevelMatch' | '
  * @param principal the list of principals in the Principal element of the Statement
  * @returns if the request matches the Principal element, and if so, how it matches
  */
-export function requestMatchesPrincipal(request: AwsRequest, principal: Principal[]): {matches: PrincipalMatchResult, explains: PrincipalExplain[]} {
-  const explains = principal.map(principalStatement => requestMatchesPrincipalStatement(request, principalStatement))
-  if(explains.some(exp => exp.matches === 'Match')) {
+export function requestMatchesPrincipal(
+  request: AwsRequest,
+  principal: Principal[]
+): { matches: PrincipalMatchResult; explains: PrincipalExplain[] } {
+  const explains = principal.map((principalStatement) =>
+    requestMatchesPrincipalStatement(request, principalStatement)
+  )
+  if (explains.some((exp) => exp.matches === 'Match')) {
     return {
       matches: 'Match',
       explains
     }
   }
 
-  if(explains.some(exp => exp.matches === 'SessionUserMatch')) {
+  if (explains.some((exp) => exp.matches === 'SessionUserMatch')) {
     return {
       matches: 'SessionUserMatch',
       explains
     }
   }
 
-  if(explains.some(exp => exp.matches === 'SessionRoleMatch')) {
+  if (explains.some((exp) => exp.matches === 'SessionRoleMatch')) {
     return {
       matches: 'SessionRoleMatch',
       explains
     }
   }
 
-  if(explains.some(exp => exp.matches === 'AccountLevelMatch')) {
+  if (explains.some((exp) => exp.matches === 'AccountLevelMatch')) {
     return {
       matches: 'AccountLevelMatch',
       explains
@@ -97,9 +106,12 @@ export function requestMatchesPrincipal(request: AwsRequest, principal: Principa
  * @param notPrincipal the list of principals in the NotPrincipal element of the Statement
  * @returns
  */
-export function requestMatchesNotPrincipal(request: AwsRequest, notPrincipal: Principal[]): {matches: PrincipalMatchResult, explains: PrincipalExplain[]} {
+export function requestMatchesNotPrincipal(
+  request: AwsRequest,
+  notPrincipal: Principal[]
+): { matches: PrincipalMatchResult; explains: PrincipalExplain[] } {
   // const matches = notPrincipal.map(principalStatement => requestMatchesPrincipalStatement(request, principalStatement))
-  const explains = notPrincipal.map(principalStatement => {
+  const explains = notPrincipal.map((principalStatement) => {
     const explain = requestMatchesPrincipalStatement(request, principalStatement)
     /**
      * Need to do research on this. If there is an account level match on a NotPrincipal, does that
@@ -107,7 +119,12 @@ export function requestMatchesNotPrincipal(request: AwsRequest, notPrincipal: Pr
      *
      * We need to test this.
      */
-    if(explain.matches === 'Match' || explain.matches === 'AccountLevelMatch' || explain.matches === 'SessionRoleMatch' || explain.matches === 'SessionUserMatch') {
+    if (
+      explain.matches === 'Match' ||
+      explain.matches === 'AccountLevelMatch' ||
+      explain.matches === 'SessionRoleMatch' ||
+      explain.matches === 'SessionUserMatch'
+    ) {
       explain.matches = 'NoMatch'
     } else {
       explain.matches = 'Match'
@@ -115,8 +132,7 @@ export function requestMatchesNotPrincipal(request: AwsRequest, notPrincipal: Pr
     return explain
   })
 
-
-  if(explains.some(exp => exp.matches === 'NoMatch')) {
+  if (explains.some((exp) => exp.matches === 'NoMatch')) {
     return {
       matches: 'NoMatch',
       explains
@@ -132,7 +148,6 @@ export function requestMatchesNotPrincipal(request: AwsRequest, notPrincipal: Pr
   //   return 'NoMatch'
   // }
 
-
   // if(matches.includes('AccountLevelMatch')) {
   //   return 'NoMatch'
   // }
@@ -147,90 +162,93 @@ export function requestMatchesNotPrincipal(request: AwsRequest, notPrincipal: Pr
  * @param principalStatement the principal statement to check the request against
  * @returns if the request matches the principal statement, and if so, how it matches
  */
-export function requestMatchesPrincipalStatement(request: AwsRequest, principalStatement: Principal): PrincipalExplain {
-  if(principalStatement.isServicePrincipal()) {
-    if(principalStatement.service() === request.principal.value()) {
+export function requestMatchesPrincipalStatement(
+  request: AwsRequest,
+  principalStatement: Principal
+): PrincipalExplain {
+  if (principalStatement.isServicePrincipal()) {
+    if (principalStatement.service() === request.principal.value()) {
       return {
         matches: 'Match',
-        principal: principalStatement.value(),
+        principal: principalStatement.value()
       }
     }
     return {
       matches: 'NoMatch',
-      principal: principalStatement.value(),
+      principal: principalStatement.value()
     }
   }
 
-  if(principalStatement.isCanonicalUserPrincipal()) {
-    if(principalStatement.canonicalUser() === request.principal.value()) {
+  if (principalStatement.isCanonicalUserPrincipal()) {
+    if (principalStatement.canonicalUser() === request.principal.value()) {
       return {
         matches: 'Match',
-        principal: principalStatement.value(),
+        principal: principalStatement.value()
       }
     }
     return {
       matches: 'NoMatch',
-      principal: principalStatement.value(),
+      principal: principalStatement.value()
     }
   }
 
-  if(principalStatement.isFederatedPrincipal()) {
-    if(principalStatement.federated() === request.principal.value()) {
+  if (principalStatement.isFederatedPrincipal()) {
+    if (principalStatement.federated() === request.principal.value()) {
       return {
         matches: 'Match',
-        principal: principalStatement.value(),
+        principal: principalStatement.value()
       }
     }
     return {
       matches: 'NoMatch',
-      principal: principalStatement.value(),
+      principal: principalStatement.value()
     }
   }
 
-  if(principalStatement.isWildcardPrincipal()) {
+  if (principalStatement.isWildcardPrincipal()) {
     return {
       matches: 'Match',
-      principal: principalStatement.value(),
+      principal: principalStatement.value()
     }
   }
 
-  if(principalStatement.isAccountPrincipal()) {
-    if(principalStatement.accountId() === request.principal.accountId()) {
+  if (principalStatement.isAccountPrincipal()) {
+    if (principalStatement.accountId() === request.principal.accountId()) {
       return {
         matches: 'AccountLevelMatch',
-        principal: principalStatement.value(),
+        principal: principalStatement.value()
       }
     }
     return {
       matches: 'NoMatch',
-      principal: principalStatement.value(),
+      principal: principalStatement.value()
     }
   }
 
-  if(principalStatement.isAwsPrincipal()) {
-    if(isAssumedRoleArn(request.principal.value())) {
+  if (principalStatement.isAwsPrincipal()) {
+    if (isAssumedRoleArn(request.principal.value())) {
       const sessionArn = request.principal.value()
       const roleArn = roleArnFromAssumedRoleArn(sessionArn)
-      if(principalStatement.arn() ===  roleArn) {
+      if (principalStatement.arn() === roleArn) {
         return {
           matches: 'SessionRoleMatch',
           principal: principalStatement.value(),
-          roleForSessionArn: roleArn,
+          roleForSessionArn: roleArn
         }
       }
-    } else if(isFederatedUserArn(request.principal.value())) {
+    } else if (isFederatedUserArn(request.principal.value())) {
       const sessionArn = request.principal.value()
       const userArn = userArnFromFederatedUserArn(sessionArn)
-      if(principalStatement.arn() === userArn) {
+      if (principalStatement.arn() === userArn) {
         return {
           matches: 'SessionUserMatch',
           principal: principalStatement.value(),
-          userForSessionArn: userArn,
+          userForSessionArn: userArn
         }
       }
     }
 
-    if(principalStatement.arn() === request.principal.value()) {
+    if (principalStatement.arn() === request.principal.value()) {
       return {
         matches: 'Match',
         principal: principalStatement.value()
@@ -240,7 +258,7 @@ export function requestMatchesPrincipalStatement(request: AwsRequest, principalS
 
   return {
     matches: 'NoMatch',
-    principal: principalStatement.value(),
+    principal: principalStatement.value()
   }
 }
 
@@ -270,7 +288,6 @@ export function userArnFromFederatedUserArn(federatedUserArn: string): string {
   return `arn:aws:iam::${stsParts[4]}:user/${username}`
 }
 
-
 /**
  * Check if a request matches the Resource or NotResource elements of a statement.
  *
@@ -278,13 +295,19 @@ export function userArnFromFederatedUserArn(federatedUserArn: string): string {
  * @param statement the statement to check against
  * @returns true if the request matches the resources in the statement, false otherwise
  */
-export function requestMatchesStatementPrincipals(request: AwsRequest, statement: Statement): {matches: PrincipalMatchResult, details: Pick<StatementExplain, 'principals' | 'notPrincipals'>} {
-  if(statement.isPrincipalStatement()) {
-    const {matches, explains} = requestMatchesPrincipal(request, statement.principals())
-    return {matches, details: {principals: explains}}
-  } else if(statement.isNotPrincipalStatement()) {
-    const {matches, explains} = requestMatchesNotPrincipal(request, statement.notPrincipals())
-    return {matches, details: {notPrincipals: explains}}
+export function requestMatchesStatementPrincipals(
+  request: AwsRequest,
+  statement: Statement
+): {
+  matches: PrincipalMatchResult
+  details: Pick<StatementExplain, 'principals' | 'notPrincipals'>
+} {
+  if (statement.isPrincipalStatement()) {
+    const { matches, explains } = requestMatchesPrincipal(request, statement.principals())
+    return { matches, details: { principals: explains } }
+  } else if (statement.isNotPrincipalStatement()) {
+    const { matches, explains } = requestMatchesNotPrincipal(request, statement.notPrincipals())
+    return { matches, details: { notPrincipals: explains } }
   }
   throw new Error('Statement should have Principal or NotPrincipal')
 }

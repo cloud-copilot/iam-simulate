@@ -1,7 +1,18 @@
-import { StatementAnalysis } from "./StatementAnalysis.js";
+import { StatementAnalysis } from './StatementAnalysis.js'
 
-export type EvaluationResult = 'Allowed' | 'ExplicitlyDenied' | 'AllowedWithConditions' | 'ImplicitlyDenied' | 'Unknown';
-export type ResourceEvaluationResult = 'NotApplicable' | 'Allowed' | 'ExplicitlyDenied' | 'AllowedForAccount' | 'DeniedForAccount' | 'ImplicityDenied';
+export type EvaluationResult =
+  | 'Allowed'
+  | 'ExplicitlyDenied'
+  | 'AllowedWithConditions'
+  | 'ImplicitlyDenied'
+  | 'Unknown'
+export type ResourceEvaluationResult =
+  | 'NotApplicable'
+  | 'Allowed'
+  | 'ExplicitlyDenied'
+  | 'AllowedForAccount'
+  | 'DeniedForAccount'
+  | 'ImplicityDenied'
 
 export interface IdentityAnalysis {
   result: EvaluationResult
@@ -40,9 +51,9 @@ export interface RequestAnalysis {
   /**
    * The result of the evaluation.
    */
-  result: EvaluationResult;
+  result: EvaluationResult
 
-  sameAccount: boolean;
+  sameAccount: boolean
 
   /**
    * The result of the evaluation of the resource policy.

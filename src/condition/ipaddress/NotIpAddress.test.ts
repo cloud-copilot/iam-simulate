@@ -1,6 +1,5 @@
-import { BaseOperatorTest, testOperator } from "../baseConditionperatorTests.js";
-import { NotIpAddress } from "./NotIpAddress.js";
-
+import { BaseOperatorTest, testOperator } from '../baseConditionperatorTests.js'
+import { NotIpAddress } from './NotIpAddress.js'
 
 const notIpAddressTests: BaseOperatorTest[] = [
   {
@@ -113,10 +112,7 @@ const notIpAddressTests: BaseOperatorTest[] = [
   },
   {
     name: 'V4/V6: should be false if V4 and V6 CIDR blocks are in the policy values and one matches',
-    policyValues: [
-      '2001:0db8::/32',
-      '192.168.0.0/16'
-    ],
+    policyValues: ['2001:0db8::/32', '192.168.0.0/16'],
     testValue: '2001:0db8:85a3::8a2e:0370:7334',
     expected: false,
     explains: [
@@ -132,10 +128,7 @@ const notIpAddressTests: BaseOperatorTest[] = [
   },
   {
     name: 'should return false if any value is a match',
-    policyValues: [
-      '192.168.0.0/8',
-      '10.10.0.0/16'
-    ],
+    policyValues: ['192.168.0.0/8', '10.10.0.0/16'],
     testValue: '192.168.0.17',
     expected: false,
     explains: [
@@ -151,4 +144,4 @@ const notIpAddressTests: BaseOperatorTest[] = [
   }
 ]
 
-testOperator('IpAddress', notIpAddressTests, NotIpAddress);
+testOperator('IpAddress', notIpAddressTests, NotIpAddress)

@@ -1,5 +1,5 @@
-import { BaseOperatorTest, testOperator } from "../baseConditionperatorTests.js";
-import { NumericNotEquals } from "./NumericNotEquals.js";
+import { BaseOperatorTest, testOperator } from '../baseConditionperatorTests.js'
+import { NumericNotEquals } from './NumericNotEquals.js'
 
 const numericNotEqualsTests: BaseOperatorTest[] = [
   {
@@ -10,11 +10,11 @@ const numericNotEqualsTests: BaseOperatorTest[] = [
     explains: [
       {
         matches: false,
-        value: '100',
+        value: '100'
       },
       {
         matches: true,
-        value: '200',
+        value: '200'
       }
     ]
   },
@@ -26,7 +26,7 @@ const numericNotEqualsTests: BaseOperatorTest[] = [
     explains: [
       {
         matches: true,
-        value: '10',
+        value: '10'
       }
     ]
   },
@@ -69,11 +69,11 @@ const numericNotEqualsTests: BaseOperatorTest[] = [
     explains: [
       {
         matches: false,
-        value: '10',
+        value: '10'
       },
       {
         matches: true,
-        value: '20',
+        value: '20'
       }
     ]
   }

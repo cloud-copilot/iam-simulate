@@ -1,5 +1,5 @@
-import { BaseOperatorTest, testOperator } from "../baseConditionperatorTests.js";
-import { StringLike } from "./StringLike.js";
+import { BaseOperatorTest, testOperator } from '../baseConditionperatorTests.js'
+import { StringLike } from './StringLike.js'
 
 const stringLikeTests: BaseOperatorTest[] = [
   {
@@ -20,26 +20,26 @@ const stringLikeTests: BaseOperatorTest[] = [
     requestContext: {},
     policyValues: ['test*'],
     testValue: 'test123',
-    expected: true,
+    expected: true
   },
   {
     name: 'Should match a value with a wildcard in the middle',
     requestContext: {},
     policyValues: ['test???value'],
     testValue: 'test123value',
-    expected: true,
+    expected: true
   },
   {
     name: 'Is case sensitive',
     requestContext: {},
     policyValues: ['test'],
     testValue: 'TEST',
-    expected: false,
+    expected: false
   },
   {
     name: 'Should replace a policy value',
     requestContext: {
-      'aws:username':'Bob'
+      'aws:username': 'Bob'
     },
     policyValues: ['test${aws:username}*'],
     testValue: 'testBobPerson',
@@ -55,7 +55,7 @@ const stringLikeTests: BaseOperatorTest[] = [
   {
     name: 'Should replace a policy value and not match wildcards in the policy value',
     requestContext: {
-      'aws:username':'Bob*'
+      'aws:username': 'Bob*'
     },
     policyValues: ['test${aws:username}'],
     testValue: 'testBobTwo',
@@ -78,10 +78,12 @@ const stringLikeTests: BaseOperatorTest[] = [
       {
         value: 'test${aws:username}*',
         matches: false,
-        errors: ['{aws:username} not found in request context, and no default value provided. This will never match']
+        errors: [
+          '{aws:username} not found in request context, and no default value provided. This will never match'
+        ]
       }
     ]
   }
 ]
 
-testOperator('StringLike',stringLikeTests, StringLike)
+testOperator('StringLike', stringLikeTests, StringLike)

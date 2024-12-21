@@ -1,5 +1,5 @@
-import { BaseOperatorTest, testOperator } from "../baseConditionperatorTests.js";
-import { DateGreaterThanEquals } from "./DateGreaterThanEquals.js";
+import { BaseOperatorTest, testOperator } from '../baseConditionperatorTests.js'
+import { DateGreaterThanEquals } from './DateGreaterThanEquals.js'
 
 const dateGreaterThanEqualsTests: BaseOperatorTest[] = [
   {

@@ -1,5 +1,5 @@
-import { BaseOperatorTest, testOperator } from "../baseConditionperatorTests.js";
-import { NumericGreaterThan } from "./NumericGreaterThan.js";
+import { BaseOperatorTest, testOperator } from '../baseConditionperatorTests.js'
+import { NumericGreaterThan } from './NumericGreaterThan.js'
 
 const numericGreaterThanTests: BaseOperatorTest[] = [
   {
@@ -10,7 +10,7 @@ const numericGreaterThanTests: BaseOperatorTest[] = [
     explains: [
       {
         matches: true,
-        value: '10',
+        value: '10'
       }
     ]
   },
@@ -22,7 +22,7 @@ const numericGreaterThanTests: BaseOperatorTest[] = [
     explains: [
       {
         matches: false,
-        value: '10',
+        value: '10'
       }
     ]
   },
@@ -34,7 +34,7 @@ const numericGreaterThanTests: BaseOperatorTest[] = [
     explains: [
       {
         matches: false,
-        value: '10',
+        value: '10'
       }
     ]
   },

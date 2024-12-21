@@ -1,10 +1,10 @@
-import { BaseOperatorTest, testOperator } from "../baseConditionperatorTests.js";
-import { ArnNotLike } from "./ArnNotLike.js";
+import { BaseOperatorTest, testOperator } from '../baseConditionperatorTests.js'
+import { ArnNotLike } from './ArnNotLike.js'
 
 const ArnNotLikeTests: BaseOperatorTest[] = [
   {
     name: 'should return false if not a valid request arn',
-    requestContext: {'aws:username': 'Bob'},
+    requestContext: { 'aws:username': 'Bob' },
     policyValues: ['arn:aws:iam::123456789012:user/${aws:username}'],
     testValue: 'arn:::bucket-name', //Not enough colons
     expected: false,
@@ -40,7 +40,7 @@ const ArnNotLikeTests: BaseOperatorTest[] = [
     explains: [
       {
         matches: false,
-        value: 'arn:aws:ec2:us-east-1:123456789012:instance/i-12345',
+        value: 'arn:aws:ec2:us-east-1:123456789012:instance/i-12345'
       }
     ]
   },
@@ -53,7 +53,7 @@ const ArnNotLikeTests: BaseOperatorTest[] = [
     explains: [
       {
         matches: true,
-        value: 'arn:aws:ec2:us-east-1:123456789012:instance/i-98765',
+        value: 'arn:aws:ec2:us-east-1:123456789012:instance/i-98765'
       }
     ]
   },
@@ -69,11 +69,11 @@ const ArnNotLikeTests: BaseOperatorTest[] = [
     explains: [
       {
         matches: false,
-        value: 'arn:aws:ec2:us-east-1:123456789012:instance/i-12345',
+        value: 'arn:aws:ec2:us-east-1:123456789012:instance/i-12345'
       },
       {
         matches: true,
-        value: 'arn:aws:ec2:us-east-1:123456789012:instance/i-98765',
+        value: 'arn:aws:ec2:us-east-1:123456789012:instance/i-98765'
       }
     ]
   },
@@ -86,7 +86,7 @@ const ArnNotLikeTests: BaseOperatorTest[] = [
     explains: [
       {
         matches: false,
-        value: 'arn:aws:s3:::my_corporate_bucket',
+        value: 'arn:aws:s3:::my_corporate_bucket'
       }
     ]
   },
@@ -99,7 +99,7 @@ const ArnNotLikeTests: BaseOperatorTest[] = [
     explains: [
       {
         matches: true,
-        value: 'arn:aws:ec2:us-east-1:123456789012:instance/i-12345',
+        value: 'arn:aws:ec2:us-east-1:123456789012:instance/i-12345'
       }
     ]
   },
@@ -118,7 +118,7 @@ const ArnNotLikeTests: BaseOperatorTest[] = [
   },
   {
     name: 'should replace variables and return true if a match',
-    requestContext: {'aws:username': 'Bob'},
+    requestContext: { 'aws:username': 'Bob' },
     policyValues: ['arn:aws:iam::123456789012:user/${aws:username}'],
     testValue: 'arn:aws:iam::123456789012:user/Bob',
     expected: false,
@@ -140,7 +140,9 @@ const ArnNotLikeTests: BaseOperatorTest[] = [
       {
         matches: false,
         value: 'arn:aws:iam::123456789012:user/${aws:username}',
-        errors: ['{aws:username} not found in request context, and no default value provided. This will never match']
+        errors: [
+          '{aws:username} not found in request context, and no default value provided. This will never match'
+        ]
       }
     ]
   }

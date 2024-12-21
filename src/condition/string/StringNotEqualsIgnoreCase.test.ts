@@ -1,5 +1,5 @@
-import { BaseOperatorTest, testOperator } from "../baseConditionperatorTests.js";
-import { StringNotEqualsIgnoreCase } from "./StringNotEqualsIgnoreCase.js";
+import { BaseOperatorTest, testOperator } from '../baseConditionperatorTests.js'
+import { StringNotEqualsIgnoreCase } from './StringNotEqualsIgnoreCase.js'
 
 const stringNotEqualsIgnoreCaseTests: BaseOperatorTest[] = [
   {
@@ -43,7 +43,7 @@ const stringNotEqualsIgnoreCaseTests: BaseOperatorTest[] = [
   },
   {
     name: 'should replace variables and return false if a match',
-    requestContext: {'aws:username': 'Bob'},
+    requestContext: { 'aws:username': 'Bob' },
     policyValues: ['arn:aws:iam::123456789012:user/${aws:username}'],
     testValue: 'arn:aws:iam::123456789012:user/Bob',
     expected: false,
@@ -54,7 +54,6 @@ const stringNotEqualsIgnoreCaseTests: BaseOperatorTest[] = [
         resolvedValue: 'arn:aws:iam::123456789012:user/Bob'
       }
     ]
-
   },
   {
     name: 'should return replacement errors',
@@ -66,7 +65,9 @@ const stringNotEqualsIgnoreCaseTests: BaseOperatorTest[] = [
       {
         value: '${aws:username}',
         matches: false,
-        errors: ['{aws:username} not found in request context, and no default value provided. This will never match']
+        errors: [
+          '{aws:username} not found in request context, and no default value provided. This will never match'
+        ]
       }
     ]
   },
@@ -87,7 +88,6 @@ const stringNotEqualsIgnoreCaseTests: BaseOperatorTest[] = [
       }
     ]
   }
-
 ]
 
 testOperator('StringNotEqualsIgnoreCase', stringNotEqualsIgnoreCaseTests, StringNotEqualsIgnoreCase)

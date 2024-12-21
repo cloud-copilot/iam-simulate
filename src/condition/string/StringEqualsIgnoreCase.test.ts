@@ -1,5 +1,5 @@
-import { BaseOperatorTest, testOperator } from "../baseConditionperatorTests.js";
-import { StringEqualsIgnoreCase } from "./StringEqualsIgnoreCase.js";
+import { BaseOperatorTest, testOperator } from '../baseConditionperatorTests.js'
+import { StringEqualsIgnoreCase } from './StringEqualsIgnoreCase.js'
 
 const stringEqualsIgnoreCaseTests: BaseOperatorTest[] = [
   {
@@ -11,7 +11,7 @@ const stringEqualsIgnoreCaseTests: BaseOperatorTest[] = [
     explains: [
       {
         value: 'test',
-        matches: true,
+        matches: true
       }
     ]
   },
@@ -43,7 +43,7 @@ const stringEqualsIgnoreCaseTests: BaseOperatorTest[] = [
   },
   {
     name: 'should replace variables in the policy value',
-    requestContext: {'aws:username': 'Bob'},
+    requestContext: { 'aws:username': 'Bob' },
     policyValues: ['arn:aws:iam::123456789012:user/${aws:username}'],
     testValue: 'arn:aws:iam::123456789012:user/Bob',
     expected: true,
@@ -57,7 +57,7 @@ const stringEqualsIgnoreCaseTests: BaseOperatorTest[] = [
   },
   {
     name: 'should ignore case in replaced variables',
-    requestContext: {'aws:username': 'BOB'},
+    requestContext: { 'aws:username': 'BOB' },
     policyValues: ['arn:aws:iam::123456789012:user/${aws:username}'],
     testValue: 'arn:aws:iam::123456789012:user/bob',
     expected: true,
@@ -84,7 +84,7 @@ const stringEqualsIgnoreCaseTests: BaseOperatorTest[] = [
   },
   {
     name: 'should return replacement errors',
-    requestContext: {"aws:PrincipalOrgPaths": ["123", "456"]},
+    requestContext: { 'aws:PrincipalOrgPaths': ['123', '456'] },
     policyValues: ['test${aws:PrincipalOrgPaths}'],
     testValue: 'test123',
     expected: false,
@@ -92,12 +92,12 @@ const stringEqualsIgnoreCaseTests: BaseOperatorTest[] = [
       {
         value: 'test${aws:PrincipalOrgPaths}',
         matches: false,
-        errors: ['{aws:PrincipalOrgPaths} is a multi value context key, and cannot be used for replacement. This will never match']
-
+        errors: [
+          '{aws:PrincipalOrgPaths} is a multi value context key, and cannot be used for replacement. This will never match'
+        ]
       }
     ]
   }
-
 ]
 
 testOperator('StringEqualsIgnoreCase', stringEqualsIgnoreCaseTests, StringEqualsIgnoreCase)

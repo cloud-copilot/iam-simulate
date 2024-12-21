@@ -1,4 +1,3 @@
-
 export interface RequestResource {
   /**
    * The raw string of the resource
@@ -36,32 +35,34 @@ export interface RequestResource {
   accountId(): string
 }
 
-
 export class ResourceRequestImpl implements RequestResource {
-  constructor(private readonly rawValue: string, private readonly accountIdString: string ) {}
+  constructor(
+    private readonly rawValue: string,
+    private readonly accountIdString: string
+  ) {}
 
   partition(): string {
-    return this.value().split(":").at(1)!
+    return this.value().split(':').at(1)!
   }
 
   service(): string {
-    return this.value().split(":").at(2)!
+    return this.value().split(':').at(2)!
   }
 
   region(): string {
-    return this.value().split(":").at(3)!
+    return this.value().split(':').at(3)!
   }
 
   account(): string {
-    return this.value().split(":").at(4)!
+    return this.value().split(':').at(4)!
   }
 
   resource(): string {
-    return this.value().split(":").slice(5).join(":")
+    return this.value().split(':').slice(5).join(':')
   }
 
   value(): string {
-    return this.rawValue;
+    return this.rawValue
   }
 
   accountId(): string {

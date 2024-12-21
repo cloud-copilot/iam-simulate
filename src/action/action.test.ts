@@ -11,16 +11,18 @@ describe('action', () => {
       const policy = loadPolicy({
         Statement: {
           Effect: 'Allow',
-          Action: '*',
+          Action: '*'
         }
       })
       const statement = policy.statements()[0]
       const actions = (statement as ActionStatement).actions()
       //And a request with an action
-      const request = new AwsRequestImpl('principal',
-        {resource: 'resource', accountId: '111111111111'},
-                                      's3:GetBucket',
-                                      new RequestContextImpl({}))
+      const request = new AwsRequestImpl(
+        'principal',
+        { resource: 'resource', accountId: '111111111111' },
+        's3:GetBucket',
+        new RequestContextImpl({})
+      )
 
       //When the request is checked against the policy
       const response = requestMatchesActions(request, actions)
@@ -34,16 +36,18 @@ describe('action', () => {
       const policy = loadPolicy({
         Statement: {
           Effect: 'Allow',
-          Action: 's3:GetBucket',
+          Action: 's3:GetBucket'
         }
       })
       const statement = policy.statements()[0]
       const actions = (statement as ActionStatement).actions()
       //And a request with the s3:GetBucket action
-      const request = new AwsRequestImpl('principal',
-                                      {resource: 'resource', accountId: '111111111111'},
-                                      's3:GetBucket',
-                                      new RequestContextImpl({}))
+      const request = new AwsRequestImpl(
+        'principal',
+        { resource: 'resource', accountId: '111111111111' },
+        's3:GetBucket',
+        new RequestContextImpl({})
+      )
 
       //When the request is checked against the policy
       const response = requestMatchesActions(request, actions)
@@ -58,16 +62,18 @@ describe('action', () => {
     const policy = loadPolicy({
       Statement: {
         Effect: 'Allow',
-        Action: '*:GetBucket',
+        Action: '*:GetBucket'
       }
     })
     const statement = policy.statements()[0]
     const actions = (statement as ActionStatement).actions()
     //And a request with the s3:GetBucket action
-    const request = new AwsRequestImpl('principal',
-                                    {resource: 'resource', accountId: '111111111111'},
-                                    's3:GetBucket',
-                                    new RequestContextImpl({}))
+    const request = new AwsRequestImpl(
+      'principal',
+      { resource: 'resource', accountId: '111111111111' },
+      's3:GetBucket',
+      new RequestContextImpl({})
+    )
 
     //When the request is checked against the policy
     const response = requestMatchesActions(request, actions)
@@ -81,17 +87,19 @@ describe('action', () => {
     const policy = loadPolicy({
       Statement: {
         Effect: 'Allow',
-        Action: 's3:*',
+        Action: 's3:*'
       }
     })
     const statement = policy.statements()[0]
     const actions = (statement as ActionStatement).actions()
 
     //And a request with the s3:GetBucket action
-    const request = new AwsRequestImpl('principal',
-                                    {resource: 'resource', accountId: '111111111111'},
-                                    's3:GetBucket',
-                                    new RequestContextImpl({}))
+    const request = new AwsRequestImpl(
+      'principal',
+      { resource: 'resource', accountId: '111111111111' },
+      's3:GetBucket',
+      new RequestContextImpl({})
+    )
 
     //When the request is checked against the policy
     const response = requestMatchesActions(request, actions)
@@ -105,17 +113,19 @@ describe('action', () => {
     const policy = loadPolicy({
       Statement: {
         Effect: 'Allow',
-        Action: 's3:Get*',
+        Action: 's3:Get*'
       }
     })
     const statement = policy.statements()[0]
     const actions = (statement as ActionStatement).actions()
 
     //And a request with the s3:GetBucket action
-    const request = new AwsRequestImpl('principal',
-                                    {resource: 'resource', accountId: '111111111111'},
-                                    's3:GetBucket',
-                                    new RequestContextImpl({}))
+    const request = new AwsRequestImpl(
+      'principal',
+      { resource: 'resource', accountId: '111111111111' },
+      's3:GetBucket',
+      new RequestContextImpl({})
+    )
 
     //When the request is checked against the policy
     const response = requestMatchesActions(request, actions)
@@ -129,17 +139,19 @@ describe('action', () => {
     const policy = loadPolicy({
       Statement: {
         Effect: 'Allow',
-        Action: 's3:Get*',
+        Action: 's3:Get*'
       }
     })
     const statement = policy.statements()[0]
     const actions = (statement as ActionStatement).actions()
 
     //And a request with the s3:GetBucket action
-    const request = new AwsRequestImpl('principal',
-                                    {resource: 'resource', accountId: '111111111111'},
-                                    's3:PutBucket',
-                                    new RequestContextImpl({}))
+    const request = new AwsRequestImpl(
+      'principal',
+      { resource: 'resource', accountId: '111111111111' },
+      's3:PutBucket',
+      new RequestContextImpl({})
+    )
 
     //When the request is checked against the policy
     const response = requestMatchesActions(request, actions)
@@ -153,17 +165,19 @@ describe('action', () => {
     const policy = loadPolicy({
       Statement: {
         Effect: 'Allow',
-        Action: 's3:Get??????',
+        Action: 's3:Get??????'
       }
     })
     const statement = policy.statements()[0]
     const actions = (statement as ActionStatement).actions()
 
     //And a request with the s3:GetBucket action
-    const request = new AwsRequestImpl('principal',
-                                    {resource: 'resource', accountId: '111111111111'},
-                                    's3:GetBucket',
-                                    new RequestContextImpl({}))
+    const request = new AwsRequestImpl(
+      'principal',
+      { resource: 'resource', accountId: '111111111111' },
+      's3:GetBucket',
+      new RequestContextImpl({})
+    )
 
     //When the request is checked against the policy
     const response = requestMatchesActions(request, actions)
@@ -177,17 +191,19 @@ describe('action', () => {
     const policy = loadPolicy({
       Statement: {
         Effect: 'Allow',
-        Action: 's3:Get???',
+        Action: 's3:Get???'
       }
     })
     const statement = policy.statements()[0]
     const actions = (statement as ActionStatement).actions()
 
     //And a request with the s3:GetBucket action
-    const request = new AwsRequestImpl('principal',
-                                    {resource: 'resource', accountId: '111111111111'},
-                                    's3:GetBuckets',
-                                    new RequestContextImpl({}))
+    const request = new AwsRequestImpl(
+      'principal',
+      { resource: 'resource', accountId: '111111111111' },
+      's3:GetBuckets',
+      new RequestContextImpl({})
+    )
 
     //When the request is checked against the policy
     const response = requestMatchesActions(request, actions)
@@ -201,17 +217,19 @@ describe('action', () => {
     const policy = loadPolicy({
       Statement: {
         Effect: 'Allow',
-        Action: ['s3:GetBucket', 's3:PutObject'],
+        Action: ['s3:GetBucket', 's3:PutObject']
       }
     })
     const statement = policy.statements()[0]
     const actions = (statement as ActionStatement).actions()
 
     //And a request with the s3:GetBucket action
-    const request = new AwsRequestImpl('principal',
-                                    {resource: 'resource', accountId: '111111111111'},
-                                    's3:GetBucket',
-                                    new RequestContextImpl({}))
+    const request = new AwsRequestImpl(
+      'principal',
+      { resource: 'resource', accountId: '111111111111' },
+      's3:GetBucket',
+      new RequestContextImpl({})
+    )
 
     //When the request is checked against the policy
     const response = requestMatchesActions(request, actions)
@@ -226,16 +244,18 @@ describe('action', () => {
       const policy = loadPolicy({
         Statement: {
           Effect: 'Allow',
-          NotAction: '*',
+          NotAction: '*'
         }
       })
       const statement = policy.statements()[0]
       const actions = (statement as NotActionStatement).notActions()
       //And a request with an action
-      const request = new AwsRequestImpl('principal',
-                                      {resource: 'resource', accountId: '111111111111'},
-                                      's3:GetBucket',
-                                      new RequestContextImpl({}))
+      const request = new AwsRequestImpl(
+        'principal',
+        { resource: 'resource', accountId: '111111111111' },
+        's3:GetBucket',
+        new RequestContextImpl({})
+      )
 
       //When the request is checked against the policy
       const response = requestMatchesNotActions(request, actions)
@@ -249,16 +269,18 @@ describe('action', () => {
       const policy = loadPolicy({
         Statement: {
           Effect: 'Allow',
-          NotAction: 's3:GetBucket',
+          NotAction: 's3:GetBucket'
         }
       })
       const statement = policy.statements()[0]
       const actions = (statement as NotActionStatement).notActions()
       //And a request with the s3:GetBucket action
-      const request = new AwsRequestImpl('principal',
-                                      {resource: 'resource', accountId: '111111111111'},
-                                      's3:GetBucket',
-                                      new RequestContextImpl({}))
+      const request = new AwsRequestImpl(
+        'principal',
+        { resource: 'resource', accountId: '111111111111' },
+        's3:GetBucket',
+        new RequestContextImpl({})
+      )
 
       //When the request is checked against the policy
       const response = requestMatchesNotActions(request, actions)

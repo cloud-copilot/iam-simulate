@@ -1,5 +1,5 @@
-import { BaseOperatorTest, testOperator } from "../baseConditionperatorTests.js";
-import { NumericEquals } from "./NumericEquals.js";
+import { BaseOperatorTest, testOperator } from '../baseConditionperatorTests.js'
+import { NumericEquals } from './NumericEquals.js'
 
 const numericEqualsTests: BaseOperatorTest[] = [
   {

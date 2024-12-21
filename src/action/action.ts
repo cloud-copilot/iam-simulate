@@ -1,6 +1,6 @@
-import { Action, Statement } from "@cloud-copilot/iam-policy";
-import { ActionExplain, StatementExplain } from "../explain/statementExplain.js";
-import { AwsRequest } from "../request/request.js";
+import { Action, Statement } from '@cloud-copilot/iam-policy'
+import { ActionExplain, StatementExplain } from '../explain/statementExplain.js'
+import { AwsRequest } from '../request/request.js'
 
 /**
  * Check if a request matches the Action or NotAction elements of a statement.
@@ -9,21 +9,24 @@ import { AwsRequest } from "../request/request.js";
  * @param statement the statement to check against
  * @returns true if the request matches the Action or NotAction in the statement, false otherwise
  */
-export function requestMatchesStatementActions(request: AwsRequest, statement: Statement): {matches: boolean, details: Pick<StatementExplain, 'actions' | 'notActions'>} {
-  if(statement.isActionStatement()) {
-    const {matches, explains} = requestMatchesActions(request, statement.actions());
-    if(!statement.actionIsArray()) {
-      return {matches, details: {actions: explains[0]}};
+export function requestMatchesStatementActions(
+  request: AwsRequest,
+  statement: Statement
+): { matches: boolean; details: Pick<StatementExplain, 'actions' | 'notActions'> } {
+  if (statement.isActionStatement()) {
+    const { matches, explains } = requestMatchesActions(request, statement.actions())
+    if (!statement.actionIsArray()) {
+      return { matches, details: { actions: explains[0] } }
     }
-    return {matches, details: {actions: explains}};
+    return { matches, details: { actions: explains } }
   } else if (statement.isNotActionStatement()) {
-    const {matches, explains} = requestMatchesNotActions(request, statement.notActions());
-    if(!statement.notActionIsArray()) {
-      return {matches, details: {notActions: explains[0]}};
+    const { matches, explains } = requestMatchesNotActions(request, statement.notActions())
+    if (!statement.notActionIsArray()) {
+      return { matches, details: { notActions: explains[0] } }
     }
-    return {matches, details: {notActions: explains}};
+    return { matches, details: { notActions: explains } }
   }
-  throw new Error('Statement has neither Actions nor NotActions');
+  throw new Error('Statement has neither Actions nor NotActions')
 }
 
 /**
@@ -33,13 +36,12 @@ export function requestMatchesStatementActions(request: AwsRequest, statement: S
  * @returns a regular that replaces any wildcards in the action with the appropriate regular expression.
  */
 function convertActionToRegex(action: string): RegExp {
-  if(action.indexOf(':') != -1) {
-    throw new Error('Action should not contain a colon');
+  if (action.indexOf(':') != -1) {
+    throw new Error('Action should not contain a colon')
   }
-  const pattern = "^" + action.replace(/\?/g, '.').replace(/\*/g, '.*?') + "$"
+  const pattern = '^' + action.replace(/\?/g, '.').replace(/\*/g, '.*?') + '$'
   return new RegExp(pattern, 'i')
 }
-
 
 /**
  * Check if a request matches a set of actions.
@@ -48,10 +50,13 @@ function convertActionToRegex(action: string): RegExp {
  * @param actions the actions to check against
  * @returns true if the request matches any of the actions, false otherwise
  */
-export function requestMatchesActions(request: AwsRequest, actions: Action[]): {matches: boolean, explains: ActionExplain[]} {
-  const explains = actions.map(action => requestMatchesSingleAction(request, action));
-  const matches = explains.some(explain => explain.matches);
-  return {matches, explains};
+export function requestMatchesActions(
+  request: AwsRequest,
+  actions: Action[]
+): { matches: boolean; explains: ActionExplain[] } {
+  const explains = actions.map((action) => requestMatchesSingleAction(request, action))
+  const matches = explains.some((explain) => explain.matches)
+  return { matches, explains }
 }
 
 /**
@@ -61,36 +66,39 @@ export function requestMatchesActions(request: AwsRequest, actions: Action[]): {
  * @param actions the actions to check against
  * @returns true if the request does not match any of the actions, false if the request matches any of the actions
  */
-export function requestMatchesNotActions(request: AwsRequest, actions: Action[]): {matches: boolean, explains: ActionExplain[]} {
-  const explains = actions.map(action => {
+export function requestMatchesNotActions(
+  request: AwsRequest,
+  actions: Action[]
+): { matches: boolean; explains: ActionExplain[] } {
+  const explains = actions.map((action) => {
     const explain = requestMatchesSingleAction(request, action)
     explain.matches = !explain.matches
     return explain
-  });
+  })
 
-  const matches = !explains.some(explain => !explain.matches);
-  return {matches, explains};
+  const matches = !explains.some((explain) => !explain.matches)
+  return { matches, explains }
 }
 
 function requestMatchesSingleAction(request: AwsRequest, action: Action): ActionExplain {
   if (action.isWildcardAction()) {
     return {
       action: action.value(),
-      matches: true,
+      matches: true
     }
-  } else if(action.isServiceAction()) {
-    if(request.action.service() != action.service()) {
+  } else if (action.isServiceAction()) {
+    if (request.action.service() != action.service()) {
       return {
         action: action.value(),
-        matches: false,
+        matches: false
       }
     }
-    const actionRegex = convertActionToRegex(action.action());
+    const actionRegex = convertActionToRegex(action.action())
     const matches = actionRegex.test(request.action.action())
     return {
       action: action.value(),
       matches
     }
   }
-  throw new Error('Unknown action type');
+  throw new Error('Unknown action type')
 }

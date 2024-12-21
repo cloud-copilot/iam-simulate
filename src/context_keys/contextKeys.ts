@@ -1,6 +1,16 @@
-import { ConditionKey, iamConditionKeyDetails, iamConditionKeyExists, iamConditionKeysForService, iamServiceExists } from "@cloud-copilot/iam-data";
-import { getGlobalConditionKeyWithOrWithoutPrefix, getVariableGlobalConditionKeyByPrefix, globalConditionKeyExists } from "../global_conditions/globalConditionKeys.js";
-import { ConditionKeyType } from "./contextKeyTypes.js";
+import {
+  ConditionKey,
+  iamConditionKeyDetails,
+  iamConditionKeyExists,
+  iamConditionKeysForService,
+  iamServiceExists
+} from '@cloud-copilot/iam-data'
+import {
+  getGlobalConditionKeyWithOrWithoutPrefix,
+  getVariableGlobalConditionKeyByPrefix,
+  globalConditionKeyExists
+} from '../global_conditions/globalConditionKeys.js'
+import { ConditionKeyType } from './contextKeyTypes.js'
 
 /**
  * Check if a context key actually exists
@@ -9,46 +19,46 @@ import { ConditionKeyType } from "./contextKeyTypes.js";
  * @returns true if the context key is valid, false otherwise
  */
 export async function isActualContextKey(key: string): Promise<boolean> {
-  if(key.includes("/")) {
-    return isActualContextKeyWithVariable(key);
+  if (key.includes('/')) {
+    return isActualContextKeyWithVariable(key)
   }
-  if(globalConditionKeyExists(key)) {
-    return true;
+  if (globalConditionKeyExists(key)) {
+    return true
   }
-  const parts = key.split(":");
-  if(parts.length !== 2) {
-    return false;
+  const parts = key.split(':')
+  if (parts.length !== 2) {
+    return false
   }
-  const [service, action] = parts;
-  const serviceExists = await iamServiceExists(service);
+  const [service, action] = parts
+  const serviceExists = await iamServiceExists(service)
 
-  if(!serviceExists) {
-    return false;
+  if (!serviceExists) {
+    return false
   }
 
-  const actionExists = await iamConditionKeyExists(service, key);
-  return actionExists;
+  const actionExists = await iamConditionKeyExists(service, key)
+  return actionExists
 }
 
 /**
  * Checks if a context key with a variable in it is a valid context key
  */
 async function isActualContextKeyWithVariable(key: string): Promise<boolean> {
-  const slashLocation = key.indexOf("/");
-  const prefix = key.slice(0, slashLocation);
-  const rest = key.slice(slashLocation + 1);
+  const slashLocation = key.indexOf('/')
+  const prefix = key.slice(0, slashLocation)
+  const rest = key.slice(slashLocation + 1)
 
-  if(rest.length === 0) {
+  if (rest.length === 0) {
     return false
   }
 
-  const globalKey = getVariableGlobalConditionKeyByPrefix(prefix);
-  if(globalKey) {
-    return true;
+  const globalKey = getVariableGlobalConditionKeyByPrefix(prefix)
+  if (globalKey) {
+    return true
   }
 
-  const serviceKey = await serviceContextKeyDetails(key);
-  return !!serviceKey;
+  const serviceKey = await serviceContextKeyDetails(key)
+  return !!serviceKey
 }
 
 /**
@@ -58,28 +68,28 @@ async function isActualContextKeyWithVariable(key: string): Promise<boolean> {
  * @returns The details for the context key if it exists. if the key has variables in it it will return the details for the variable key
  */
 async function serviceContextKeyDetails(contextKey: string): Promise<ConditionKey | undefined> {
-  const [service, key] = contextKeyParts(contextKey.toLowerCase());
+  const [service, key] = contextKeyParts(contextKey.toLowerCase())
 
-  const serviceExists = await iamServiceExists(service);
-  if(!serviceExists) {
-    return undefined;
+  const serviceExists = await iamServiceExists(service)
+  if (!serviceExists) {
+    return undefined
   }
 
-  if(key.includes("/")) {
-    const prefix = service + ":" + key.slice(0, key.indexOf("/") + 1);
-    const allConditionsKeys = await iamConditionKeysForService(service);
-    const matchingKey = allConditionsKeys.find(k => k.toLowerCase().startsWith(prefix));
-    if(matchingKey) {
-      return await iamConditionKeyDetails(service, matchingKey);
+  if (key.includes('/')) {
+    const prefix = service + ':' + key.slice(0, key.indexOf('/') + 1)
+    const allConditionsKeys = await iamConditionKeysForService(service)
+    const matchingKey = allConditionsKeys.find((k) => k.toLowerCase().startsWith(prefix))
+    if (matchingKey) {
+      return await iamConditionKeyDetails(service, matchingKey)
     }
     return undefined
   }
 
-  const exists = await iamConditionKeyExists(service, contextKey);
-  if(!exists) {
-    return undefined;
+  const exists = await iamConditionKeyExists(service, contextKey)
+  if (!exists) {
+    return undefined
   }
-  return iamConditionKeyDetails(service, contextKey);
+  return iamConditionKeyDetails(service, contextKey)
 }
 
 /**
@@ -91,7 +101,7 @@ async function serviceContextKeyDetails(contextKey: string): Promise<ConditionKe
  * @returns A tuple with the service and the rest of the key
  */
 export function contextKeyParts(contextKey: string): [string, string] {
-  const colonIndex = contextKey.indexOf(":");
+  const colonIndex = contextKey.indexOf(':')
   return [contextKey.slice(0, colonIndex), contextKey.slice(colonIndex + 1)]
 }
 
@@ -102,17 +112,17 @@ export function contextKeyParts(contextKey: string): [string, string] {
  * @returns if the condition key is an array type
  */
 export async function normalizeContextKeyCase(contextKey: string): Promise<string> {
-  const serviceKey = await serviceContextKeyDetails(contextKey);
-  if(serviceKey) {
+  const serviceKey = await serviceContextKeyDetails(contextKey)
+  if (serviceKey) {
     return replaceVariableInContextKey(serviceKey.key, contextKey)
   }
 
-  const globalConditionKey = getGlobalConditionKeyWithOrWithoutPrefix(contextKey);
-  if(globalConditionKey) {
+  const globalConditionKey = getGlobalConditionKeyWithOrWithoutPrefix(contextKey)
+  if (globalConditionKey) {
     return replaceVariableInContextKey(globalConditionKey.key, contextKey)
   }
 
-  throw new Error(`Context key ${contextKey} not found`);
+  throw new Error(`Context key ${contextKey} not found`)
 }
 
 /**
@@ -123,8 +133,8 @@ export async function normalizeContextKeyCase(contextKey: string): Promise<strin
  * @returns the spec condition key with the variable portion replaced with the actual value
  */
 function replaceVariableInContextKey(specKey: string, actualKey: string): string {
-  const slashIndex = specKey.indexOf("/")
-  if(slashIndex === -1) {
+  const slashIndex = specKey.indexOf('/')
+  if (slashIndex === -1) {
     return specKey
   }
   const prefix = specKey.slice(0, slashIndex)
@@ -140,15 +150,15 @@ function replaceVariableInContextKey(specKey: string, actualKey: string): string
  * @throws an error if the condition key is not found
  */
 export async function typeForContextKey(contextKey: string): Promise<ConditionKeyType> {
-  const globalConditionKey = getGlobalConditionKeyWithOrWithoutPrefix(contextKey);
-  if(globalConditionKey) {
-    return globalConditionKey.dataType as ConditionKeyType;
+  const globalConditionKey = getGlobalConditionKeyWithOrWithoutPrefix(contextKey)
+  if (globalConditionKey) {
+    return globalConditionKey.dataType as ConditionKeyType
   }
 
   const keyDetails = await serviceContextKeyDetails(contextKey)
-  if(keyDetails) {
-    return keyDetails.type as ConditionKeyType;
+  if (keyDetails) {
+    return keyDetails.type as ConditionKeyType
   }
 
-  throw new Error(`Condition key ${contextKey} not found`);
+  throw new Error(`Condition key ${contextKey} not found`)
 }

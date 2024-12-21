@@ -1,5 +1,5 @@
-import { BaseOperatorTest, testOperator } from "../baseConditionperatorTests.js";
-import { StringNotEquals } from "./StringNotEquals.js";
+import { BaseOperatorTest, testOperator } from '../baseConditionperatorTests.js'
+import { StringNotEquals } from './StringNotEquals.js'
 
 const stringNotEqualsTests: BaseOperatorTest[] = [
   {
@@ -60,7 +60,7 @@ const stringNotEqualsTests: BaseOperatorTest[] = [
   },
   {
     name: 'should replace variables and return false if a match',
-    requestContext: {'aws:username': 'Bob'},
+    requestContext: { 'aws:username': 'Bob' },
     policyValues: ['arn:aws:iam::123456789012:user/${aws:username}'],
     testValue: 'arn:aws:iam::123456789012:user/Bob',
     expected: false,
@@ -82,11 +82,12 @@ const stringNotEqualsTests: BaseOperatorTest[] = [
       {
         value: '${aws:username}',
         matches: false,
-        errors: ['{aws:username} not found in request context, and no default value provided. This will never match']
+        errors: [
+          '{aws:username} not found in request context, and no default value provided. This will never match'
+        ]
       }
     ]
   }
-
 ]
 
 testOperator('StringNotEquals', stringNotEqualsTests, StringNotEquals)

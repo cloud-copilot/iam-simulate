@@ -1,23 +1,23 @@
-import { ContextKey, RequestContext } from "../requestContext.js";
-import { RequestAction, RequestActionImpl } from "./requestAction.js";
-import { RequestPrincipal, RequestPrincipalImpl } from "./requestPrincipal.js";
-import { RequestResource, ResourceRequestImpl } from "./requestResource.js";
+import { ContextKey, RequestContext } from '../requestContext.js'
+import { RequestAction, RequestActionImpl } from './requestAction.js'
+import { RequestPrincipal, RequestPrincipalImpl } from './requestPrincipal.js'
+import { RequestResource, ResourceRequestImpl } from './requestResource.js'
 
 /**
  * A request to be evaluated by the policy engine
  */
 export interface AwsRequest {
-  principal: RequestPrincipal;
+  principal: RequestPrincipal
 
   /**
    * The action to be performed
    */
-  action: RequestAction;
+  action: RequestAction
 
   /**
    * The resource to be acted upon
    */
-  resource: RequestResource;
+  resource: RequestResource
 
   /**
    * The context of the request
@@ -31,7 +31,7 @@ export interface AwsRequest {
    * @param key the key to check for existence
    * @returns true if the key is valid for the request and exists in the request context.
    */
-  contextKeyExists(key: string): boolean;
+  contextKeyExists(key: string): boolean
 
   /**
    * Gets the value of a context key, if it is valid for the request and exist, otherwise throws an error
@@ -39,41 +39,40 @@ export interface AwsRequest {
    *
    * @returns the value of the context key
    */
-  getContextKeyValue(key: string): ContextKey;
+  getContextKeyValue(key: string): ContextKey
 }
 
 export class AwsRequestImpl implements AwsRequest {
-
-  constructor(public readonly principalString: string,
-              public readonly resourceIdentifier: {resource: string, accountId: string},
-              public readonly actionString: string,
-              public readonly context: RequestContext) {
-
-  }
+  constructor(
+    public readonly principalString: string,
+    public readonly resourceIdentifier: { resource: string; accountId: string },
+    public readonly actionString: string,
+    public readonly context: RequestContext
+  ) {}
 
   get action(): RequestAction {
-    return new RequestActionImpl(this.actionString);
+    return new RequestActionImpl(this.actionString)
   }
 
   get resource(): RequestResource {
-    return new ResourceRequestImpl(this.resourceIdentifier.resource, this.resourceIdentifier.accountId);
+    return new ResourceRequestImpl(
+      this.resourceIdentifier.resource,
+      this.resourceIdentifier.accountId
+    )
   }
 
   get principal(): RequestPrincipal {
-    return new RequestPrincipalImpl(this.principalString);
+    return new RequestPrincipalImpl(this.principalString)
   }
-
 
   public contextKeyExists(key: string): boolean {
-    return this.context.contextKeyExists(key);
+    return this.context.contextKeyExists(key)
   }
-
 
   public getContextKeyValue(key: string): ContextKey {
-    if(!this.contextKeyExists(key)) {
+    if (!this.contextKeyExists(key)) {
       throw new Error(`Invalid context key: ${key}`)
     }
-    return this.context.contextKeyValue(key);
+    return this.context.contextKeyValue(key)
   }
-
 }

@@ -1,5 +1,5 @@
-import { BaseOperatorTest, testOperator } from "../baseConditionperatorTests.js";
-import { NumericLessThan } from "./NumericLessThan.js";
+import { BaseOperatorTest, testOperator } from '../baseConditionperatorTests.js'
+import { NumericLessThan } from './NumericLessThan.js'
 
 const numericLessThanTests: BaseOperatorTest[] = [
   {

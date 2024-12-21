@@ -1,5 +1,5 @@
-import { BaseOperatorTest, testOperator } from "../baseConditionperatorTests.js";
-import { StringNotLike } from "./StringNotLike.js";
+import { BaseOperatorTest, testOperator } from '../baseConditionperatorTests.js'
+import { StringNotLike } from './StringNotLike.js'
 
 const stringNotLikeTests: BaseOperatorTest[] = [
   {
@@ -20,26 +20,26 @@ const stringNotLikeTests: BaseOperatorTest[] = [
     requestContext: {},
     policyValues: ['test*'],
     testValue: 'test123',
-    expected: false,
+    expected: false
   },
   {
     name: 'Should not match a value with a wildcard in the middle',
     requestContext: {},
     policyValues: ['test???value'],
     testValue: 'test123value',
-    expected: false,
+    expected: false
   },
   {
     name: 'Is case sensitive',
     requestContext: {},
     policyValues: ['test'],
     testValue: 'TEST',
-    expected: true,
+    expected: true
   },
   {
     name: 'Should replace a policy value',
     requestContext: {
-      'aws:username':'Bob'
+      'aws:username': 'Bob'
     },
     policyValues: ['test${aws:username}*'],
     testValue: 'testBobPerson',
@@ -55,7 +55,7 @@ const stringNotLikeTests: BaseOperatorTest[] = [
   {
     name: 'Should replace a policy value and not match wildcards in the policy value',
     requestContext: {
-      'aws:username':'Bob*'
+      'aws:username': 'Bob*'
     },
     policyValues: ['test${aws:username}'],
     testValue: 'testBobTwo',
@@ -78,7 +78,9 @@ const stringNotLikeTests: BaseOperatorTest[] = [
       {
         value: 'test${aws:username}*',
         matches: false,
-        errors: ['{aws:username} not found in request context, and no default value provided. This will never match']
+        errors: [
+          '{aws:username} not found in request context, and no default value provided. This will never match'
+        ]
       }
     ]
   },
@@ -91,7 +93,7 @@ const stringNotLikeTests: BaseOperatorTest[] = [
     explains: [
       {
         value: 'A*',
-        matches: false,
+        matches: false
       },
       {
         value: 'B*',
@@ -101,4 +103,4 @@ const stringNotLikeTests: BaseOperatorTest[] = [
   }
 ]
 
-testOperator('StringNotLike',stringNotLikeTests, StringNotLike)
+testOperator('StringNotLike', stringNotLikeTests, StringNotLike)

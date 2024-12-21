@@ -1,5 +1,5 @@
-import { BaseOperatorTest, testOperator } from "../baseConditionperatorTests.js";
-import { Bool } from "./Bool.js";
+import { BaseOperatorTest, testOperator } from '../baseConditionperatorTests.js'
+import { Bool } from './Bool.js'
 
 const boolTests: BaseOperatorTest[] = [
   {
@@ -95,7 +95,9 @@ const boolTests: BaseOperatorTest[] = [
       {
         value: '${aws:SecureTransport}',
         matches: false,
-        errors: ['{aws:SecureTransport} not found in request context, and no default value provided. This will never match']
+        errors: [
+          '{aws:SecureTransport} not found in request context, and no default value provided. This will never match'
+        ]
       }
     ]
   },
@@ -125,7 +127,7 @@ const boolTests: BaseOperatorTest[] = [
       {
         value: 'true',
         matches: false,
-        errors: ['request value \'not a boolean\' is not a boolean']
+        errors: ["request value 'not a boolean' is not a boolean"]
       }
     ]
   }

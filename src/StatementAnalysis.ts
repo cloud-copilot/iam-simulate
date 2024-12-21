@@ -1,7 +1,7 @@
-import { Statement } from "@cloud-copilot/iam-policy";
-import { ConditionMatchResult } from "./condition/condition.js";
-import { StatementExplain } from "./explain/statementExplain.js";
-import { PrincipalMatchResult } from "./principal/principal.js";
+import { Statement } from '@cloud-copilot/iam-policy'
+import { ConditionMatchResult } from './condition/condition.js'
+import { StatementExplain } from './explain/statementExplain.js'
+import { PrincipalMatchResult } from './principal/principal.js'
 
 /**
  * The result of analyzing a statement against a request.
@@ -11,17 +11,17 @@ export interface StatementAnalysis {
   /**
    * The statement being analyzed.
    */
-  statement: Statement;
+  statement: Statement
 
   /**
    * Whether the Resource or NotResource – if any – matches the request.
    */
-  resourceMatch: boolean;
+  resourceMatch: boolean
 
   /**
    * Whether the Action or NotAction matches the request.
    */
-  actionMatch: boolean;
+  actionMatch: boolean
 
   /**
    * Whether the Principal or NotPrincipal – if any – matches the request.
@@ -43,13 +43,15 @@ export interface StatementAnalysis {
  * @returns Whether the statement is an identity statement that allows the request.
  */
 export function identityStatementAllows(statement: StatementAnalysis): boolean {
-  if(statement.resourceMatch &&
+  if (
+    statement.resourceMatch &&
     statement.actionMatch &&
     statement.conditionMatch === 'Match' &&
-    statement.statement.effect() === 'Allow') {
-      return true;
+    statement.statement.effect() === 'Allow'
+  ) {
+    return true
   }
-  return false;
+  return false
 }
 
 // export function identityStatementUknownAllow(statement: StatementAnalysis): boolean {
@@ -73,18 +75,29 @@ export function identityStatementAllows(statement: StatementAnalysis): boolean {
 // }
 
 export function identityStatementExplicitDeny(statement: StatementAnalysis): boolean {
-  if(statement.resourceMatch &&
+  if (
+    statement.resourceMatch &&
     statement.actionMatch &&
     statement.conditionMatch === 'Match' &&
-    statement.statement.effect() === 'Deny') {
-      return true;
+    statement.statement.effect() === 'Deny'
+  ) {
+    return true
   }
-  return false;
+  return false
 }
 
-export function statementMatches(analysis: Pick<StatementAnalysis, 'actionMatch' | 'conditionMatch' | 'principalMatch' | 'resourceMatch'>): boolean {
-  return analysis.resourceMatch &&
+export function statementMatches(
+  analysis: Pick<
+    StatementAnalysis,
+    'actionMatch' | 'conditionMatch' | 'principalMatch' | 'resourceMatch'
+  >
+): boolean {
+  return (
+    analysis.resourceMatch &&
     analysis.actionMatch &&
     analysis.conditionMatch === 'Match' &&
-    ['Match', 'AccountLevelMatch', 'SessionRoleMatch', 'SessionUserMatch'].includes(analysis.principalMatch);
+    ['Match', 'AccountLevelMatch', 'SessionRoleMatch', 'SessionUserMatch'].includes(
+      analysis.principalMatch
+    )
+  )
 }

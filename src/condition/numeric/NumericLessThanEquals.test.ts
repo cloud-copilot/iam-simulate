@@ -1,5 +1,5 @@
-import { BaseOperatorTest, testOperator } from "../baseConditionperatorTests.js";
-import { NumericLessThanEquals } from "./NumericLessThanEquals.js";
+import { BaseOperatorTest, testOperator } from '../baseConditionperatorTests.js'
+import { NumericLessThanEquals } from './NumericLessThanEquals.js'
 
 const numericLessThanEqualsTests: BaseOperatorTest[] = [
   {
@@ -10,7 +10,7 @@ const numericLessThanEqualsTests: BaseOperatorTest[] = [
     explains: [
       {
         matches: true,
-        value: '10',
+        value: '10'
       }
     ]
   },
@@ -22,7 +22,7 @@ const numericLessThanEqualsTests: BaseOperatorTest[] = [
     explains: [
       {
         matches: true,
-        value: '10',
+        value: '10'
       }
     ]
   },
@@ -34,7 +34,7 @@ const numericLessThanEqualsTests: BaseOperatorTest[] = [
     explains: [
       {
         matches: false,
-        value: '10',
+        value: '10'
       }
     ]
   },

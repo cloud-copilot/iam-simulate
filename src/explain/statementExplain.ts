@@ -1,4 +1,9 @@
-export type ExplainPrincipalMatch = 'Match' | 'NoMatch' | 'AccountLevelMatch' | 'SessionRoleMatch' | 'SessionUserMatch'
+export type ExplainPrincipalMatch =
+  | 'Match'
+  | 'NoMatch'
+  | 'AccountLevelMatch'
+  | 'SessionRoleMatch'
+  | 'SessionUserMatch'
 
 export interface ActionExplain {
   action: string
@@ -30,11 +35,10 @@ export interface ConditionValueExplain {
 }
 
 export interface ConditionExplain {
-
   /**
    * The operation that was used in the condition statement
    */
-  operator: string;
+  operator: string
 
   /**
    * The value being matched in the condition statement
@@ -61,7 +65,6 @@ export interface ConditionExplain {
    *
    */
   matchedBecauseMissing?: boolean
-
 
   /**
    * Failed because the context key was missing from the request.
@@ -99,7 +102,7 @@ export interface StatementExplain {
   notActions?: ActionExplain | ActionExplain[]
   resources?: ResourceExplain | ResourceExplain[]
   notResources?: ResourceExplain | ResourceExplain[]
-  principals? : PrincipalExplain | PrincipalExplain[]
+  principals?: PrincipalExplain | PrincipalExplain[]
   notPrincipals?: PrincipalExplain | PrincipalExplain[]
   conditions?: ConditionExplain[]
 }
@@ -108,6 +111,3 @@ export interface StatementExplain {
 I want to emit the policy object exactly as it was written. How do I get a structure
 that matches the policy object exactly? Should I just embed the values in the explain?
 */
-
-
-

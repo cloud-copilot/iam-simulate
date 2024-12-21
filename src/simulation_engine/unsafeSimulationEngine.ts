@@ -1,10 +1,10 @@
-import { loadPolicy } from "@cloud-copilot/iam-policy";
-import { authorize, ServiceControlPolicies } from "../core_engine/coreSimulatorEngine.js";
-import { type EvaluationResult } from "../evaluate.js";
-import { AwsRequestImpl } from "../request/request.js";
-import { RequestContextImpl } from "../requestContext.js";
-import { Simulation } from "./simulation.js";
-import { SimulationOptions } from "./simulationOptions.js";
+import { loadPolicy } from '@cloud-copilot/iam-policy'
+import { authorize, ServiceControlPolicies } from '../core_engine/coreSimulatorEngine.js'
+import { type EvaluationResult } from '../evaluate.js'
+import { AwsRequestImpl } from '../request/request.js'
+import { RequestContextImpl } from '../requestContext.js'
+import { Simulation } from './simulation.js'
+import { SimulationOptions } from './simulationOptions.js'
 
 /**
  * Runs a simulation without input validation or context variable verification.
@@ -14,25 +14,38 @@ import { SimulationOptions } from "./simulationOptions.js";
  * @param simulationOptions Options for the simulation.
  * @returns The result of the simulation.
  */
-export function runUnsafeSimulation(simulation: Simulation, simulationOptions: Partial<SimulationOptions>): EvaluationResult {
-  const identityPolicies = Object.values(simulation.identityPolicies).map(p => loadPolicy(p.policy));
-  const serviceControlPolicies: ServiceControlPolicies[] = simulation.serviceControlPolicies.map((scp) => {
-    const ouId = scp.orgIdentifier;
-    const policies = scp.policies.map(val => loadPolicy(val.policy));
+export function runUnsafeSimulation(
+  simulation: Simulation,
+  simulationOptions: Partial<SimulationOptions>
+): EvaluationResult {
+  const identityPolicies = Object.values(simulation.identityPolicies).map((p) =>
+    loadPolicy(p.policy)
+  )
+  const serviceControlPolicies: ServiceControlPolicies[] = simulation.serviceControlPolicies.map(
+    (scp) => {
+      const ouId = scp.orgIdentifier
+      const policies = scp.policies.map((val) => loadPolicy(val.policy))
 
-    return {
-      orgIdentifier: ouId,
-      policies: policies
+      return {
+        orgIdentifier: ouId,
+        policies: policies
+      }
     }
-  })
+  )
 
-  const permissionBoundaries = simulation.permissionBoundaryPolicies?.map(val => loadPolicy(val.policy)) ?? undefined;
+  const permissionBoundaries =
+    simulation.permissionBoundaryPolicies?.map((val) => loadPolicy(val.policy)) ?? undefined
 
   const requestContext = new RequestContextImpl(simulation.request.contextVariables)
-  const request = new AwsRequestImpl(simulation.request.principal, {
-    resource: simulation.request.resource.resource,
-    accountId: simulation.request.resource.accountId,
-  }, simulation.request.action, requestContext);
+  const request = new AwsRequestImpl(
+    simulation.request.principal,
+    {
+      resource: simulation.request.resource.resource,
+      accountId: simulation.request.resource.accountId
+    },
+    simulation.request.action,
+    requestContext
+  )
 
   const analysis = authorize({
     request,
@@ -40,7 +53,7 @@ export function runUnsafeSimulation(simulation: Simulation, simulationOptions: P
     serviceControlPolicies,
     resourcePolicy: simulation.resourcePolicy ? loadPolicy(simulation.resourcePolicy) : undefined,
     permissionBoundaries
-  });
+  })
 
-  return analysis.result;
+  return analysis.result
 }

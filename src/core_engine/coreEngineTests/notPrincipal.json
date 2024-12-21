@@ -48,7 +48,10 @@
           "Action": "s3:GetObject",
           "Resource": "arn:aws:s3:::mybucket/testobject",
           "NotPrincipal": {
-            "AWS": ["arn:aws:iam::123456789012:user/not-test-user", "arn:aws:iam::123456789012:user/not-test-user-2"]
+            "AWS": [
+              "arn:aws:iam::123456789012:user/not-test-user",
+              "arn:aws:iam::123456789012:user/not-test-user-2"
+            ]
           }
         }
       ]
@@ -106,7 +109,10 @@
           "Action": "s3:GetObject",
           "Resource": "arn:aws:s3:::mybucket/testobject",
           "NotPrincipal": {
-            "AWS": ["arn:aws:iam::123456789012:user/test-user", "arn:aws:iam::123456789012:user/not-test-user"]
+            "AWS": [
+              "arn:aws:iam::123456789012:user/test-user",
+              "arn:aws:iam::123456789012:user/not-test-user"
+            ]
           }
         }
       ]
@@ -115,6 +121,4 @@
       "response": "ImplicitlyDenied"
     }
   }
-
-
 ]

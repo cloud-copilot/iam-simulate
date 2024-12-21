@@ -1,5 +1,5 @@
-import { BaseConditionOperator } from "../BaseConditionOperator.js";
-import { ArnLike } from "./ArnLike.js";
+import { BaseConditionOperator } from '../BaseConditionOperator.js'
+import { ArnLike } from './ArnLike.js'
 
 export const ArnEquals: BaseConditionOperator = {
   name: 'ArnEquals',

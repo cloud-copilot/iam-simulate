@@ -1,5 +1,5 @@
-import { BaseOperatorTest, testOperator } from "../baseConditionperatorTests.js";
-import { StringEquals } from "./StringEquals.js";
+import { BaseOperatorTest, testOperator } from '../baseConditionperatorTests.js'
+import { StringEquals } from './StringEquals.js'
 
 const stringEqualsTests: BaseOperatorTest[] = [
   {
@@ -11,7 +11,7 @@ const stringEqualsTests: BaseOperatorTest[] = [
     explains: [
       {
         value: 'arn:aws:iam::123456789012:user/Bob',
-        matches: true,
+        matches: true
       },
       {
         value: 'arn:aws:iam::123456789012:user/Alice',
@@ -94,11 +94,12 @@ const stringEqualsTests: BaseOperatorTest[] = [
       {
         value: 'arn:aws:iam::123456789012:user/${aws:userid}',
         matches: false,
-        errors: ["{aws:userid} not found in request context, and no default value provided. This will never match"]
+        errors: [
+          '{aws:userid} not found in request context, and no default value provided. This will never match'
+        ]
       }
     ]
-  },
-
+  }
 ]
 
 testOperator('StringEquals', stringEqualsTests, StringEquals)

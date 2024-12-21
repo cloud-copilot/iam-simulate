@@ -10,7 +10,7 @@
       "principal": "arn:aws:iam::123456789012:user/test-user",
       "context": {
         "s3:prefix": "allowed-prefix/",
-        "aws:PrincipalOrgPaths":["ou-12345"]
+        "aws:PrincipalOrgPaths": ["ou-12345"]
       }
     },
     "identityPolicies": [
@@ -26,7 +26,7 @@
                 "s3:prefix": "allowed-prefix/"
               },
               "ForAnyValue:StringEquals": {
-                "aws:PrincipalOrgPaths":["ou-12345"]
+                "aws:PrincipalOrgPaths": ["ou-12345"]
               }
             }
           }

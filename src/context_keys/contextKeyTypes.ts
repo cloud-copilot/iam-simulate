@@ -1,4 +1,11 @@
-export type BaseConditionKeyType = 'String' | 'ARN' | 'Numeric' | 'Bool' | 'Date' | 'IPAddress' | 'Binary'
+export type BaseConditionKeyType =
+  | 'String'
+  | 'ARN'
+  | 'Numeric'
+  | 'Bool'
+  | 'Date'
+  | 'IPAddress'
+  | 'Binary'
 export type ArrayConditionKeyType = `ArrayOf${BaseConditionKeyType}`
 export type ConditionKeyType = BaseConditionKeyType | ArrayConditionKeyType
 
@@ -20,7 +27,7 @@ export function isConditionKeyArray(key: ConditionKeyType): key is ArrayConditio
  * @throws if the key is not an array type
  */
 export function getBaseConditionKeyType(key: ArrayConditionKeyType): BaseConditionKeyType {
-  if(!isConditionKeyArray(key)) {
+  if (!isConditionKeyArray(key)) {
     throw new Error(`Expected ArrayConditionType, got ${key}`)
   }
   return key.slice(7) as BaseConditionKeyType

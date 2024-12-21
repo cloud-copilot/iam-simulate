@@ -1,6 +1,6 @@
-import { ConditionValueExplain } from "../../explain/statementExplain.js";
-import { BaseConditionOperator } from "../BaseConditionOperator.js";
-import { resolvedValue } from "../conditionUtil.js";
+import { ConditionValueExplain } from '../../explain/statementExplain.js'
+import { BaseConditionOperator } from '../BaseConditionOperator.js'
+import { resolvedValue } from '../conditionUtil.js'
 
 /**
  * For Binary we don't really have the ability to accept binary
@@ -13,7 +13,7 @@ export const BinaryEquals: BaseConditionOperator = {
       return {
         value: policyValue,
         matches: policyValue === keyValue,
-        resolvedValue: resolvedValue(policyValue, request),
+        resolvedValue: resolvedValue(policyValue, request)
       }
     })
 

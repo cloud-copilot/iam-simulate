@@ -113,7 +113,7 @@ describe('isActualContextKey', () => {
   })
 })
 
-describe("typeForContextKey", () => {
+describe('typeForContextKey', () => {
   it('should return a service key with a slash in it', async () => {
     //Given a service key
     const key = 's3:ExistingObjectTag/Classification'

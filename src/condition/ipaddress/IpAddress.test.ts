@@ -1,6 +1,5 @@
-import { BaseOperatorTest, testOperator } from "../baseConditionperatorTests.js";
-import { IpAddress } from "./IpAddress.js";
-
+import { BaseOperatorTest, testOperator } from '../baseConditionperatorTests.js'
+import { IpAddress } from './IpAddress.js'
 
 const ipAddressTests: BaseOperatorTest[] = [
   {
@@ -125,10 +124,7 @@ const ipAddressTests: BaseOperatorTest[] = [
   },
   {
     name: 'V4/V6: should be true if V4 and V6 CIDR blocks are in the policy values',
-    policyValues: [
-      '2001:0db8::/32',
-      '192.168.0.0/16'
-    ],
+    policyValues: ['2001:0db8::/32', '192.168.0.0/16'],
     testValue: '2001:0db8:85a3::8a2e:0370:7334',
     expected: true,
     explains: [
@@ -144,4 +140,4 @@ const ipAddressTests: BaseOperatorTest[] = [
   }
 ]
 
-testOperator('IpAddress', ipAddressTests, IpAddress);
+testOperator('IpAddress', ipAddressTests, IpAddress)

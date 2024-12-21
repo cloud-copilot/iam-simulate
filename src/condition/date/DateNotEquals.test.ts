@@ -1,5 +1,5 @@
-import { BaseOperatorTest, testOperator } from "../baseConditionperatorTests.js";
-import { DateNotEquals } from "./DateNotEquals.js";
+import { BaseOperatorTest, testOperator } from '../baseConditionperatorTests.js'
+import { DateNotEquals } from './DateNotEquals.js'
 
 const dateNotEqualsTests: BaseOperatorTest[] = [
   {

@@ -36,7 +36,6 @@
           }
         ]
       }
-
     ],
     "expected": {
       "response": "ImplicitlyDenied"
@@ -306,7 +305,10 @@
           {
             "Effect": "Allow",
             "Action": "s3:ListBucket",
-            "NotResource": ["arn:aws:s3:::a-different-bucket", "arn:aws:s3:::another-different-bucket"]
+            "NotResource": [
+              "arn:aws:s3:::a-different-bucket",
+              "arn:aws:s3:::another-different-bucket"
+            ]
           }
         ]
       }

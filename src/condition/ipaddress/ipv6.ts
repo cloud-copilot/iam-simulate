@@ -8,22 +8,22 @@
  */
 export function isIpInCidrV6(ip: string, cidr: string): boolean {
   if (!isValidIpV6(ip)) {
-    throw new Error('Invalid IPv6 address');
+    throw new Error('Invalid IPv6 address')
   }
 
   if (!isValidIpCidrV6(cidr)) {
-    throw new Error('Invalid IPv6 CIDR block');
+    throw new Error('Invalid IPv6 CIDR block')
   }
 
-  const [cidrIp, prefixLengthStr] = cidr.split('/');
-  const prefixLength = parseInt(prefixLengthStr, 10);
+  const [cidrIp, prefixLengthStr] = cidr.split('/')
+  const prefixLength = parseInt(prefixLengthStr, 10)
 
-  const ipBigInt = ipv6ToBigInt(ip);
-  const cidrIpBigInt = ipv6ToBigInt(cidrIp);
+  const ipBigInt = ipv6ToBigInt(ip)
+  const cidrIpBigInt = ipv6ToBigInt(cidrIp)
 
-  const mask = BigInt(-1) << BigInt(128 - prefixLength);
+  const mask = BigInt(-1) << BigInt(128 - prefixLength)
 
-  return (ipBigInt & mask) === (cidrIpBigInt & mask);
+  return (ipBigInt & mask) === (cidrIpBigInt & mask)
 }
 
 /**
@@ -53,8 +53,8 @@ export function isValidIpV6(ip: string): boolean {
       '((25[0-5]|(2[0-4]|1{0,1}[0-9])?[0-9])\.){3,3}' +
       '(25[0-5]|(2[0-4]|1{0,1}[0-9])?[0-9])' +
       ')$'
-  );
-  return ipv6Regex.test(ip);
+  )
+  return ipv6Regex.test(ip)
 }
 
 /**
@@ -64,18 +64,18 @@ export function isValidIpV6(ip: string): boolean {
  * @returns True if the CIDR block is valid; otherwise, false.
  */
 export function isValidIpCidrV6(cidr: string): boolean {
-  const parts = cidr.split('/');
+  const parts = cidr.split('/')
   if (parts.length !== 2) {
-    return false;
+    return false
   }
 
-  const [cidrIp, prefixLengthStr] = parts;
+  const [cidrIp, prefixLengthStr] = parts
   if (!isValidIpV6(cidrIp)) {
-    return false;
+    return false
   }
 
-  const prefixLength = parseInt(prefixLengthStr, 10);
-  return prefixLength >= 0 && prefixLength <= 128;
+  const prefixLength = parseInt(prefixLengthStr, 10)
+  return prefixLength >= 0 && prefixLength <= 128
 }
 
 /**
@@ -85,13 +85,13 @@ export function isValidIpCidrV6(cidr: string): boolean {
  * @returns A BigInt representing the IPv6 address.
  */
 function ipv6ToBigInt(ip: string): bigint {
-  const fullIp = expandIpv6Address(ip);
-  const parts = fullIp.split(':');
-  let result = BigInt(0);
+  const fullIp = expandIpv6Address(ip)
+  const parts = fullIp.split(':')
+  let result = BigInt(0)
   for (const part of parts) {
-    result = (result << BigInt(16)) + BigInt(parseInt(part, 16));
+    result = (result << BigInt(16)) + BigInt(parseInt(part, 16))
   }
-  return result;
+  return result
 }
 
 /**
@@ -102,17 +102,17 @@ function ipv6ToBigInt(ip: string): bigint {
  */
 function expandIpv6Address(ip: string): string {
   // Replace '::' with the appropriate number of ':0'
-  const numColons = (ip.match(/:/g) || []).length;
-  const numMissingSections = 8 - numColons + (ip.includes('::') ? 1 : 0);
+  const numColons = (ip.match(/:/g) || []).length
+  const numMissingSections = 8 - numColons + (ip.includes('::') ? 1 : 0)
 
   if (ip.startsWith('::')) {
-    ip = ip.replace('::', '0:'.repeat(numMissingSections));
+    ip = ip.replace('::', '0:'.repeat(numMissingSections))
   } else if (ip.endsWith('::')) {
-    ip = ip.replace('::', ':0'.repeat(numMissingSections));
+    ip = ip.replace('::', ':0'.repeat(numMissingSections))
   } else if (ip.includes('::')) {
-    ip = ip.replace('::', ':' + '0:'.repeat(numMissingSections - 1));
+    ip = ip.replace('::', ':' + '0:'.repeat(numMissingSections - 1))
   }
 
-  const parts = ip.split(':').map(part => part.padStart(4, '0'));
-  return parts.join(':');
+  const parts = ip.split(':').map((part) => part.padStart(4, '0'))
+  return parts.join(':')
 }

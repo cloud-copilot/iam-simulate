@@ -1,5 +1,5 @@
-import { BaseOperatorTest, testOperator } from "../baseConditionperatorTests.js";
-import { DateLessThanEquals } from "./DateLessThanEquals.js";
+import { BaseOperatorTest, testOperator } from '../baseConditionperatorTests.js'
+import { DateLessThanEquals } from './DateLessThanEquals.js'
 
 const dateLessThanEqualsTests: BaseOperatorTest[] = [
   {
@@ -10,7 +10,7 @@ const dateLessThanEqualsTests: BaseOperatorTest[] = [
     explains: [
       {
         matches: true,
-        value: '2024-01-01T00:00:00Z',
+        value: '2024-01-01T00:00:00Z'
       }
     ]
   },
@@ -22,7 +22,7 @@ const dateLessThanEqualsTests: BaseOperatorTest[] = [
     explains: [
       {
         matches: true,
-        value: '2024-01-01T00:00:00Z',
+        value: '2024-01-01T00:00:00Z'
       }
     ]
   },
@@ -34,7 +34,7 @@ const dateLessThanEqualsTests: BaseOperatorTest[] = [
     explains: [
       {
         matches: false,
-        value: '2024-01-01T00:00:00Z',
+        value: '2024-01-01T00:00:00Z'
       }
     ]
   },

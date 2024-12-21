@@ -1,5 +1,5 @@
-import { ConditionValueExplain } from "../../explain/statementExplain.js"
-import { isDefined, isNotDefined } from "../../util.js"
+import { ConditionValueExplain } from '../../explain/statementExplain.js'
+import { isDefined, isNotDefined } from '../../util.js'
 
 /**
  * Parse a string to an epoch date value
@@ -11,13 +11,13 @@ export function parseDate(value: string): number | undefined {
   // An Integer such as 2024 will be interpreted as a unix epoch date
   // A unix epoch date
   const epochDate = parseInt(value, 10)
-  if(isDefined(epochDate) && !isNaN(epochDate) && epochDate.toString() === value) {
+  if (isDefined(epochDate) && !isNaN(epochDate) && epochDate.toString() === value) {
     return epochDate
   }
 
   // Date Values can be a date string: https://www.w3.org/TR/NOTE-datetime
   const dateNumber = Date.parse(value)
-  if(isDefined(dateNumber) && !isNaN(dateNumber)) {
+  if (isDefined(dateNumber) && !isNaN(dateNumber)) {
     return dateNumber
   }
 
@@ -32,17 +32,21 @@ export function parseDate(value: string): number | undefined {
  * @param check
  * @returns
  */
-export function checkIfDate(policyValue: string, testValue: string, check: (policyValue: number, testValue: number) => boolean): ConditionValueExplain {
+export function checkIfDate(
+  policyValue: string,
+  testValue: string,
+  check: (policyValue: number, testValue: number) => boolean
+): ConditionValueExplain {
   const policyDate = parseDate(policyValue)
   const testDate = parseDate(testValue)
-  if(isNotDefined(policyDate)) {
+  if (isNotDefined(policyDate)) {
     return {
       value: policyValue,
       matches: false,
       errors: [`${policyValue} is not a date`]
     }
   }
-  if(isNotDefined(testDate)) {
+  if (isNotDefined(testDate)) {
     return {
       value: policyValue,
       matches: false,
@@ -53,6 +57,6 @@ export function checkIfDate(policyValue: string, testValue: string, check: (poli
   const matches = check(policyDate, testDate)
   return {
     value: policyValue,
-    matches,
+    matches
   }
 }

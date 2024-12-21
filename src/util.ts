@@ -21,27 +21,39 @@ const defaultStringReplaceOptions: StringReplaceOptions = {
  * @param requestContext the request context to get the variable values from
  * @returns a regex that can be used to match against a string
  */
-export function convertIamString(value: string, request: AwsRequest, replaceOptions: {replaceWildcards?: boolean, convertToRegex: false}): string;
-export function convertIamString(value: string, request: AwsRequest, replaceOptions?: Partial<StringReplaceOptions>): {pattern: RegExp, errors?: string[]};
-export function convertIamString(value: string, request: AwsRequest, replaceOptions?: Partial<StringReplaceOptions>): {pattern: RegExp, errors?: string[]} | string {
-  const options = {...defaultStringReplaceOptions, ...replaceOptions}
+export function convertIamString(
+  value: string,
+  request: AwsRequest,
+  replaceOptions: { replaceWildcards?: boolean; convertToRegex: false }
+): string
+export function convertIamString(
+  value: string,
+  request: AwsRequest,
+  replaceOptions?: Partial<StringReplaceOptions>
+): { pattern: RegExp; errors?: string[] }
+export function convertIamString(
+  value: string,
+  request: AwsRequest,
+  replaceOptions?: Partial<StringReplaceOptions>
+): { pattern: RegExp; errors?: string[] } | string {
+  const options = { ...defaultStringReplaceOptions, ...replaceOptions }
 
   const errors: string[] = []
-  const newValue = value.replaceAll(/(\$\{.*?\})|(\*)|(\?)/ig, (match, args) => {
-    if (match == "?") {
+  const newValue = value.replaceAll(/(\$\{.*?\})|(\*)|(\?)/gi, (match, args) => {
+    if (match == '?') {
       return replacementValue(match, '\\?', '.', options)
       // return '.'
-    } else if (match == "*") {
-      return replacementValue(match, '\\*', ".*?", options)
+    } else if (match == '*') {
+      return replacementValue(match, '\\*', '.*?', options)
       // return ".*?"
-    } else if (match == "${*}") {
-      return replacementValue(match, "\\$\\{\\*\\}", "\\*", options)
+    } else if (match == '${*}') {
+      return replacementValue(match, '\\$\\{\\*\\}', '\\*', options)
       // return "\\*"
-    } else if (match == "${?}") {
-      return replacementValue(match, "\\$\\{\\?\\}", "\\?", options)
+    } else if (match == '${?}') {
+      return replacementValue(match, '\\$\\{\\?\\}', '\\?', options)
       // return "\\?"
-    } else if (match == "${$}") {
-      return replacementValue(match, "\\$\\{\\$\\}", "\\$", options)
+    } else if (match == '${$}') {
+      return replacementValue(match, '\\$\\{\\$\\}', '\\$', options)
       // return "\\$"
     }
     //
@@ -50,31 +62,38 @@ export function convertIamString(value: string, request: AwsRequest, replaceOpti
 
     let defaultValue = undefined
     const defaultParts = inTheBrackets.split(', ')
-    if(defaultParts.length == 2) {
+    if (defaultParts.length == 2) {
       const segmentAfterComma = defaultParts.at(1)
-      if(segmentAfterComma?.startsWith("'") && segmentAfterComma.endsWith("'")) {
+      if (segmentAfterComma?.startsWith("'") && segmentAfterComma.endsWith("'")) {
         defaultValue = segmentAfterComma.slice(1, -1)
       }
     }
     const variableName = defaultParts.at(0)!.trim()
 
-    const {value: requestValue, error: requestValueError} = getContextSingleValue(request, variableName)
+    const { value: requestValue, error: requestValueError } = getContextSingleValue(
+      request,
+      variableName
+    )
 
-    if(requestValue) {
+    if (requestValue) {
       //TODO: Maybe escpae the * in the resolved value to ${*}
       return options.convertToRegex ? escapeRegexCharacters(requestValue) : requestValue
-    } else if(defaultValue) {
+    } else if (defaultValue) {
       /*
         TODO: What happens in a request if a multi value context key is used in a string and there
         is a default value? Will it use the default value or will it fail the condition test?
       */
-     //TODO: Maybe escpae the * in the resolved value to ${*}
+      //TODO: Maybe escpae the * in the resolved value to ${*}
       return options.convertToRegex ? escapeRegexCharacters(defaultValue) : defaultValue
     } else {
-      if(requestValueError == 'missing') {
-        errors.push(`{${variableName}} not found in request context, and no default value provided. This will never match`)
-      } else if(requestValueError == 'multivalue') {
-        errors.push(`{${variableName}} is a multi value context key, and cannot be used for replacement. This will never match`)
+      if (requestValueError == 'missing') {
+        errors.push(
+          `{${variableName}} not found in request context, and no default value provided. This will never match`
+        )
+      } else if (requestValueError == 'multivalue') {
+        errors.push(
+          `{${variableName}} is a multi value context key, and cannot be used for replacement. This will never match`
+        )
       }
       /*
       https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html#policy-vars-no-value
@@ -85,15 +104,15 @@ export function convertIamString(value: string, request: AwsRequest, replaceOpti
     throw new Error('This should never happen')
   })
 
-  if(!options.convertToRegex) {
+  if (!options.convertToRegex) {
     return newValue
   }
 
-  if(errors.length > 0) {
-    return {pattern: matchesNothing, errors}
+  if (errors.length > 0) {
+    return { pattern: matchesNothing, errors }
   }
 
-  return {pattern: new RegExp('^' + newValue + '$')}
+  return { pattern: new RegExp('^' + newValue + '$') }
 }
 
 /**
@@ -103,7 +122,7 @@ export function convertIamString(value: string, request: AwsRequest, replaceOpti
  * @returns the string with regex characters escaped
  */
 function escapeRegexCharacters(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 /**
@@ -113,18 +132,21 @@ function escapeRegexCharacters(str: string): string {
  * @param contextKeyName the name of the context key to get the value of
  * @returns the value of the context key if it is a single value key, undefined otherwise
  */
-function getContextSingleValue(request: AwsRequest, contextKeyName: string): {value?: string, error?: 'missing' | 'multivalue'} {
-  if(!request.contextKeyExists(contextKeyName)) {
+function getContextSingleValue(
+  request: AwsRequest,
+  contextKeyName: string
+): { value?: string; error?: 'missing' | 'multivalue' } {
+  if (!request.contextKeyExists(contextKeyName)) {
     return {
       error: 'missing'
     }
   }
   const keyValue = request.getContextKeyValue(contextKeyName)
-  if(keyValue.isStringValue()) {
-    return {value: keyValue.value}
+  if (keyValue.isStringValue()) {
+    return { value: keyValue.value }
   }
 
-  return {error: 'multivalue'}
+  return { error: 'multivalue' }
 }
 
 /**
@@ -136,11 +158,16 @@ function getContextSingleValue(request: AwsRequest, contextKeyName: string): {va
  * @param replaceWildcards if the wildcard or raw string should be used
  * @returns
  */
-function replacementValue(original: string, escaped: string, regex: string, options: StringReplaceOptions): string {
-  if(!options.convertToRegex) {
+function replacementValue(
+  original: string,
+  escaped: string,
+  regex: string,
+  options: StringReplaceOptions
+): string {
+  if (!options.convertToRegex) {
     return original
   }
-  if(options.replaceWildcards) {
+  if (options.replaceWildcards) {
     return regex
   }
   return escaped
@@ -168,11 +195,11 @@ export function splitArnParts(arn: string): ArnParts {
   const service = parts.at(2)
   const region = parts.at(3)
   const accountId = parts.at(4)
-  const resource = parts.slice(5).join(":")
+  const resource = parts.slice(5).join(':')
 
   let resourceType = undefined
   let resourcePath = undefined
-  if(resource?.includes('/') || resource?.includes(':')) {
+  if (resource?.includes('/') || resource?.includes(':')) {
     const [resourceTypeSegment, resourcePathSegment] = getResourceSegments(resource)
     resourceType = resourceTypeSegment
     resourcePath = resourcePathSegment
@@ -201,7 +228,7 @@ export function getResourceSegments(resource: string): [string, string] {
   const colonIndex = resource.indexOf(':')
 
   let splitIndex = slashIndex
-  if(slashIndex != -1 && colonIndex != -1) {
+  if (slashIndex != -1 && colonIndex != -1) {
     splitIndex = Math.min(slashIndex, colonIndex) + 1
   } else if (colonIndex == -1) {
     splitIndex = slashIndex + 1
@@ -221,7 +248,7 @@ export function getResourceSegments(resource: string): [string, string] {
  * @returns if the value is defined and not null
  */
 export function isDefined<T>(value: T | undefined): value is T {
-  return value !== undefined && value !== null;
+  return value !== undefined && value !== null
 }
 
 /**
@@ -255,19 +282,23 @@ export async function isWildcardOnlyAction(service: string, action: string): Pro
  * @param resource the resource type matching the action, if any
  * @throws an error if the service or action does not exist, or if the action is a wildcard only action
  */
-export async function getResourceTypesForAction(service: string, action: string, resource: string): Promise<ResourceType[]> {
+export async function getResourceTypesForAction(
+  service: string,
+  action: string,
+  resource: string
+): Promise<ResourceType[]> {
   const actionDetails = await iamActionDetails(service, action)
-  if(actionDetails.resourceTypes.length === 0) {
+  if (actionDetails.resourceTypes.length === 0) {
     throw new Error(`${service}:${action} does not have any resource types`)
   }
 
-  const matchingResourceTypes: ResourceType[] = [];
-  for(const rt of actionDetails.resourceTypes) {
-    const resourceType = await iamResourceTypeDetails(service, rt.name);
-    const pattern = convertResourcePatternToRegex(resourceType.arn);
-    const match = resource.match(new RegExp(pattern));
-    if(match) {
-      matchingResourceTypes.push(resourceType);
+  const matchingResourceTypes: ResourceType[] = []
+  for (const rt of actionDetails.resourceTypes) {
+    const resourceType = await iamResourceTypeDetails(service, rt.name)
+    const pattern = convertResourcePatternToRegex(resourceType.arn)
+    const match = resource.match(new RegExp(pattern))
+    if (match) {
+      matchingResourceTypes.push(resourceType)
     }
   }
 
@@ -296,7 +327,7 @@ export function convertResourcePatternToRegex(pattern: string): string {
  * @returns the lowercased strings
  */
 export function lowerCaseAll(strings: string[]): string[] {
-  return strings.map(s => s.toLowerCase())
+  return strings.map((s) => s.toLowerCase())
 }
 
 /**
@@ -307,10 +338,10 @@ export function lowerCaseAll(strings: string[]): string[] {
  */
 export function getVariablesFromString(value: string): string[] {
   const matches = value.match(/\$\{.*?\}/g)
-  if(matches) {
+  if (matches) {
     return matches.map((m) => {
       const inBrackets = m.slice(2, -1)
-      if(inBrackets.includes(',')) {
+      if (inBrackets.includes(',')) {
         return inBrackets.split(',')[0].trim()
       }
       return inBrackets

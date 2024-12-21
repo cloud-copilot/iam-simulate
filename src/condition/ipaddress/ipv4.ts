@@ -8,22 +8,22 @@
  */
 export function isIpInCidrV4(ip: string, cidr: string): boolean {
   if (!isValidIpV4(ip)) {
-    throw new Error('Invalid IP address');
+    throw new Error('Invalid IP address')
   }
 
   if (!isValidCidrV4(cidr)) {
-    throw new Error('Invalid CIDR block');
+    throw new Error('Invalid CIDR block')
   }
 
-  const [cidrIp, prefixLengthStr] = cidr.split('/');
-  const prefixLength = parseInt(prefixLengthStr, 10);
+  const [cidrIp, prefixLengthStr] = cidr.split('/')
+  const prefixLength = parseInt(prefixLengthStr, 10)
 
-  const ipLong = ipV4ToLong(ip);
-  const cidrIpLong = ipV4ToLong(cidrIp);
+  const ipLong = ipV4ToLong(ip)
+  const cidrIpLong = ipV4ToLong(cidrIp)
 
-  const mask = -1 << (32 - prefixLength);
+  const mask = -1 << (32 - prefixLength)
 
-  return (ipLong & mask) === (cidrIpLong & mask);
+  return (ipLong & mask) === (cidrIpLong & mask)
 }
 
 /**
@@ -33,9 +33,8 @@ export function isIpInCidrV4(ip: string, cidr: string): boolean {
  * @returns True if the IP address is valid; otherwise, false.
  */
 export function isValidIpV4(ip: string): boolean {
-  const ipRegex =
-    /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3}$/;
-  return ipRegex.test(ip);
+  const ipRegex = /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3}$/
+  return ipRegex.test(ip)
 }
 
 /**
@@ -46,8 +45,8 @@ export function isValidIpV4(ip: string): boolean {
  */
 export function isValidCidrV4(cidr: string): boolean {
   const cidrRegex =
-    /^((25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3})\/([0-9]|[1-2][0-9]|3[0-2])$/;
-  return cidrRegex.test(cidr);
+    /^((25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3})\/([0-9]|[1-2][0-9]|3[0-2])$/
+  return cidrRegex.test(cidr)
 }
 
 /**
@@ -57,7 +56,9 @@ export function isValidCidrV4(cidr: string): boolean {
  * @returns The numeric representation of the IP address.
  */
 function ipV4ToLong(ip: string): number {
-  return ip.split('.').reduce((acc, octet) => {
-    return (acc << 8) + parseInt(octet, 10);
-  }, 0) >>> 0;
+  return (
+    ip.split('.').reduce((acc, octet) => {
+      return (acc << 8) + parseInt(octet, 10)
+    }, 0) >>> 0
+  )
 }

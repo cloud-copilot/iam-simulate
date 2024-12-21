@@ -1,14 +1,14 @@
-import { RequestAnalysis } from "../evaluate.js";
-import { isAssumedRoleArn, isFederatedUserArn, isIamUserArn } from "../util.js";
-import { ServiceAuthorizationRequest, ServiceAuthorizer } from "./ServiceAuthorizer.js";
+import { RequestAnalysis } from '../evaluate.js'
+import { isAssumedRoleArn, isFederatedUserArn, isIamUserArn } from '../util.js'
+import { ServiceAuthorizationRequest, ServiceAuthorizer } from './ServiceAuthorizer.js'
 
 /**
  * The default authorizer for services.
  */
 export class DefaultServiceAuthorizer implements ServiceAuthorizer {
   public authorize(request: ServiceAuthorizationRequest): RequestAnalysis {
-    const scpResult = request.scpAnalysis.result;
-    const identityStatementResult = request.identityAnalysis.result;
+    const scpResult = request.scpAnalysis.result
+    const identityStatementResult = request.identityAnalysis.result
     const resourcePolicyResult = request.resourceAnalysis?.result
     const permissionBoundaryResult = request.permissionBoundaryAnalysis?.result
 
@@ -16,7 +16,14 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     const resourceAccount = request.request.resource?.accountId()
     const sameAccount = principalAccount === resourceAccount
 
-    const baseResult: Pick<RequestAnalysis, 'sameAccount' | 'scpAnalysis' | 'resourceAnalysis' | 'identityAnalysis' | 'permissionBoundaryAnalysis' > = {
+    const baseResult: Pick<
+      RequestAnalysis,
+      | 'sameAccount'
+      | 'scpAnalysis'
+      | 'resourceAnalysis'
+      | 'identityAnalysis'
+      | 'permissionBoundaryAnalysis'
+    > = {
       sameAccount,
       identityAnalysis: request.identityAnalysis,
       scpAnalysis: request.scpAnalysis,
@@ -24,28 +31,31 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
       permissionBoundaryAnalysis: request.permissionBoundaryAnalysis
     }
 
-    if(scpResult !== 'Allowed') {
+    if (scpResult !== 'Allowed') {
       return {
         result: scpResult,
         ...baseResult
       }
     }
 
-    if(resourcePolicyResult === 'ExplicitlyDenied' || resourcePolicyResult === 'DeniedForAccount') {
+    if (
+      resourcePolicyResult === 'ExplicitlyDenied' ||
+      resourcePolicyResult === 'DeniedForAccount'
+    ) {
       return {
         result: 'ExplicitlyDenied',
         ...baseResult
       }
     }
 
-    if(identityStatementResult === 'ExplicitlyDenied') {
+    if (identityStatementResult === 'ExplicitlyDenied') {
       return {
         result: 'ExplicitlyDenied',
         ...baseResult
       }
     }
 
-    if(permissionBoundaryResult === 'ExplicitlyDenied') {
+    if (permissionBoundaryResult === 'ExplicitlyDenied') {
       return {
         result: 'ExplicitlyDenied',
         ...baseResult
@@ -53,9 +63,8 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     }
 
     //Same Account
-    if(principalAccount === resourceAccount) {
-
-      if(permissionBoundaryResult === 'ImplicitlyDenied') {
+    if (principalAccount === resourceAccount) {
+      if (permissionBoundaryResult === 'ImplicitlyDenied') {
         /**
          * If the permission boundary is an implicit deny
          *
@@ -64,10 +73,18 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
          * If the request is from a federated user ARN AND the resource policy allows the federated user ARN = ALLOW
          * The request is allowed: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html
          */
-        if(resourcePolicyResult === 'Allowed') {
+        if (resourcePolicyResult === 'Allowed') {
           const principal = request.request.principal.value()
-          if(isAssumedRoleArn(principal) || isIamUserArn(principal) || isFederatedUserArn(principal)) {
-            if(request.resourceAnalysis.allowStatements.some(statement => statement.principalMatch === 'Match')){
+          if (
+            isAssumedRoleArn(principal) ||
+            isIamUserArn(principal) ||
+            isFederatedUserArn(principal)
+          ) {
+            if (
+              request.resourceAnalysis.allowStatements.some(
+                (statement) => statement.principalMatch === 'Match'
+              )
+            ) {
               return {
                 result: 'Allowed',
                 ...baseResult
@@ -81,7 +98,6 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
         }
       }
 
-
       /*
         TODO: Implicit denies in identity policies
         I think if the identity policy has an implicit deny for assumed roles or federated users,
@@ -91,7 +107,7 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
 
         Need to add some tests for this.
       */
-      if(resourcePolicyResult === 'Allowed' || identityStatementResult === 'Allowed') {
+      if (resourcePolicyResult === 'Allowed' || identityStatementResult === 'Allowed') {
         return {
           result: 'Allowed',
           ...baseResult
@@ -104,15 +120,15 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     }
 
     //Cross Account
-    if(permissionBoundaryResult === 'ImplicitlyDenied') {
+    if (permissionBoundaryResult === 'ImplicitlyDenied') {
       return {
         result: 'ImplicitlyDenied',
         ...baseResult
       }
     }
 
-    if(resourcePolicyResult === 'Allowed' || resourcePolicyResult === 'AllowedForAccount') {
-      if(identityStatementResult === 'Allowed') {
+    if (resourcePolicyResult === 'Allowed' || resourcePolicyResult === 'AllowedForAccount') {
+      if (identityStatementResult === 'Allowed') {
         return {
           result: 'Allowed',
           ...baseResult
@@ -140,4 +156,3 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
      */
   }
 }
-

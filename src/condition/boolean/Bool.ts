@@ -1,14 +1,15 @@
-import { ConditionValueExplain } from "../../explain/statementExplain.js";
-import { convertIamString } from "../../util.js";
-import { BaseConditionOperator } from "../BaseConditionOperator.js";
+import { ConditionValueExplain } from '../../explain/statementExplain.js'
+import { convertIamString } from '../../util.js'
+import { BaseConditionOperator } from '../BaseConditionOperator.js'
 
 export const Bool: BaseConditionOperator = {
   name: 'Bool',
   matches: (request, keyValue, policyValues) => {
-
-    const explains: ConditionValueExplain[] = policyValues.map(policyValue => {
-      const {pattern, errors} = convertIamString(policyValue, request, {replaceWildcards: false})
-      if(errors && errors.length > 0) {
+    const explains: ConditionValueExplain[] = policyValues.map((policyValue) => {
+      const { pattern, errors } = convertIamString(policyValue, request, {
+        replaceWildcards: false
+      })
+      if (errors && errors.length > 0) {
         return {
           value: policyValue,
           matches: false,
@@ -16,10 +17,13 @@ export const Bool: BaseConditionOperator = {
         }
       }
 
-      const resolvedValue = convertIamString(policyValue, request, {replaceWildcards: false, convertToRegex: false})
+      const resolvedValue = convertIamString(policyValue, request, {
+        replaceWildcards: false,
+        convertToRegex: false
+      })
       const lowercaseResolvedValue = resolvedValue.toLowerCase()
 
-      if(lowercaseResolvedValue != 'true' && lowercaseResolvedValue != 'false') {
+      if (lowercaseResolvedValue != 'true' && lowercaseResolvedValue != 'false') {
         return {
           matches: false,
           value: policyValue,
@@ -28,11 +32,11 @@ export const Bool: BaseConditionOperator = {
         }
       }
 
-      if(keyValue.toLowerCase() != 'true' && keyValue.toLowerCase() != 'false') {
+      if (keyValue.toLowerCase() != 'true' && keyValue.toLowerCase() != 'false') {
         return {
           matches: false,
           value: policyValue,
-          errors: [`request value '${keyValue}' is not a boolean`],
+          errors: [`request value '${keyValue}' is not a boolean`]
         }
       }
 
@@ -44,7 +48,7 @@ export const Bool: BaseConditionOperator = {
     })
 
     return {
-      matches: explains.some(explain => explain.matches),
+      matches: explains.some((explain) => explain.matches),
       explains
     }
   },
