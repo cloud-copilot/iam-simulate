@@ -34,14 +34,12 @@ export function requestMatchesStatementResources(
       return { matches, details: { resources: explains[0] } }
     }
     return { matches, details: { resources: explains } }
-    // return requestMatchesResources(request, statement.resources());
   } else if (statement.isNotResourceStatement()) {
     const { matches, explains } = requestMatchesNotResources(request, statement.notResources())
     if (!statement.notResourceIsArray()) {
       return { matches, details: { notResources: explains[0] } }
     }
     return { matches, details: { notResources: explains } }
-    // return requestMatchesNotResources(request, statement.notResources());
   }
   return { matches: true, details: {} }
 }
