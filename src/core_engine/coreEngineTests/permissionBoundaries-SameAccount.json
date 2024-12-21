@@ -1,0 +1,498 @@
+[
+  {
+    "name": "Permission boundary and identity allow",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:role/test-role",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::mybucket/testobject"
+          }
+        ]
+      }
+    ],
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Permission boundary implicit deny and identity allow",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:role/test-role",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::mybucket/testobject"
+          }
+        ]
+      }
+    ],
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "ec2:*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Permission boundary allow and identity deny",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:role/test-role",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Deny",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::mybucket/testobject"
+          }
+        ]
+      }
+    ],
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied"
+    }
+  },
+  {
+    "name": "Permission boundary explicity deny and identity deny",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:role/test-role",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Deny",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::mybucket/testobject"
+          }
+        ]
+      }
+    ],
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Deny",
+            "Action": "s3:*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied"
+    }
+  },
+  {
+    "name": "Permission boundary implicity deny and identity explicit deny",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:role/test-role",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Deny",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::mybucket/testobject"
+          }
+        ]
+      }
+    ],
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Deny",
+            "Action": "s3:*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied"
+    }
+  },
+  {
+    "name": "Permission boundary allow and identity implicit deny",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:role/test-role",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Permission boundary deny resource policy allows role, from role",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:role/test-role",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Deny",
+            "Action": "s3:*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::mybucket/testobject",
+          "Principal": "arn:aws:iam::123456789012:role/test-role"
+        }
+      ]
+    },
+    "expected": {
+      "response": "ExplicitlyDenied"
+    }
+  },
+  {
+    "name": "Permission boundary deny resource policy allows role, from session",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:sts::123456789012:assumed-role/test-role/session-name",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Deny",
+            "Action": "s3:*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::mybucket/testobject",
+          "Principal": "arn:aws:iam::123456789012:role/test-role"
+        }
+      ]
+    },
+    "expected": {
+      "response": "ExplicitlyDenied"
+    }
+  },
+  {
+    "name": "Permission boundary deny resource policy allows session, from session",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:sts::123456789012:assumed-role/test-role/session-name",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Deny",
+            "Action": "s3:*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::mybucket/testobject",
+          "Principal": "arn:aws:sts::123456789012:assumed-role/test-role/session-name"
+        }
+      ]
+    },
+    "expected": {
+      "response": "ExplicitlyDenied"
+    }
+  },
+  {
+    "name": "Permission boundary implicit deny resource policy allows role, from role",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:role/test-role",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "ec2:*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::mybucket/testobject",
+          "Principal": "arn:aws:iam::123456789012:role/test-role"
+        }
+      ]
+    },
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Permission boundary implicit deny resource policy allows role, from session",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:sts::123456789012:assumed-role/test-role/session-name",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "ec2:*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::mybucket/testobject",
+          "Principal": "arn:aws:iam::123456789012:role/test-role"
+        }
+      ]
+    },
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Permission boundary implicit deny resource policy allows session, from session",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:sts::123456789012:assumed-role/test-role/session-name",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "ec2:*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::mybucket/testobject",
+          "Principal": "arn:aws:sts::123456789012:assumed-role/test-role/session-name"
+        }
+      ]
+    },
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Permission boundary implicit deny resource policy allows user",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "ec2:*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::mybucket/testobject",
+          "Principal": "arn:aws:iam::123456789012:user/test-user"
+        }
+      ]
+    },
+    "expected": {
+      "response": "Allowed"
+    }
+  }
+]

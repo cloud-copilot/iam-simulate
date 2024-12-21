@@ -3,12 +3,14 @@ import { AwsRequest } from './request/request.js'
 
 const matchesNothing = new RegExp('a^')
 
-interface StringReplaceOptions {
+export interface StringReplaceOptions {
   replaceWildcards: boolean
+  convertToRegex: boolean
 }
 
 const defaultStringReplaceOptions: StringReplaceOptions = {
-  replaceWildcards: true
+  replaceWildcards: true,
+  convertToRegex: true
 }
 
 /**
@@ -19,25 +21,27 @@ const defaultStringReplaceOptions: StringReplaceOptions = {
  * @param requestContext the request context to get the variable values from
  * @returns a regex that can be used to match against a string
  */
-export function convertIamStringToRegex(value: string, request: AwsRequest, replaceOptions?: Partial<StringReplaceOptions>): RegExp {
+export function convertIamString(value: string, request: AwsRequest, replaceOptions: {replaceWildcards?: boolean, convertToRegex: false}): string;
+export function convertIamString(value: string, request: AwsRequest, replaceOptions?: Partial<StringReplaceOptions>): {pattern: RegExp, errors?: string[]};
+export function convertIamString(value: string, request: AwsRequest, replaceOptions?: Partial<StringReplaceOptions>): {pattern: RegExp, errors?: string[]} | string {
   const options = {...defaultStringReplaceOptions, ...replaceOptions}
 
-  let invalidVariableFound = false
+  const errors: string[] = []
   const newValue = value.replaceAll(/(\$\{.*?\})|(\*)|(\?)/ig, (match, args) => {
     if (match == "?") {
-      return replacementValue('\\?', '.', options.replaceWildcards)
+      return replacementValue(match, '\\?', '.', options)
       // return '.'
     } else if (match == "*") {
-      return replacementValue('\\*', ".*?", options.replaceWildcards)
+      return replacementValue(match, '\\*', ".*?", options)
       // return ".*?"
     } else if (match == "${*}") {
-      return replacementValue("\\$\\{\\*\\}", "\\*", options.replaceWildcards)
+      return replacementValue(match, "\\$\\{\\*\\}", "\\*", options)
       // return "\\*"
     } else if (match == "${?}") {
-      return replacementValue("\\$\\{\\?\\}", "\\?", options.replaceWildcards)
+      return replacementValue(match, "\\$\\{\\?\\}", "\\?", options)
       // return "\\?"
     } else if (match == "${$}") {
-      return replacementValue("\\$\\{\\$\\}", "\\$", options.replaceWildcards)
+      return replacementValue(match, "\\$\\{\\$\\}", "\\$", options)
       // return "\\$"
     }
     //
@@ -54,31 +58,42 @@ export function convertIamStringToRegex(value: string, request: AwsRequest, repl
     }
     const variableName = defaultParts.at(0)!.trim()
 
-    const requestValue = getContextSingleValue(request, variableName)
+    const {value: requestValue, error: requestValueError} = getContextSingleValue(request, variableName)
 
     if(requestValue) {
-      return escapeRegexCharacters(requestValue)
+      //TODO: Maybe escpae the * in the resolved value to ${*}
+      return options.convertToRegex ? escapeRegexCharacters(requestValue) : requestValue
     } else if(defaultValue) {
       /*
         TODO: What happens in a request if a multi value context key is used in a string and there
         is a default value? Will it use the default value or will it fail the condition test?
       */
-      return escapeRegexCharacters(defaultValue)
+     //TODO: Maybe escpae the * in the resolved value to ${*}
+      return options.convertToRegex ? escapeRegexCharacters(defaultValue) : defaultValue
     } else {
-      invalidVariableFound = true
+      if(requestValueError == 'missing') {
+        errors.push(`{${variableName}} not found in request context, and no default value provided. This will never match`)
+      } else if(requestValueError == 'multivalue') {
+        errors.push(`{${variableName}} is a multi value context key, and cannot be used for replacement. This will never match`)
+      }
       /*
       https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html#policy-vars-no-value
       */
-      return "--undefined---"
+      return match
     }
 
     throw new Error('This should never happen')
   })
 
-  if(invalidVariableFound) {
-    return matchesNothing
+  if(!options.convertToRegex) {
+    return newValue
   }
-  return new RegExp('^' + newValue + '$')
+
+  if(errors.length > 0) {
+    return {pattern: matchesNothing, errors}
+  }
+
+  return {pattern: new RegExp('^' + newValue + '$')}
 }
 
 /**
@@ -98,31 +113,37 @@ function escapeRegexCharacters(str: string): string {
  * @param contextKeyName the name of the context key to get the value of
  * @returns the value of the context key if it is a single value key, undefined otherwise
  */
-function getContextSingleValue(request: AwsRequest, contextKeyName: string): string | undefined {
+function getContextSingleValue(request: AwsRequest, contextKeyName: string): {value?: string, error?: 'missing' | 'multivalue'} {
   if(!request.contextKeyExists(contextKeyName)) {
-    return undefined
+    return {
+      error: 'missing'
+    }
   }
   const keyValue = request.getContextKeyValue(contextKeyName)
   if(keyValue.isStringValue()) {
-    return keyValue.value
+    return {value: keyValue.value}
   }
 
-  return undefined
+  return {error: 'multivalue'}
 }
 
 /**
  * Get the replacement value for a string
  *
+ * @param originalString the original string to replace the value of
  * @param rawString the string to replace the value in
  * @param wildcard the value to replace the wildcard with
  * @param replaceWildcards if the wildcard or raw string should be used
  * @returns
  */
-function replacementValue(rawString: string, wildcard: string, replaceWildcards: boolean): string {
-  if(replaceWildcards) {
-    return wildcard
+function replacementValue(original: string, escaped: string, regex: string, options: StringReplaceOptions): string {
+  if(!options.convertToRegex) {
+    return original
   }
-  return rawString
+  if(options.replaceWildcards) {
+    return regex
+  }
+  return escaped
 }
 
 export interface ArnParts {
@@ -296,4 +317,40 @@ export function getVariablesFromString(value: string): string[] {
     })
   }
   return []
+}
+
+const assumedRoleArnRegex = /^arn:aws:sts::\d{12}:assumed-role\/.*$/
+
+/**
+ * Tests if a principal string is an assumed role ARN
+ *
+ * @param principal the principal string to test
+ * @returns true if the principal is an assumed role ARN, false otherwise
+ */
+export function isAssumedRoleArn(principal: string): boolean {
+  return assumedRoleArnRegex.test(principal)
+}
+
+const userArnRegex = /^arn:aws:iam::\d{12}:user\/.*$/
+
+/**
+ * Test if a principal string is an IAM user ARN
+ *
+ * @param principal the principal string to test
+ * @returns true if the principal is an IAM user ARN, false otherwise
+ */
+export function isIamUserArn(principal: string): boolean {
+  return userArnRegex.test(principal)
+}
+
+const federatedUserArnRegex = /^arn:aws:sts::\d{12}:federated-user\/.*$/
+
+/**
+ * Test if a principal string is a federated user ARN
+ *
+ * @param principal the principal string to test
+ * @returns true if the principal is a federated user ARN, false otherwise
+ */
+export function isFederatedUserArn(principal: string): boolean {
+  return federatedUserArnRegex.test(principal)
 }

@@ -2,6 +2,7 @@ export { typeForContextKey } from './context_keys/contextKeys.js';
 export { BaseConditionKeyType, isConditionKeyArray, type ConditionKeyType } from './context_keys/contextKeyTypes.js';
 export { findContextKeys } from './context_keys/findContextKeys.js';
 export { type EvaluationResult } from './evaluate.js';
+export type { ActionExplain, ConditionExplain, ConditionValueExplain, ExplainPrincipalMatch, PrincipalExplain, ResourceExplain, StatementExplain } from './explain/statementExplain.js';
 export { allowedContextKeysForRequest } from './simulation_engine/contextKeys.js';
 export { type Simulation } from './simulation_engine/simulation.js';
 export { runSimulation } from './simulation_engine/simulationEngine.js';

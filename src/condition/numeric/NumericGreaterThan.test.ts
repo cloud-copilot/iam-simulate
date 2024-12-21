@@ -6,31 +6,63 @@ const numericGreaterThanTests: BaseOperatorTest[] = [
     name: 'should return true if the test value is greater than the policy value',
     policyValues: ['10'],
     testValue: '5',
-    expected: true
+    expected: true,
+    explains: [
+      {
+        matches: true,
+        value: '10',
+      }
+    ]
   },
   {
     name: 'should return false if the test value is equals to the policy value',
     policyValues: ['10'],
     testValue: '10',
-    expected: false
+    expected: false,
+    explains: [
+      {
+        matches: false,
+        value: '10',
+      }
+    ]
   },
   {
     name: 'should return false if the test value is less than the policy value',
     policyValues: ['10'],
     testValue: '15',
-    expected: false
+    expected: false,
+    explains: [
+      {
+        matches: false,
+        value: '10',
+      }
+    ]
   },
   {
     name: 'should return false if the policy values are not numbers',
     policyValues: ['a'],
     testValue: '10',
-    expected: false
+    expected: false,
+    explains: [
+      {
+        matches: false,
+        value: 'a',
+        errors: ['a is not a number']
+      }
+    ]
   },
   {
     name: 'should return false if the test value is not a number',
     policyValues: ['10'],
     testValue: 'a',
-    expected: false
+    expected: false,
+    explains: [
+      {
+        matches: false,
+        value: '10',
+        errors: [`request value 'a' is not a number`]
+      }
+    ]
   }
 ]
 

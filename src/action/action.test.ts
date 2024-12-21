@@ -18,7 +18,7 @@ describe('action', () => {
       const actions = (statement as ActionStatement).actions()
       //And a request with an action
       const request = new AwsRequestImpl('principal',
-                                      'resource',
+        {resource: 'resource', accountId: '111111111111'},
                                       's3:GetBucket',
                                       new RequestContextImpl({}))
 
@@ -26,7 +26,7 @@ describe('action', () => {
       const response = requestMatchesActions(request, actions)
 
       //Then the request should match the policy
-      expect(response).toBe(true)
+      expect(response.matches).toBe(true)
     })
 
     it('should return true if the policy action matches the request action', () => {
@@ -41,7 +41,7 @@ describe('action', () => {
       const actions = (statement as ActionStatement).actions()
       //And a request with the s3:GetBucket action
       const request = new AwsRequestImpl('principal',
-                                      'resource',
+                                      {resource: 'resource', accountId: '111111111111'},
                                       's3:GetBucket',
                                       new RequestContextImpl({}))
 
@@ -49,7 +49,7 @@ describe('action', () => {
       const response = requestMatchesActions(request, actions)
 
       //Then the request should match the policy
-      expect(response).toBe(true)
+      expect(response.matches).toBe(true)
     })
   })
 
@@ -65,7 +65,7 @@ describe('action', () => {
     const actions = (statement as ActionStatement).actions()
     //And a request with the s3:GetBucket action
     const request = new AwsRequestImpl('principal',
-                                    'resource',
+                                    {resource: 'resource', accountId: '111111111111'},
                                     's3:GetBucket',
                                     new RequestContextImpl({}))
 
@@ -73,7 +73,7 @@ describe('action', () => {
     const response = requestMatchesActions(request, actions)
 
     //Then the request should not match the policy
-    expect(response).toBe(false)
+    expect(response.matches).toBe(false)
   })
 
   it('should match a wildcard action in the policy', () => {
@@ -89,7 +89,7 @@ describe('action', () => {
 
     //And a request with the s3:GetBucket action
     const request = new AwsRequestImpl('principal',
-                                    'resource',
+                                    {resource: 'resource', accountId: '111111111111'},
                                     's3:GetBucket',
                                     new RequestContextImpl({}))
 
@@ -97,7 +97,7 @@ describe('action', () => {
     const response = requestMatchesActions(request, actions)
 
     //Then the request should match the policy
-    expect(response).toBe(true)
+    expect(response.matches).toBe(true)
   })
 
   it('should request a partial Wildcard action in the policy', () => {
@@ -113,7 +113,7 @@ describe('action', () => {
 
     //And a request with the s3:GetBucket action
     const request = new AwsRequestImpl('principal',
-                                    'resource',
+                                    {resource: 'resource', accountId: '111111111111'},
                                     's3:GetBucket',
                                     new RequestContextImpl({}))
 
@@ -121,7 +121,7 @@ describe('action', () => {
     const response = requestMatchesActions(request, actions)
 
     //Then the request should match the policy
-    expect(response).toBe(true)
+    expect(response.matches).toBe(true)
   })
 
   it('should not match a partial Wildcard action in the policy', () => {
@@ -137,7 +137,7 @@ describe('action', () => {
 
     //And a request with the s3:GetBucket action
     const request = new AwsRequestImpl('principal',
-                                    'resource',
+                                    {resource: 'resource', accountId: '111111111111'},
                                     's3:PutBucket',
                                     new RequestContextImpl({}))
 
@@ -145,7 +145,7 @@ describe('action', () => {
     const response = requestMatchesActions(request, actions)
 
     //Then the request should not match the policy
-    expect(response).toBe(false)
+    expect(response.matches).toBe(false)
   })
 
   it('should match question mark wildcards in the actions', () => {
@@ -161,7 +161,7 @@ describe('action', () => {
 
     //And a request with the s3:GetBucket action
     const request = new AwsRequestImpl('principal',
-                                    'resource',
+                                    {resource: 'resource', accountId: '111111111111'},
                                     's3:GetBucket',
                                     new RequestContextImpl({}))
 
@@ -169,7 +169,7 @@ describe('action', () => {
     const response = requestMatchesActions(request, actions)
 
     //Then the request should match the policy
-    expect(response).toBe(true)
+    expect(response.matches).toBe(true)
   })
 
   it('should not match a different number of question mark wildcards in the actions', () => {
@@ -185,7 +185,7 @@ describe('action', () => {
 
     //And a request with the s3:GetBucket action
     const request = new AwsRequestImpl('principal',
-                                    'resource',
+                                    {resource: 'resource', accountId: '111111111111'},
                                     's3:GetBuckets',
                                     new RequestContextImpl({}))
 
@@ -193,7 +193,7 @@ describe('action', () => {
     const response = requestMatchesActions(request, actions)
 
     //Then the request should not match the policy
-    expect(response).toBe(false)
+    expect(response.matches).toBe(false)
   })
 
   it('should return true if only one action in the policy matches the request action', () => {
@@ -209,7 +209,7 @@ describe('action', () => {
 
     //And a request with the s3:GetBucket action
     const request = new AwsRequestImpl('principal',
-                                    'resource',
+                                    {resource: 'resource', accountId: '111111111111'},
                                     's3:GetBucket',
                                     new RequestContextImpl({}))
 
@@ -217,7 +217,7 @@ describe('action', () => {
     const response = requestMatchesActions(request, actions)
 
     //Then the request should match the policy
-    expect(response).toBe(true)
+    expect(response.matches).toBe(true)
   })
 
   describe('requestMatchesNotActions', () => {
@@ -233,7 +233,7 @@ describe('action', () => {
       const actions = (statement as NotActionStatement).notActions()
       //And a request with an action
       const request = new AwsRequestImpl('principal',
-                                      'resource',
+                                      {resource: 'resource', accountId: '111111111111'},
                                       's3:GetBucket',
                                       new RequestContextImpl({}))
 
@@ -241,7 +241,7 @@ describe('action', () => {
       const response = requestMatchesNotActions(request, actions)
 
       //Then the request should not match the policy
-      expect(response).toBe(false)
+      expect(response.matches).toBe(false)
     })
 
     it('should return false if the policy action matches the request action', () => {
@@ -256,7 +256,7 @@ describe('action', () => {
       const actions = (statement as NotActionStatement).notActions()
       //And a request with the s3:GetBucket action
       const request = new AwsRequestImpl('principal',
-                                      'resource',
+                                      {resource: 'resource', accountId: '111111111111'},
                                       's3:GetBucket',
                                       new RequestContextImpl({}))
 
@@ -264,7 +264,7 @@ describe('action', () => {
       const response = requestMatchesNotActions(request, actions)
 
       //Then the request should not match the policy
-      expect(response).toBe(false)
+      expect(response.matches).toBe(false)
     })
   })
 })

@@ -56,20 +56,23 @@ describe('coreSimulatorEngine', () => {
             }
           })
           const resourcePolicy = testCase.resourcePolicy ? loadPolicy(testCase.resourcePolicy) : undefined;
+          const permissionBoundaries = testCase.permissionBoundaries ? testCase.permissionBoundaries.map((p: any) => loadPolicy(p)) : undefined;
+
           //In an authorization request
           const authorizationRequest: AuthorizationRequest = {
             request,
             identityPolicies,
             serviceControlPolicies,
-            resourcePolicy
+            resourcePolicy,
+            permissionBoundaries
           };
 
           // When the request is authorized
-          const result = authorize(authorizationRequest);
+          const analysis = authorize(authorizationRequest);
 
           // Then the result should match the expected result
           const expected = testCase.expected.response
-          expect(result).toEqual(expected);
+          expect(analysis.result).toEqual(expected);
         });
       }
     })

@@ -68,6 +68,17 @@ describe('isActualContextKey', () => {
     expect(result).toBeTruthy()
   })
 
+  it('should return false for a global key that accepts a variable in the key but there is nothing after the slash', async () => {
+    //Given a global context key missing the variable
+    const key = 'aws:PrincipalTag/'
+
+    //When the key is checked
+    const result = await isActualContextKey(key)
+
+    //Then the result should be false
+    expect(result).toBeFalsy()
+  })
+
   it('should return true for a global key that accepts a variable and there is a slash in the variable', async () => {
     //Given a global context key
     const key = 'aws:PrincipalTag/SomeTag/SomeTag'

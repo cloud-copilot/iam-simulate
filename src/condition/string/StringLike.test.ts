@@ -8,6 +8,12 @@ const stringLikeTests: BaseOperatorTest[] = [
     policyValues: ['test'],
     testValue: 'test',
     expected: true,
+    explains: [
+      {
+        value: 'test',
+        matches: true
+      }
+    ]
   },
   {
     name: 'Should match a value with a wildcard',
@@ -35,9 +41,16 @@ const stringLikeTests: BaseOperatorTest[] = [
     requestContext: {
       'aws:username':'Bob'
     },
-    policyValues: ['test${aws:username}'],
-    testValue: 'testBob',
+    policyValues: ['test${aws:username}*'],
+    testValue: 'testBobPerson',
     expected: true,
+    explains: [
+      {
+        value: 'test${aws:username}*',
+        matches: true,
+        resolvedValue: 'testBob*'
+      }
+    ]
   },
   {
     name: 'Should replace a policy value and not match wildcards in the policy value',
@@ -47,6 +60,27 @@ const stringLikeTests: BaseOperatorTest[] = [
     policyValues: ['test${aws:username}'],
     testValue: 'testBobTwo',
     expected: false,
+    explains: [
+      {
+        value: 'test${aws:username}',
+        matches: false,
+        resolvedValue: 'testBob*'
+      }
+    ]
+  },
+  {
+    name: 'Should return replacement errors',
+    requestContext: {},
+    policyValues: ['test${aws:username}*'],
+    testValue: 'testBobPerson',
+    expected: false,
+    explains: [
+      {
+        value: 'test${aws:username}*',
+        matches: false,
+        errors: ['{aws:username} not found in request context, and no default value provided. This will never match']
+      }
+    ]
   }
 ]
 

@@ -1,6 +1,6 @@
 import { Action, Statement } from "@cloud-copilot/iam-policy";
+import { ActionExplain, StatementExplain } from "../explain/statementExplain.js";
 import { AwsRequest } from "../request/request.js";
-
 
 /**
  * Check if a request matches the Action or NotAction elements of a statement.
@@ -9,11 +9,19 @@ import { AwsRequest } from "../request/request.js";
  * @param statement the statement to check against
  * @returns true if the request matches the Action or NotAction in the statement, false otherwise
  */
-export function requestMatchesStatementActions(request: AwsRequest, statement: Statement): boolean {
+export function requestMatchesStatementActions(request: AwsRequest, statement: Statement): {matches: boolean, details: Pick<StatementExplain, 'actions' | 'notActions'>} {
   if(statement.isActionStatement()) {
-    return requestMatchesActions(request, statement.actions());
+    const {matches, explains} = requestMatchesActions(request, statement.actions());
+    if(!statement.actionIsArray()) {
+      return {matches, details: {actions: explains[0]}};
+    }
+    return {matches, details: {actions: explains}};
   } else if (statement.isNotActionStatement()) {
-    return requestMatchesNotActions(request, statement.notActions());
+    const {matches, explains} = requestMatchesNotActions(request, statement.notActions());
+    if(!statement.notActionIsArray()) {
+      return {matches, details: {notActions: explains[0]}};
+    }
+    return {matches, details: {notActions: explains}};
   }
   throw new Error('Statement has neither Actions nor NotActions');
 }
@@ -40,23 +48,10 @@ function convertActionToRegex(action: string): RegExp {
  * @param actions the actions to check against
  * @returns true if the request matches any of the actions, false otherwise
  */
-export function requestMatchesActions(request: AwsRequest, actions: Action[]): boolean {
-  for(const action of actions) {
-    if (action.isWildcardAction()) {
-      return true;
-    } else if(action.isServiceAction()) {
-      if(request.action.service() != action.service()) {
-        continue
-      }
-      const actionRegex = convertActionToRegex(action.action());
-      if(actionRegex.test(request.action.action())) {
-        return true;
-      }
-    } else {
-      throw new Error('Unknown action type');
-    }
-  }
-  return false;
+export function requestMatchesActions(request: AwsRequest, actions: Action[]): {matches: boolean, explains: ActionExplain[]} {
+  const explains = actions.map(action => requestMatchesSingleAction(request, action));
+  const matches = explains.some(explain => explain.matches);
+  return {matches, explains};
 }
 
 /**
@@ -66,6 +61,36 @@ export function requestMatchesActions(request: AwsRequest, actions: Action[]): b
  * @param actions the actions to check against
  * @returns true if the request does not match any of the actions, false if the request matches any of the actions
  */
-export function requestMatchesNotActions(request: AwsRequest, actions: Action[]): boolean {
-  return !requestMatchesActions(request, actions);
+export function requestMatchesNotActions(request: AwsRequest, actions: Action[]): {matches: boolean, explains: ActionExplain[]} {
+  const explains = actions.map(action => {
+    const explain = requestMatchesSingleAction(request, action)
+    explain.matches = !explain.matches
+    return explain
+  });
+
+  const matches = !explains.some(explain => !explain.matches);
+  return {matches, explains};
+}
+
+function requestMatchesSingleAction(request: AwsRequest, action: Action): ActionExplain {
+  if (action.isWildcardAction()) {
+    return {
+      action: action.value(),
+      matches: true,
+    }
+  } else if(action.isServiceAction()) {
+    if(request.action.service() != action.service()) {
+      return {
+        action: action.value(),
+        matches: false,
+      }
+    }
+    const actionRegex = convertActionToRegex(action.action());
+    const matches = actionRegex.test(request.action.action())
+    return {
+      action: action.value(),
+      matches
+    }
+  }
+  throw new Error('Unknown action type');
 }

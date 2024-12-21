@@ -5,5 +5,6 @@ export const ArnNotEquals: BaseConditionOperator = {
   name: 'ArnNotEquals',
   matches: ArnNotLike.matches,
   allowsVariables: ArnNotLike.allowsVariables,
-  allowsWildcards: ArnNotLike.allowsWildcards
+  allowsWildcards: ArnNotLike.allowsWildcards,
+  isNegative: ArnNotLike.isNegative
 }

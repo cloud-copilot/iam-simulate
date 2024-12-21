@@ -1,4 +1,6 @@
+import { ConditionValueExplain } from "../../explain/statementExplain.js";
 import { BaseConditionOperator } from "../BaseConditionOperator.js";
+import { resolvedValue } from "../conditionUtil.js";
 
 /**
  * For Binary we don't really have the ability to accept binary
@@ -7,8 +9,20 @@ import { BaseConditionOperator } from "../BaseConditionOperator.js";
 export const BinaryEquals: BaseConditionOperator = {
   name: 'BinaryEquals',
   matches: (request, keyValue, policyValues) => {
-    return policyValues.includes(keyValue);
+    const explains: ConditionValueExplain[] = policyValues.map((policyValue) => {
+      return {
+        value: policyValue,
+        matches: policyValue === keyValue,
+        resolvedValue: resolvedValue(policyValue, request),
+      }
+    })
+
+    return {
+      matches: explains.some((explain) => explain.matches),
+      explains
+    }
   },
   allowsVariables: true,
-  allowsWildcards: false
+  allowsWildcards: false,
+  isNegative: false
 }
