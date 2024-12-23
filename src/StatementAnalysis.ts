@@ -33,7 +33,7 @@ export interface StatementAnalysis {
    */
   conditionMatch: ConditionMatchResult
 
-  explain?: StatementExplain
+  explain: StatementExplain
 }
 
 /**
