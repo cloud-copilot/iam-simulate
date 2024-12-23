@@ -16,8 +16,9 @@ export type {
   StatementExplain
 } from './explain/statementExplain.js'
 export { allowedContextKeysForRequest } from './simulation_engine/contextKeys.js'
-export { type Simulation } from './simulation_engine/simulation.js'
+export type { Simulation } from './simulation_engine/simulation.js'
 export { runSimulation } from './simulation_engine/simulationEngine.js'
+export type { SimulationErrors, SimulationResult } from './simulation_engine/simulationEngine.js'
 export { type SimulationOptions } from './simulation_engine/simulationOptions.js'
 export { runUnsafeSimulation } from './simulation_engine/unsafeSimulationEngine.js'
 export { isWildcardOnlyAction } from './util.js'
