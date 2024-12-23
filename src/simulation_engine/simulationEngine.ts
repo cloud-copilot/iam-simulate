@@ -30,6 +30,13 @@ export interface SimulationResult {
   analysis?: RequestAnalysis
 
   /**
+   * The resource type that was used for the simulation, if applicable.
+   *
+   * Will only be present if the request passes validation to reach the policy
+   * evaluation stage and the action is not a wildcard-only action.
+   */
+  resourceType?: string
+  /**
    * Any context keys provided in the request that were filtered out before
    * policy evaluation because they do not apply to the action/resource type.
    *
@@ -153,6 +160,7 @@ export async function runSimulation(
 
   const resourceArn = simulation.request.resource.resource
   const isWildCardOnlyAction = await isWildcardOnlyAction(service, action)
+  let resourceType: string | undefined = undefined
   if (isWildCardOnlyAction) {
     if (resourceArn !== '*') {
       return {
@@ -175,6 +183,8 @@ export async function runSimulation(
           message: 'multiple.resource.types'
         }
       }
+    } else {
+      resourceType = resourceTypes[0].key
     }
   }
 
@@ -198,7 +208,8 @@ export async function runSimulation(
 
   return {
     analysis: simulationResult,
-    ignoredContextKeys
+    ignoredContextKeys,
+    resourceType
   }
 }
 
