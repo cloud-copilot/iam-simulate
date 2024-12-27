@@ -105,6 +105,16 @@ export interface StatementExplain {
   principals?: PrincipalExplain | PrincipalExplain[]
   notPrincipals?: PrincipalExplain | PrincipalExplain[]
   conditions?: ConditionExplain[]
+
+  /**
+   * The statement was denied because the resource policy has a NotPrincipal in a Deny
+   * statement and the principal has a Permission Boundary.
+   *
+   * This will always resolve to to Deny.
+   *
+   * https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html
+   */
+  denyBecauseNpInRpAndPb?: boolean
 }
 
 /*

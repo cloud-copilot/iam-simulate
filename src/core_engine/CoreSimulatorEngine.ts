@@ -79,13 +79,19 @@ const serviceEngines: Record<string, new () => ServiceAuthorizer> = {}
  * @returns the result of the authorization
  */
 export function authorize(request: AuthorizationRequest): RequestAnalysis {
+  const principalHasPermissionBoundary =
+    !!request.permissionBoundaries && request.permissionBoundaries.length > 0
   const identityAnalysis = analyzeIdentityPolicies(request.identityPolicies, request.request)
   const permissionBoundaryAnalysis = analyzePermissionBoundaryPolicies(
     request.permissionBoundaries,
     request.request
   )
   const scpAnalysis = analyzeServiceControlPolicies(request.serviceControlPolicies, request.request)
-  const resourceAnalysis = analyzeResourcePolicy(request.resourcePolicy, request.request)
+  const resourceAnalysis = analyzeResourcePolicy(
+    request.resourcePolicy,
+    request.request,
+    principalHasPermissionBoundary
+  )
 
   const serviceAuthorizer = getServiceAuthorizer(request)
   return serviceAuthorizer.authorize({
@@ -285,7 +291,8 @@ export function analyzeServiceControlPolicies(
  */
 export function analyzeResourcePolicy(
   resourcePolicy: Policy | undefined,
-  request: AwsRequest
+  request: AwsRequest,
+  principalHasPermissionBoundary: boolean
 ): ResourceAnalysis {
   const resourceAnalysis: ResourceAnalysis = {
     result: 'NotApplicable',
@@ -313,8 +320,34 @@ export function analyzeResourcePolicy(
       request,
       statement
     )
-    const { matches: principalMatch, details: principalDetails } =
-      requestMatchesStatementPrincipals(request, statement)
+    let { matches: principalMatch, details: principalDetails } = requestMatchesStatementPrincipals(
+      request,
+      statement
+    )
+
+    const permissionBoundaryDetails: Pick<StatementExplain, 'denyBecauseNpInRpAndPb'> = {}
+
+    /**
+     * "Don't use resource-based policy statements that include a NotPrincipal policy element with a
+     * Deny effect for IAM users or roles that have a permissions boundary policy attached.
+     * The NotPrincipal element with a Deny effect will always deny any IAM principal that
+     * has a permissions boundary policy attached, regardless of the values specified in the
+     * NotPrincipal element. This causes some IAM users or roles that would otherwise have access
+     * to the resource to lose access. We recommend changing your resource-based policy statements
+     * to use the condition operator ArnNotEquals with the aws:PrincipalArn context key to limit
+     * access instead of the NotPrincipal element. For information about permissions boundaries, see
+     * Permissions boundaries for IAM entities."
+     * https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html
+     */
+    if (
+      principalHasPermissionBoundary &&
+      statement.isNotPrincipalStatement() &&
+      statement.effect() === 'Deny'
+    ) {
+      principalMatch = 'Match'
+      permissionBoundaryDetails.denyBecauseNpInRpAndPb = true
+    }
+
     const { matches: conditionMatch, details: conditionDetails } = requestMatchesConditions(
       request,
       statement.conditions()

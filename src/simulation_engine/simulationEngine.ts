@@ -9,7 +9,7 @@ import {
 } from '@cloud-copilot/iam-policy'
 import { isConditionKeyArray } from '../context_keys/contextKeyTypes.js'
 import { normalizeContextKeyCase, typeForContextKey } from '../context_keys/contextKeys.js'
-import { authorize, ServiceControlPolicies } from '../core_engine/coreSimulatorEngine.js'
+import { authorize, ServiceControlPolicies } from '../core_engine/CoreSimulatorEngine.js'
 import { RequestAnalysis } from '../evaluate.js'
 import { AwsRequestImpl } from '../request/request.js'
 import { RequestContextImpl } from '../requestContext.js'

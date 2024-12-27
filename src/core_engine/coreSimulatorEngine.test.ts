@@ -4,7 +4,7 @@ import { join, resolve } from 'path'
 import { describe, expect, it } from 'vitest'
 import { AwsRequestImpl } from '../request/request.js'
 import { RequestContextImpl } from '../requestContext.js'
-import { AuthorizationRequest, authorize } from './coreSimulatorEngine.js'
+import { AuthorizationRequest, authorize } from './CoreSimulatorEngine.js'
 
 function getAllFiles(dir: string, allFiles: string[] = []): string[] {
   const files = readdirSync(dir)

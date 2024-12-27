@@ -1,5 +1,5 @@
 import { loadPolicy } from '@cloud-copilot/iam-policy'
-import { authorize, ServiceControlPolicies } from '../core_engine/coreSimulatorEngine.js'
+import { authorize, ServiceControlPolicies } from '../core_engine/CoreSimulatorEngine.js'
 import { type EvaluationResult } from '../evaluate.js'
 import { AwsRequestImpl } from '../request/request.js'
 import { RequestContextImpl } from '../requestContext.js'
