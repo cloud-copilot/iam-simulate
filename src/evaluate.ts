@@ -1,11 +1,6 @@
 import { StatementAnalysis } from './StatementAnalysis.js'
 
-export type EvaluationResult =
-  | 'Allowed'
-  | 'ExplicitlyDenied'
-  | 'AllowedWithConditions'
-  | 'ImplicitlyDenied'
-  | 'Unknown'
+export type EvaluationResult = 'Allowed' | 'ExplicitlyDenied' | 'ImplicitlyDenied'
 export type ResourceEvaluationResult =
   | 'NotApplicable'
   | 'Allowed'
@@ -44,6 +39,22 @@ export interface ScpAnalysis {
   ouAnalysis: OuScpAnalysis[]
 }
 
+export interface OuRcpAnalysis {
+  orgIdentifier: string
+  result: EvaluationResult
+  denyStatements: StatementAnalysis[]
+  allowStatements: StatementAnalysis[]
+  unmatchedStatements: StatementAnalysis[]
+}
+
+export interface RcpAnalysis {
+  /**
+   * OU Result
+   */
+  result: EvaluationResult
+  ouAnalysis: OuRcpAnalysis[]
+}
+
 /**
  * The analysis of a request.
  */
@@ -53,6 +64,9 @@ export interface RequestAnalysis {
    */
   result: EvaluationResult
 
+  /**
+   * Whether the principal and the resource are in the same account.
+   */
   sameAccount: boolean
 
   /**
@@ -65,7 +79,18 @@ export interface RequestAnalysis {
    */
   resourceAnalysis?: ResourceAnalysis
 
+  /**
+   * The result of the evaluation of the SCPs
+   */
   scpAnalysis?: ScpAnalysis
 
+  /**
+   * The result of the evaluation of the RCPs
+   */
+  rcpAnalysis?: RcpAnalysis
+
+  /**
+   * The result of the evaluation of the permission boundary.
+   */
   permissionBoundaryAnalysis?: IdentityAnalysis | undefined
 }

@@ -8,6 +8,7 @@ import { ServiceAuthorizationRequest, ServiceAuthorizer } from './ServiceAuthori
 export class DefaultServiceAuthorizer implements ServiceAuthorizer {
   public authorize(request: ServiceAuthorizationRequest): RequestAnalysis {
     const scpResult = request.scpAnalysis.result
+    const rcpResult = request.rcpAnalysis.result
     const identityStatementResult = request.identityAnalysis.result
     const resourcePolicyResult = request.resourceAnalysis?.result
     const permissionBoundaryResult = request.permissionBoundaryAnalysis?.result
@@ -20,6 +21,7 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
       RequestAnalysis,
       | 'sameAccount'
       | 'scpAnalysis'
+      | 'rcpAnalysis'
       | 'resourceAnalysis'
       | 'identityAnalysis'
       | 'permissionBoundaryAnalysis'
@@ -27,6 +29,7 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
       sameAccount,
       identityAnalysis: request.identityAnalysis,
       scpAnalysis: request.scpAnalysis,
+      rcpAnalysis: request.rcpAnalysis,
       resourceAnalysis: request.resourceAnalysis,
       permissionBoundaryAnalysis: request.permissionBoundaryAnalysis
     }
@@ -34,6 +37,13 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     if (scpResult !== 'Allowed') {
       return {
         result: scpResult,
+        ...baseResult
+      }
+    }
+
+    if (rcpResult !== 'Allowed') {
+      return {
+        result: rcpResult,
         ...baseResult
       }
     }
@@ -147,9 +157,8 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
 
     /**
      * Add checks for:
+     * * root user - can override resource policies for most resource types
      * * session policies
-     * * resource control policies
-     * * root user
      * * service linked roles
      * * vpc endpoint policies
      * * organization APIs and delegated admin policy

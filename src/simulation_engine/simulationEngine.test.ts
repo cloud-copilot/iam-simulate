@@ -169,6 +169,7 @@ describe('normalizeSimulationParameters', () => {
     const simulation: Simulation = {
       identityPolicies: [],
       serviceControlPolicies: [],
+      resourceControlPolicies: [],
       resourcePolicy: undefined,
       request: {
         action: 's3:GetObject',
@@ -204,6 +205,7 @@ describe('normalizeSimulationParameters', () => {
     const simulation: Simulation = {
       identityPolicies: [],
       serviceControlPolicies: [],
+      resourceControlPolicies: [],
       resourcePolicy: undefined,
       request: {
         action: 's3:GetObject',
@@ -237,6 +239,7 @@ describe('normalizeSimulationParameters', () => {
     const simulation: Simulation = {
       identityPolicies: [],
       serviceControlPolicies: [],
+      resourceControlPolicies: [],
       resourcePolicy: undefined,
       request: {
         action: 's3:GetObject',
@@ -269,6 +272,7 @@ describe('normalizeSimulationParameters', () => {
     const simulation: Simulation = {
       identityPolicies: [],
       serviceControlPolicies: [],
+      resourceControlPolicies: [],
       resourcePolicy: undefined,
       request: {
         action: 's3:GetObject',
@@ -301,6 +305,7 @@ describe('normalizeSimulationParameters', () => {
     const simulation: Simulation = {
       identityPolicies: [],
       serviceControlPolicies: [],
+      resourceControlPolicies: [],
       resourcePolicy: undefined,
       request: {
         action: 's3:GetObject',
@@ -352,6 +357,7 @@ describe('runSimulation', () => {
           ]
         }
       ],
+      resourceControlPolicies: [],
       resourcePolicy: undefined,
       request: {
         action: 's3:GetObject',
@@ -378,6 +384,7 @@ describe('runSimulation', () => {
     const simulation: Simulation = {
       identityPolicies: [],
       serviceControlPolicies: [],
+      resourceControlPolicies: [],
       resourcePolicy: {
         Statement: {
           Effect: 'Invisible',
@@ -422,6 +429,7 @@ describe('runSimulation', () => {
         }
       ],
       serviceControlPolicies: [],
+      resourceControlPolicies: [],
       resourcePolicy: undefined,
       request: {
         action: 's3:GetObject',
@@ -443,11 +451,90 @@ describe('runSimulation', () => {
     expect(result.ignoredContextKeys).toBeUndefined()
   })
 
+  it('should return resource control policy errors', async () => {
+    //Given a simulation with an error in a resource control policy
+    const simulation: Simulation = {
+      identityPolicies: [],
+      serviceControlPolicies: [],
+      resourceControlPolicies: [
+        {
+          orgIdentifier: 'o-123456',
+          policies: [
+            {
+              name: 'Gandalf',
+              policy: {
+                Version: '2012-10-17',
+                Statement: {
+                  Effect: 'SHALL NOT PASS',
+                  Action: 's3:GetObject',
+                  Resource: 'arn:aws:s3:::examplebucket/1234',
+                  Principal: '*'
+                }
+              }
+            }
+          ]
+        }
+      ],
+      resourcePolicy: undefined,
+      request: {
+        action: 's3:GetObject',
+        resource: {
+          resource: 'arn:aws:s3:::examplebucket/1234',
+          accountId: '123456789012'
+        },
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        contextVariables: {}
+      }
+    }
+
+    //When the simulation is run
+    const result = await runSimulation(simulation, {})
+
+    //Then the result should contain an error
+    expect(result.errors!.message).toEqual('policy.errors')
+    expect(result.errors!.resourceControlPolicyErrors!['Gandalf'].length).toEqual(2)
+    expect(result.ignoredContextKeys).toBeUndefined()
+  })
+
+  it('should return permission boundary errors', async () => {
+    //Given a simulation with an error in a permission boundary
+    const simulation: Simulation = {
+      identityPolicies: [],
+      serviceControlPolicies: [],
+      resourceControlPolicies: [],
+      permissionBoundaryPolicies: [
+        {
+          name: 'permissionBoundary',
+          policy: { Statement: { Effect: 'Enable', Action: '*', Resource: '*' } }
+        }
+      ],
+      resourcePolicy: undefined,
+      request: {
+        action: 's3:GetObject',
+        resource: {
+          resource: 'arn:aws:s3:::examplebucket/1234',
+          accountId: '123456789012'
+        },
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        contextVariables: {}
+      }
+    }
+
+    //When the simulation is run
+    const result = await runSimulation(simulation, {})
+
+    //Then the result should contain an error
+    expect(result.errors!.message).toEqual('policy.errors')
+    expect(result.errors!.permissionBoundaryErrors!['permissionBoundary'].length).toEqual(1)
+    expect(result.ignoredContextKeys).toBeUndefined()
+  })
+
   it('should return an error for a mal formatted action', async () => {
     //Given a simulation with a mal formatted action
     const simulation: Simulation = {
       identityPolicies: [],
       serviceControlPolicies: [],
+      resourceControlPolicies: [],
       resourcePolicy: undefined,
       request: {
         action: 'oneRing:PutOn:finger',
@@ -473,6 +560,7 @@ describe('runSimulation', () => {
     const simulation: Simulation = {
       identityPolicies: [],
       serviceControlPolicies: [],
+      resourceControlPolicies: [],
       resourcePolicy: undefined,
       request: {
         action: 'hobbit:EatBreakfast',
@@ -498,6 +586,7 @@ describe('runSimulation', () => {
     const simulation: Simulation = {
       identityPolicies: [],
       serviceControlPolicies: [],
+      resourceControlPolicies: [],
       resourcePolicy: undefined,
       request: {
         action: 's3:SaveMoneyOnEgress',
@@ -523,6 +612,7 @@ describe('runSimulation', () => {
     const simulation: Simulation = {
       identityPolicies: [],
       serviceControlPolicies: [],
+      resourceControlPolicies: [],
       resourcePolicy: undefined,
       request: {
         action: 's3:ListAllMyBuckets',
@@ -557,6 +647,7 @@ describe('runSimulation', () => {
     const simulation: Simulation = {
       identityPolicies: [],
       serviceControlPolicies: [],
+      resourceControlPolicies: [],
       resourcePolicy: undefined,
       request: {
         action: 's3:GetObject',
@@ -582,6 +673,7 @@ describe('runSimulation', () => {
     const simulation: Simulation = {
       identityPolicies: [],
       serviceControlPolicies: [],
+      resourceControlPolicies: [],
       resourcePolicy: undefined,
       request: {
         action: 's3:GetObjects',
@@ -634,6 +726,28 @@ describe('runSimulation', () => {
           ]
         }
       ],
+      resourceControlPolicies: [
+        {
+          orgIdentifier: 'ou-123456',
+          policies: []
+        },
+        {
+          orgIdentifier: 'ou-123456',
+          policies: [
+            {
+              name: 'NoEc2',
+              policy: {
+                Statement: {
+                  Effect: 'Deny',
+                  Action: 'ec2:*',
+                  Resource: '*',
+                  Principal: '*'
+                }
+              }
+            }
+          ]
+        }
+      ],
       resourcePolicy: {
         Statement: {
           Effect: 'Allow',
@@ -642,6 +756,18 @@ describe('runSimulation', () => {
           Principal: 'arn:aws:iam::123456789012:user/Alice'
         }
       },
+      permissionBoundaryPolicies: [
+        {
+          name: 'theBoundary',
+          policy: {
+            Statement: {
+              Effect: 'Allow',
+              Action: '*',
+              Resource: '*'
+            }
+          }
+        }
+      ],
       request: {
         action: 's3:GetObject',
         resource: {
@@ -688,6 +814,7 @@ describe('runSimulation', () => {
         }
       ],
       serviceControlPolicies: [],
+      resourceControlPolicies: [],
       request: {
         action: 's3:ListBucket',
         principal: 'arn:aws:iam::123456789012:user/username',
@@ -740,6 +867,7 @@ describe('runSimulation', () => {
           ]
         }
       ],
+      resourceControlPolicies: [],
       resourcePolicy: {
         Statement: {
           Effect: 'Allow',

@@ -1,0 +1,291 @@
+[
+  {
+    "name": "generic RCP test",
+    "request": {
+      "action": "s3:ListAllMyBuckets",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "resourceControlPolicies": [
+      {
+        "orgIdentifier": "ou-123456789012",
+        "policies": []
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "RCPs allow by default if identity policy allows",
+    "request": {
+      "action": "s3:ListAllMyBuckets",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "resourceControlPolicies": [
+      {
+        "orgIdentifier": "ou-123456789012",
+        "policies": []
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "RCPs denied if denied by an RCP",
+    "request": {
+      "action": "s3:ListAllMyBuckets",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "resourceControlPolicies": [
+      {
+        "orgIdentifier": "ou-123456789012",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Deny",
+                "Action": "s3:ListAllMyBuckets",
+                "Resource": "*",
+                "Principal": "*"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied"
+    }
+  },
+  {
+    "name": "RCPs denied if denied by any level of the RCPs",
+    "request": {
+      "action": "s3:ListAllMyBuckets",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "resourceControlPolicies": [
+      {
+        "orgIdentifier": "ou-123456789012",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Deny",
+                "Action": "s3:ListAllMyBuckets",
+                "Resource": "*",
+                "Principal": "*"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "orgIdentifier": "ou-123456789012",
+        "policies": []
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied"
+    }
+  },
+  {
+    "name": "RCPs allowed if action does not match",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/object1.csv",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "resourceControlPolicies": [
+      {
+        "orgIdentifier": "ou-123456789012",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Deny",
+                "Action": "s3:ListAllMyBuckets",
+                "Resource": "*",
+                "Principal": "*"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "RCPs allowed if resource does not match",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/object1.csv",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "resourceControlPolicies": [
+      {
+        "orgIdentifier": "ou-123456789012",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Deny",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::otherbucket/*",
+                "Principal": "*"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "RCPs denied if RCP Allows but SCP Denies",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/object1.csv",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "resourceControlPolicies": [
+      {
+        "orgIdentifier": "ou-123456789012",
+        "policies": []
+      }
+    ],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-1",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Deny",
+                "Action": "s3:GetObject",
+                "Resource": "*"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied"
+    }
+  }
+]

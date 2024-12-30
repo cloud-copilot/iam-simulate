@@ -5,6 +5,7 @@ import {
   EvaluationResult,
   IdentityAnalysis,
   OuScpAnalysis,
+  RcpAnalysis,
   RequestAnalysis,
   ResourceAnalysis,
   ScpAnalysis
@@ -23,9 +24,9 @@ import {
 } from '../StatementAnalysis.js'
 
 /**
- * A set of service control policies for each level of an organization tree
+ * A set of service or resource control policies for each level of an organization tree
  */
-export interface ServiceControlPolicies {
+export interface ControlPolicies {
   /**
    * The organization identifier for the organizational unit these policies apply to.
    */
@@ -53,9 +54,15 @@ export interface AuthorizationRequest {
 
   /**
    * The service control policies that apply to the principal making the request. In
-   * order of the orgnaization hierarchy. So the root ou SCPS should be first.
+   * order of the orgnaization hierarchy. So the root ou SCPs should be first.
    */
-  serviceControlPolicies: ServiceControlPolicies[]
+  serviceControlPolicies: ControlPolicies[]
+
+  /**
+   * The resource control policies that apply to the resource being accessed. In
+   * order of the orgnaization hierarchy. So the root ou RCPs should be first.
+   */
+  resourceControlPolicies: ControlPolicies[]
 
   /**
    * The resource policy that applies to the resource being accessed.
@@ -86,7 +93,14 @@ export function authorize(request: AuthorizationRequest): RequestAnalysis {
     request.permissionBoundaries,
     request.request
   )
-  const scpAnalysis = analyzeServiceControlPolicies(request.serviceControlPolicies, request.request)
+  const scpAnalysis = analyzeControlPolicies(
+    request.serviceControlPolicies,
+    request.request
+  ) as ScpAnalysis
+  const rcpAnalysis = analyzeControlPolicies(
+    request.resourceControlPolicies,
+    request.request
+  ) as RcpAnalysis
   const resourceAnalysis = analyzeResourcePolicy(
     request.resourcePolicy,
     request.request,
@@ -98,6 +112,7 @@ export function authorize(request: AuthorizationRequest): RequestAnalysis {
     request: request.request,
     identityAnalysis,
     scpAnalysis,
+    rcpAnalysis,
     resourceAnalysis,
     permissionBoundaryAnalysis
   })
@@ -111,7 +126,7 @@ export function authorize(request: AuthorizationRequest): RequestAnalysis {
  * @returns the service authorizer for the request
  */
 export function getServiceAuthorizer(request: AuthorizationRequest): ServiceAuthorizer {
-  const serviceName = request.request.resource.service()
+  const serviceName = request.request.action.service()
   if (serviceEngines[serviceName]) {
     return new serviceEngines[serviceName]()
   }
@@ -194,18 +209,18 @@ export function analyzeIdentityPolicies(
 }
 
 /**
- * Analyzes a set of service control policies and the statements within them.
+ * Analyzes a set of service or resource control policies and the statements within them.
  *
- * @param serviceControlPolicies the service control policies to analyze
+ * @param controlPolicies the control policies to analyze
  * @param request the request to analyze against
- * @returns an array of SCP analysis results
+ * @returns an array of SCP or RCP analysis results
  */
-export function analyzeServiceControlPolicies(
-  serviceControlPolicies: ServiceControlPolicies[],
+export function analyzeControlPolicies(
+  controlPolicies: ControlPolicies[],
   request: AwsRequest
-): ScpAnalysis {
+): ScpAnalysis | RcpAnalysis {
   const analysis: OuScpAnalysis[] = []
-  for (const controlPolicy of serviceControlPolicies) {
+  for (const controlPolicy of controlPolicies) {
     const ouAnalysis: OuScpAnalysis = {
       orgIdentifier: controlPolicy.orgIdentifier,
       result: 'ImplicitlyDenied',

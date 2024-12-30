@@ -3,13 +3,14 @@ import {
   loadPolicy,
   Policy,
   validateIdentityPolicy,
+  validateResourceControlPolicy,
   validateResourcePolicy,
   validateServiceControlPolicy,
   ValidationError
 } from '@cloud-copilot/iam-policy'
 import { isConditionKeyArray } from '../context_keys/contextKeyTypes.js'
 import { normalizeContextKeyCase, typeForContextKey } from '../context_keys/contextKeys.js'
-import { authorize, ServiceControlPolicies } from '../core_engine/CoreSimulatorEngine.js'
+import { authorize, ControlPolicies } from '../core_engine/CoreSimulatorEngine.js'
 import { RequestAnalysis } from '../evaluate.js'
 import { AwsRequestImpl } from '../request/request.js'
 import { RequestContextImpl } from '../requestContext.js'
@@ -18,9 +19,26 @@ import { allowedContextKeysForRequest } from './contextKeys.js'
 import { Simulation } from './simulation.js'
 import { SimulationOptions } from './simulationOptions.js'
 
+const DEFAULT_RCP = {
+  name: 'RCPFullAWSAccess',
+  policy: {
+    Version: '2012-10-17',
+    Statement: [
+      {
+        Effect: 'Allow',
+        Principal: '*',
+        Action: '*',
+        Resource: '*'
+      }
+    ]
+  }
+}
+
 export interface SimulationErrors {
   identityPolicyErrors?: Record<string, ValidationError[]>
   seviceControlPolicyErrors?: Record<string, ValidationError[]>
+  resourceControlPolicyErrors?: Record<string, ValidationError[]>
+  permissionBoundaryErrors?: Record<string, ValidationError[]>
   resourcePolicyErrors?: ValidationError[]
   message: string
 }
@@ -72,16 +90,38 @@ export async function runSimulation(
   })
 
   const seviceControlPolicyErrors: Record<string, ValidationError[]> = {}
-  const serviceControlPolicies: ServiceControlPolicies[] = simulation.serviceControlPolicies.map(
-    (scp) => {
-      const ouId = scp.orgIdentifier
-      const validPolicies: Policy[] = []
+  const serviceControlPolicies: ControlPolicies[] = simulation.serviceControlPolicies.map((scp) => {
+    const ouId = scp.orgIdentifier
+    const validPolicies: Policy[] = []
 
-      scp.policies.forEach((value) => {
+    scp.policies.forEach((value) => {
+      const { name, policy } = value
+      const validationErrors = validateServiceControlPolicy(policy)
+      if (validationErrors.length > 0) {
+        seviceControlPolicyErrors[name] = validationErrors
+      } else {
+        validPolicies.push(loadPolicy(policy))
+      }
+    })
+
+    return {
+      orgIdentifier: ouId,
+      policies: validPolicies
+    }
+  })
+
+  const resourceControlPolicyErrors: Record<string, ValidationError[]> = {}
+  const resourceControlPolicies: ControlPolicies[] = simulation.resourceControlPolicies.map(
+    (rcp) => {
+      const ouId = rcp.orgIdentifier
+      const validPolicies: Policy[] = []
+      validPolicies.push(loadPolicy(DEFAULT_RCP.policy))
+
+      rcp.policies.forEach((value) => {
         const { name, policy } = value
-        const validationErrors = validateServiceControlPolicy(policy)
+        const validationErrors = validateResourceControlPolicy(policy)
         if (validationErrors.length > 0) {
-          seviceControlPolicyErrors[name] = validationErrors
+          resourceControlPolicyErrors[name] = validationErrors
         } else {
           validPolicies.push(loadPolicy(policy))
         }
@@ -115,6 +155,7 @@ export async function runSimulation(
   if (
     Object.keys(identityPolicyErrors).length > 0 ||
     Object.keys(seviceControlPolicyErrors).length > 0 ||
+    Object.keys(resourceControlPolicyErrors).length > 0 ||
     Object.keys(permissionBoundaryErrors).length > 0 ||
     resourcePolicyErrors.length > 0
   ) {
@@ -122,7 +163,9 @@ export async function runSimulation(
       errors: {
         identityPolicyErrors,
         seviceControlPolicyErrors,
+        resourceControlPolicyErrors,
         resourcePolicyErrors,
+        permissionBoundaryErrors,
         message: 'policy.errors'
       }
     }
@@ -202,6 +245,7 @@ export async function runSimulation(
     ),
     identityPolicies,
     serviceControlPolicies,
+    resourceControlPolicies,
     resourcePolicy,
     permissionBoundaries
   })

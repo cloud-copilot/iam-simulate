@@ -25,6 +25,17 @@ function getAllFiles(dir: string, allFiles: string[] = []): string[] {
   return allFiles
 }
 
+const defaultRcp = loadPolicy({
+  Version: '2012-10-17',
+  Statement: [
+    {
+      Effect: 'Allow',
+      Action: '*',
+      Resource: '*'
+    }
+  ]
+})
+
 describe('coreSimulatorEngine', () => {
   const testFolderPath = resolve(join(__dirname, 'coreEngineTests'))
   const allFiles = getAllFiles(testFolderPath)
@@ -59,6 +70,17 @@ describe('coreSimulatorEngine', () => {
               policies: scp.policies.map((p: any) => loadPolicy(p))
             }
           })
+
+          const resourceControlPolicies = (testCase.resourceControlPolicies || []).map(
+            (rcp: any) => {
+              return {
+                orgIdentifier: rcp.orgIdentifier,
+                //We add a default allow all rcp to every level of the org, just like AWS does.
+                policies: [defaultRcp, ...rcp.policies.map((p: any) => loadPolicy(p))]
+              }
+            }
+          )
+
           const resourcePolicy = testCase.resourcePolicy
             ? loadPolicy(testCase.resourcePolicy)
             : undefined
@@ -71,6 +93,7 @@ describe('coreSimulatorEngine', () => {
             request,
             identityPolicies,
             serviceControlPolicies,
+            resourceControlPolicies,
             resourcePolicy,
             permissionBoundaries
           }
