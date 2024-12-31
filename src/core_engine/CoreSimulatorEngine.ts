@@ -15,6 +15,7 @@ import { PrincipalMatchResult, requestMatchesStatementPrincipals } from '../prin
 import { AwsRequest } from '../request/request.js'
 import { requestMatchesStatementResources } from '../resource/resource.js'
 import { DefaultServiceAuthorizer } from '../services/DefaultServiceAuthorizer.js'
+import { KmsServiceAuthorizer } from '../services/KmsServiceAuthorizer.js'
 import { ServiceAuthorizer } from '../services/ServiceAuthorizer.js'
 import {
   identityStatementAllows,
@@ -75,7 +76,9 @@ export interface AuthorizationRequest {
   permissionBoundaries: Policy[] | undefined
 }
 
-const serviceEngines: Record<string, new () => ServiceAuthorizer> = {}
+const serviceEngines: Record<string, new () => ServiceAuthorizer> = {
+  kms: KmsServiceAuthorizer
+}
 
 /**
  * Authorizes a request.
@@ -126,7 +129,7 @@ export function authorize(request: AuthorizationRequest): RequestAnalysis {
  * @returns the service authorizer for the request
  */
 export function getServiceAuthorizer(request: AuthorizationRequest): ServiceAuthorizer {
-  const serviceName = request.request.action.service()
+  const serviceName = request.request.action.service().toLowerCase()
   if (serviceEngines[serviceName]) {
     return new serviceEngines[serviceName]()
   }

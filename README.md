@@ -9,6 +9,7 @@ The simulator currently supports these features of AWS IAM
 - Identity Policies
 - Resource Policies
 - Service Control Policies
+- Resource Control Policies
 - Permission Boundaries
 - All [AWS Condition Operators](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition_operators.html)
 - Same Account and Cross Account Requests
@@ -32,7 +33,6 @@ It will also return "explains" for each statement that was evaluated, detailing 
 
 ### Features Coming Soon
 
-- Resource Control Policies
 - Distinct Behavior for KMS and IAM Resource Policies
 - Session Policies
 - Validation of Global Condition Keys for each action

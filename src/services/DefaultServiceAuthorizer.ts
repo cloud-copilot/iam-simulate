@@ -1,4 +1,4 @@
-import { RequestAnalysis } from '../evaluate.js'
+import { RequestAnalysis, ResourceAnalysis } from '../evaluate.js'
 import { isAssumedRoleArn, isFederatedUserArn, isIamUserArn } from '../util.js'
 import { ServiceAuthorizationRequest, ServiceAuthorizer } from './ServiceAuthorizer.js'
 
@@ -117,7 +117,15 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
 
         Need to add some tests for this.
       */
-      if (resourcePolicyResult === 'Allowed' || identityStatementResult === 'Allowed') {
+
+      const trustedAccount = this.serviceTrustsPrincipalAccount(
+        sameAccount,
+        request.resourceAnalysis
+      )
+      if (
+        resourcePolicyResult === 'Allowed' ||
+        (trustedAccount && identityStatementResult === 'Allowed')
+      ) {
         return {
           result: 'Allowed',
           ...baseResult
@@ -163,5 +171,22 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
      * * vpc endpoint policies
      * * organization APIs and delegated admin policy
      */
+  }
+
+  /**
+   * Determines if the service trusts the principal's Account's IAM policies
+   *
+   * @param sameAccount - If the principal and resource are in the same account
+   * @param resourceAnalysis - The resource policy analysis
+   * @returns true if the service trusts the principal's account IAM policies
+   */
+  serviceTrustsPrincipalAccount(sameAccount: boolean, resourceAnalysis: ResourceAnalysis): boolean {
+    if (sameAccount) {
+      return true
+    }
+
+    return resourceAnalysis.allowStatements.some(
+      (statement) => statement.principalMatch === 'AccountLevelMatch'
+    )
   }
 }
