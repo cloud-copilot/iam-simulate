@@ -166,8 +166,8 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     /**
      * Add checks for:
      * * root user - can override resource policies for most resource types
+     * * service linked roles - ignore SCPs and RCPs
      * * session policies
-     * * service linked roles
      * * vpc endpoint policies
      * * organization APIs and delegated admin policy
      */
