@@ -13,6 +13,7 @@ The simulator currently supports these features of AWS IAM
 - Permission Boundaries
 - All [AWS Condition Operators](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition_operators.html)
 - Same Account and Cross Account Requests
+- Custom trust behavior for IAM Trust Policies and KMS Key Policies
 
 ### Request Validation
 
@@ -33,7 +34,6 @@ It will also return "explains" for each statement that was evaluated, detailing 
 
 ### Features Coming Soon
 
-- Distinct Behavior for KMS and IAM Resource Policies
 - Session Policies
 - Validation of Global Condition Keys for each action
 - Automatically populating context keys from the request such as `aws:PrincipalServiceName`

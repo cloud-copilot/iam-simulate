@@ -1,0 +1,72 @@
+[
+  {
+    "name": "implicit deny when no policies",
+    "request": {
+      "action": "sts:GetFederationToken",
+      "resource": {
+        "resource": "arn:aws:iam::111111111111:user/target-user",
+        "accountId": "111111111111"
+      },
+      "principal": "arn:aws:iam::222222222222:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Denied when identity policy allows",
+    "request": {
+      "action": "sts:GetFederationToken",
+      "resource": {
+        "resource": "arn:aws:iam::111111111111:user/target-user",
+        "accountId": "111111111111"
+      },
+      "principal": "arn:aws:iam::222222222222:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "sts:GetFederationToken",
+            "Resource": "arn:aws:iam::111111111111:user/target-user"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Denied when denied by identity policy",
+    "request": {
+      "action": "sts:GetFederationToken",
+      "resource": {
+        "resource": "arn:aws:iam::111111111111:user/target-user",
+        "accountId": "111111111111"
+      },
+      "principal": "arn:aws:iam::222222222222:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Deny",
+            "Action": "sts:GetFederationToken",
+            "Resource": "arn:aws:iam::111111111111:user/target-user"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied"
+    }
+  }
+]

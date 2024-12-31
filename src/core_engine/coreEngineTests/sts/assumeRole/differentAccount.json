@@ -1,0 +1,282 @@
+[
+  {
+    "name": "implicit deny when no policies",
+    "request": {
+      "action": "sts:AssumeRole",
+      "resource": {
+        "resource": "arn:aws:iam::111111111111:role/test-role",
+        "accountId": "111111111111"
+      },
+      "principal": "arn:aws:iam::222222222222:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "implicit deny when different principal is allowed by resource policy",
+    "request": {
+      "action": "sts:AssumeRole",
+      "resource": {
+        "resource": "arn:aws:iam::111111111111:role/test-role",
+        "accountId": "111111111111"
+      },
+      "principal": "arn:aws:iam::222222222222:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "sts:AssumeRole",
+          "Resource": "*",
+          "Principal": {
+            "AWS": "arn:aws:iam::222222222222:user/other-user"
+          }
+        }
+      ]
+    },
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Implicitly denied when identity policy allows but not resource policy",
+    "request": {
+      "action": "sts:AssumeRole",
+      "resource": {
+        "resource": "arn:aws:iam::111111111111:role/test-role",
+        "accountId": "111111111111"
+      },
+      "principal": "arn:aws:iam::222222222222:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "sts:AssumeRole",
+            "Resource": "arn:aws:iam::111111111111:role/test-role"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Implicitly denied when account allowed by resource policy but not identity policy",
+    "request": {
+      "action": "sts:AssumeRole",
+      "resource": {
+        "resource": "arn:aws:iam::111111111111:role/test-role",
+        "accountId": "111111111111"
+      },
+      "principal": "arn:aws:iam::222222222222:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "sts:AssumeRole",
+          "Resource": "*",
+          "Principal": {
+            "AWS": "arn:aws:iam::222222222222:root"
+          }
+        }
+      ]
+    },
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Implicitly denied when resource policy allows for principal but not identity policy",
+    "request": {
+      "action": "sts:AssumeRole",
+      "resource": {
+        "resource": "arn:aws:iam::111111111111:role/test-role",
+        "accountId": "111111111111"
+      },
+      "principal": "arn:aws:iam::222222222222:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "sts:AssumeRole",
+          "Resource": "*",
+          "Principal": {
+            "AWS": "arn:aws:iam::222222222222:user/test-user"
+          }
+        }
+      ]
+    },
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Denied when resource policy allows for account number but no identity policy",
+    "request": {
+      "action": "sts:AssumeRole",
+      "resource": {
+        "resource": "arn:aws:iam::111111111111:role/test-role",
+        "accountId": "111111111111"
+      },
+      "principal": "arn:aws:iam::222222222222:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "sts:AssumeRole",
+          "Resource": "*",
+          "Principal": {
+            "AWS": "222222222222"
+          }
+        }
+      ]
+    },
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Allowed when resource policy allows account and identity policy both allow",
+    "request": {
+      "action": "sts:AssumeRole",
+      "resource": {
+        "resource": "arn:aws:iam::111111111111:role/test-role",
+        "accountId": "111111111111"
+      },
+      "principal": "arn:aws:iam::222222222222:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "sts:AssumeRole",
+            "Resource": "arn:aws:iam::111111111111:role/test-role"
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "sts:AssumeRole",
+          "Resource": "*",
+          "Principal": {
+            "AWS": "arn:aws:iam::222222222222:root"
+          }
+        }
+      ]
+    },
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Denied when denied by identity policy",
+    "request": {
+      "action": "sts:AssumeRole",
+      "resource": {
+        "resource": "arn:aws:iam::111111111111:role/test-role",
+        "accountId": "111111111111"
+      },
+      "principal": "arn:aws:iam::222222222222:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Deny",
+            "Action": "sts:AssumeRole",
+            "Resource": "arn:aws:iam::111111111111:role/test-role"
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "sts:AssumeRole",
+          "Resource": "*",
+          "Principal": {
+            "AWS": "arn:aws:iam::222222222222:root"
+          }
+        }
+      ]
+    },
+    "expected": {
+      "response": "ExplicitlyDenied"
+    }
+  },
+
+  {
+    "name": "Denied when denied by resource policy",
+    "request": {
+      "action": "sts:AssumeRole",
+      "resource": {
+        "resource": "arn:aws:iam::111111111111:role/test-role",
+        "accountId": "111111111111"
+      },
+      "principal": "arn:aws:iam::222222222222:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "sts:AssumeRole",
+            "Resource": "arn:aws:iam::111111111111:role/test-role"
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Deny",
+          "Action": "sts:AssumeRole",
+          "Resource": "*",
+          "Principal": {
+            "AWS": "arn:aws:iam::222222222222:root"
+          }
+        }
+      ]
+    },
+    "expected": {
+      "response": "ExplicitlyDenied"
+    }
+  }
+]

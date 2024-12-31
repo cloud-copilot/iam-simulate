@@ -17,6 +17,7 @@ import { requestMatchesStatementResources } from '../resource/resource.js'
 import { DefaultServiceAuthorizer } from '../services/DefaultServiceAuthorizer.js'
 import { KmsServiceAuthorizer } from '../services/KmsServiceAuthorizer.js'
 import { ServiceAuthorizer } from '../services/ServiceAuthorizer.js'
+import { StsServiceAuthorizer } from '../services/StsServiceAuthorizer.js'
 import {
   identityStatementAllows,
   identityStatementExplicitDeny,
@@ -77,7 +78,8 @@ export interface AuthorizationRequest {
 }
 
 const serviceEngines: Record<string, new () => ServiceAuthorizer> = {
-  kms: KmsServiceAuthorizer
+  kms: KmsServiceAuthorizer,
+  sts: StsServiceAuthorizer
 }
 
 /**
@@ -418,7 +420,7 @@ export function analyzeResourcePolicy(
   ) {
     resourceAnalysis.result = 'AllowedForAccount'
   } else {
-    resourceAnalysis.result = 'NotApplicable'
+    resourceAnalysis.result = 'ImplicityDenied'
   }
 
   return resourceAnalysis
