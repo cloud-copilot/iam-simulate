@@ -1,4 +1,5 @@
 import { RequestAnalysis, ResourceAnalysis } from '../evaluate.js'
+import { RequestResource } from '../request/requestResource.js'
 import { isAssumedRoleArn, isFederatedUserArn, isIamUserArn } from '../util.js'
 import { ServiceAuthorizationRequest, ServiceAuthorizer } from './ServiceAuthorizer.js'
 
@@ -120,7 +121,8 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
 
       const trustedAccount = this.serviceTrustsPrincipalAccount(
         sameAccount,
-        request.resourceAnalysis
+        request.resourceAnalysis,
+        request.request.resource
       )
       if (
         resourcePolicyResult === 'Allowed' ||
@@ -180,7 +182,11 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
    * @param resourceAnalysis - The resource policy analysis
    * @returns true if the service trusts the principal's account IAM policies
    */
-  serviceTrustsPrincipalAccount(sameAccount: boolean, resourceAnalysis: ResourceAnalysis): boolean {
+  serviceTrustsPrincipalAccount(
+    sameAccount: boolean,
+    resourceAnalysis: ResourceAnalysis,
+    resource: RequestResource
+  ): boolean {
     if (sameAccount) {
       return true
     }

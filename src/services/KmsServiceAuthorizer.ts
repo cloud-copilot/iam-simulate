@@ -1,4 +1,5 @@
 import { ResourceAnalysis } from '../evaluate.js'
+import { RequestResource } from '../request/requestResource.js'
 import { DefaultServiceAuthorizer } from './DefaultServiceAuthorizer.js'
 
 /**
@@ -12,7 +13,14 @@ export class KmsServiceAuthorizer extends DefaultServiceAuthorizer {
    * @param resourceAnalysis - The resource policy analysis
    * @returns true if the service trusts the principal's account IAM policies
    */
-  serviceTrustsPrincipalAccount(sameAccount: boolean, resourceAnalysis: ResourceAnalysis): boolean {
+  serviceTrustsPrincipalAccount(
+    sameAccount: boolean,
+    resourceAnalysis: ResourceAnalysis,
+    resource: RequestResource
+  ): boolean {
+    if (sameAccount && resource.value() == '*') {
+      return true
+    }
     return resourceAnalysis.allowStatements.some(
       (statement) => statement.principalMatch === 'AccountLevelMatch'
     )

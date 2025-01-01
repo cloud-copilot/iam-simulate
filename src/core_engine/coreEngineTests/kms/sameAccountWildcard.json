@@ -1,0 +1,29 @@
+[
+  {
+    "name": "should allow wildcard actions without a resource policy",
+    "request": {
+      "action": "kms:ListKeys",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "kms:ListKeys",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  }
+]
