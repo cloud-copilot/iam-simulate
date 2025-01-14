@@ -12,6 +12,9 @@ import {
 } from '../global_conditions/globalConditionKeys.js'
 import { ConditionKeyType } from './contextKeyTypes.js'
 
+const oidcKeys = new Set(['aud', 'sub', 'email', 'oaud', 'sub'])
+const oidcProviderPattern = /^[0-9a-zA-Z\._\-]+$/
+
 /**
  * Check if a context key actually exists
  *
@@ -25,13 +28,16 @@ export async function isActualContextKey(key: string): Promise<boolean> {
   if (globalConditionKeyExists(key)) {
     return true
   }
+  if (isOidcConditionKey(key)) {
+    return true
+  }
+
   const parts = key.split(':')
   if (parts.length !== 2) {
     return false
   }
   const [service, action] = parts
   const serviceExists = await iamServiceExists(service)
-
   if (!serviceExists) {
     return false
   }
@@ -122,6 +128,10 @@ export async function normalizeContextKeyCase(contextKey: string): Promise<strin
     return replaceVariableInContextKey(globalConditionKey.key, contextKey)
   }
 
+  if (isOidcConditionKey(contextKey)) {
+    return contextKey
+  }
+
   throw new Error(`Context key ${contextKey} not found`)
 }
 
@@ -161,4 +171,19 @@ export async function typeForContextKey(contextKey: string): Promise<ConditionKe
   }
 
   throw new Error(`Condition key ${contextKey} not found`)
+}
+
+/**
+ * Checks if a string is a valid OIDC condition key
+ *
+ * @param key the key to check
+ * @returns true if the key is a valid OIDC condition key
+ */
+function isOidcConditionKey(key: string): boolean {
+  const parts = key.split(':')
+  if (parts.length !== 2) {
+    return false
+  }
+  const [service, action] = parts
+  return oidcKeys.has(action) && oidcProviderPattern.test(service)
 }

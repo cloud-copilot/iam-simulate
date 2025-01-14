@@ -15,7 +15,8 @@ describe('findContextKeys', () => {
           Condition: {
             StringEquals: {
               's3:prefix': '${prefix}',
-              'aws:PrincipalArn': 'arn:aws:iam::123456789012:role/roleName'
+              'aws:PrincipalArn': 'arn:aws:iam::123456789012:role/roleName',
+              'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com'
             }
           }
         }
@@ -43,7 +44,8 @@ describe('findContextKeys', () => {
       'aws:PrincipalArn',
       'aws:username',
       's3:DataAccessPointArn',
-      's3:prefix'
+      's3:prefix',
+      'token.actions.githubusercontent.com:aud'
     ])
     expect(invalidKeys.sort()).toEqual(['bucketName', 'prefix', 's3:fakeValue'])
   })

@@ -111,6 +111,27 @@ describe('isActualContextKey', () => {
     //Then the result should be true
     expect(result).toBeTruthy()
   })
+
+  it('should return true for a OIDC key', async () => {
+    //For a given set of OIDC keys
+    //https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_iam-condition-keys.html#condition-keys-wif
+    const keys = [
+      'token.actions.githubusercontent.com:aud',
+      'token.actions.githubusercontent.com:sub',
+      'token.actions.githubusercontent.com:email',
+      'token.actions.githubusercontent.com:oaud',
+      'token.actions.githubusercontent.com:sub',
+      'ABCD-123_456:sub'
+    ]
+
+    //When the keys are checked
+    for (const key of keys) {
+      const result = await isActualContextKey(key)
+
+      //Then the result should be true
+      expect(result, key).toEqual(true)
+    }
+  })
 })
 
 describe('typeForContextKey', () => {
