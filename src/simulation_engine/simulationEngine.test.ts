@@ -737,6 +737,7 @@ describe('runSimulation', () => {
             {
               name: 'NoEc2',
               policy: {
+                Version: '2012-10-17',
                 Statement: {
                   Effect: 'Deny',
                   Action: 'ec2:*',

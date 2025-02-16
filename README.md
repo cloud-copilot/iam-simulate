@@ -1,5 +1,7 @@
 # IAM Simulate
 
+[![NPM Version](https://img.shields.io/npm/v/@cloud-copilot/iam-simulate.svg?logo=nodedotjs)](https://www.npmjs.com/package/@cloud-copilot/iam-simulate) [![License: AGPL v3](https://img.shields.io/github/license/cloud-copilot/iam-simulate)](LICENSE.txt) [![GuardDog](https://github.com/cloud-copilot/iam-simulate/actions/workflows/guarddog.yml/badge.svg)](https://github.com/cloud-copilot/iam-simulate/actions/workflows/guarddog.yml) [![Known Vulnerabilities](https://snyk.io/test/github/cloud-copilot/iam-simulate/badge.svg?targetFile=package.json&style=flat-square)](https://snyk.io/test/github/cloud-copilot/iam-simulate?targetFile=package.json)
+
 An AWS IAM Simulator and Policy Tester built as a Node/Typescript library.
 
 The simulator currently supports these features of AWS IAM
