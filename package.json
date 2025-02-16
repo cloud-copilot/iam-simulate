@@ -1,6 +1,6 @@
 {
   "name": "@cloud-copilot/iam-simulate",
-  "version": "0.1.26",
+  "version": "1.0.0",
   "description": "Simulate evaluation of AWS IAM policies",
   "repository": {
     "type": "git",
