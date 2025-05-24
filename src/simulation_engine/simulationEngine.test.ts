@@ -375,7 +375,7 @@ describe('runSimulation', () => {
 
     //Then the result should contain an error
     expect(result.errors!.message).toEqual('policy.errors')
-    expect(result.errors!.seviceControlPolicyErrors!['Gandalf'].length).toEqual(1)
+    expect(result.errors!.serviceControlPolicyErrors!['Gandalf'].length).toEqual(1)
     expect(result.ignoredContextKeys).toBeUndefined()
   })
 

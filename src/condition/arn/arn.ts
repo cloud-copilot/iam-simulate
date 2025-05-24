@@ -1,6 +1,7 @@
+import { splitArnParts } from '@cloud-copilot/iam-utils'
 import { ConditionValueExplain } from '../../explain/statementExplain.js'
 import { AwsRequest } from '../../request/request.js'
-import { convertIamString, isNotDefined, splitArnParts } from '../../util.js'
+import { convertIamString, isNotDefined } from '../../util.js'
 
 /**
  * Checks to see if a single ARN matches in ArnLike format

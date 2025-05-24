@@ -36,7 +36,7 @@ const DEFAULT_RCP = {
 
 export interface SimulationErrors {
   identityPolicyErrors?: Record<string, ValidationError[]>
-  seviceControlPolicyErrors?: Record<string, ValidationError[]>
+  serviceControlPolicyErrors?: Record<string, ValidationError[]>
   resourceControlPolicyErrors?: Record<string, ValidationError[]>
   permissionBoundaryErrors?: Record<string, ValidationError[]>
   resourcePolicyErrors?: ValidationError[]
@@ -89,7 +89,7 @@ export async function runSimulation(
     }
   })
 
-  const seviceControlPolicyErrors: Record<string, ValidationError[]> = {}
+  const serviceControlPolicyErrors: Record<string, ValidationError[]> = {}
   const serviceControlPolicies: ControlPolicies[] = simulation.serviceControlPolicies.map((scp) => {
     const ouId = scp.orgIdentifier
     const validPolicies: Policy[] = []
@@ -98,7 +98,7 @@ export async function runSimulation(
       const { name, policy } = value
       const validationErrors = validateServiceControlPolicy(policy)
       if (validationErrors.length > 0) {
-        seviceControlPolicyErrors[name] = validationErrors
+        serviceControlPolicyErrors[name] = validationErrors
       } else {
         validPolicies.push(loadPolicy(policy))
       }
@@ -154,7 +154,7 @@ export async function runSimulation(
 
   if (
     Object.keys(identityPolicyErrors).length > 0 ||
-    Object.keys(seviceControlPolicyErrors).length > 0 ||
+    Object.keys(serviceControlPolicyErrors).length > 0 ||
     Object.keys(resourceControlPolicyErrors).length > 0 ||
     Object.keys(permissionBoundaryErrors).length > 0 ||
     resourcePolicyErrors.length > 0
@@ -162,7 +162,7 @@ export async function runSimulation(
     return {
       errors: {
         identityPolicyErrors,
-        seviceControlPolicyErrors,
+        serviceControlPolicyErrors: serviceControlPolicyErrors,
         resourceControlPolicyErrors,
         resourcePolicyErrors,
         permissionBoundaryErrors,

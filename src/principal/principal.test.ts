@@ -7,35 +7,10 @@ import {
   requestMatchesPrincipal,
   requestMatchesPrincipalStatement,
   requestMatchesStatementPrincipals,
-  roleArnFromAssumedRoleArn,
   userArnFromFederatedUserArn
 } from './principal.js'
 
 const defaultResource = { accountId: '', resource: '' }
-
-describe('roleArnFromAssumedRoleArn', () => {
-  it('should return the role ARN from an assumed role ARN', () => {
-    //Given an assumed role ARN
-    const assumedRoleArn = 'arn:aws:sts::123456789012:assumed-role/role-name/session-name'
-
-    //When we get the role ARN from the assumed role ARN
-    const result = roleArnFromAssumedRoleArn(assumedRoleArn)
-
-    //Then it should return the role ARN
-    expect(result).toBe('arn:aws:iam::123456789012:role/role-name')
-  })
-
-  it('should return the role ARN from an assumed role ARN with a path', () => {
-    //Given an assumed role ARN
-    const assumedRoleArn = 'arn:aws:sts::123456789012:assumed-role/admin/global-admin/session-name'
-
-    //When we get the role ARN from the assumed role ARN
-    const result = roleArnFromAssumedRoleArn(assumedRoleArn)
-
-    //Then it should return the role ARN
-    expect(result).toBe('arn:aws:iam::123456789012:role/admin/global-admin')
-  })
-})
 
 describe('userArnFromFederatedUserArn', () => {
   it('should return the user ARN from a federated user ARN', () => {

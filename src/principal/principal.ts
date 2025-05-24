@@ -1,7 +1,11 @@
 import { Principal, Statement } from '@cloud-copilot/iam-policy'
+import {
+  convertAssumedRoleArnToRoleArn,
+  isAssumedRoleArn,
+  isFederatedUserArn
+} from '@cloud-copilot/iam-utils'
 import { PrincipalExplain, StatementExplain } from '../explain/statementExplain.js'
 import { AwsRequest } from '../request/request.js'
-import { isAssumedRoleArn, isFederatedUserArn } from '../util.js'
 
 //Wildcards are not allowed in the principal element https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html
 // The only exception is the "*" wildcard, which you can use to match all principals, including anonymous principals.
@@ -228,7 +232,7 @@ export function requestMatchesPrincipalStatement(
   if (principalStatement.isAwsPrincipal()) {
     if (isAssumedRoleArn(request.principal.value())) {
       const sessionArn = request.principal.value()
-      const roleArn = roleArnFromAssumedRoleArn(sessionArn)
+      const roleArn = convertAssumedRoleArnToRoleArn(sessionArn)
       if (principalStatement.arn() === roleArn) {
         return {
           matches: 'SessionRoleMatch',
@@ -260,19 +264,6 @@ export function requestMatchesPrincipalStatement(
     matches: 'NoMatch',
     principal: principalStatement.value()
   }
-}
-
-/**
- * Transfrom an assumed role session ARN into a role ARN
- *
- * @param assumedRoleArn the assumed role session ARN
- * @returns the role ARN for the assumed role session
- */
-export function roleArnFromAssumedRoleArn(assumedRoleArn: string): string {
-  const stsParts = assumedRoleArn.split(':')
-  const resourceParts = stsParts.at(-1)!.split('/')
-  const rolePathAndName = resourceParts.slice(1, -1).join('/')
-  return `arn:aws:iam::${stsParts[4]}:role/${rolePathAndName}`
 }
 
 /**
