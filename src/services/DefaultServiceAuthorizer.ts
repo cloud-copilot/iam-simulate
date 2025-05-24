@@ -1,6 +1,6 @@
+import { isAssumedRoleArn, isFederatedUserArn, isIamUserArn } from '@cloud-copilot/iam-utils'
 import { RequestAnalysis, ResourceAnalysis } from '../evaluate.js'
 import { RequestResource } from '../request/requestResource.js'
-import { isAssumedRoleArn, isFederatedUserArn, isIamUserArn } from '../util.js'
 import { ServiceAuthorizationRequest, ServiceAuthorizer } from './ServiceAuthorizer.js'
 
 /**
