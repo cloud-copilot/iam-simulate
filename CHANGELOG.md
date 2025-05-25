@@ -1,3 +1,10 @@
+## [0.1.39](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.38...v0.1.39) (2025-05-25)
+
+
+### Bug Fixes
+
+* Remove bad node:test import ([7195ffc](https://github.com/cloud-copilot/iam-simulate/commit/7195ffc653ad6bdcd407fa1a44514479fae5404a))
+
 ## [0.1.38](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.37...v0.1.38) (2025-05-25)
 
 
