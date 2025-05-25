@@ -494,5 +494,33 @@
     "expected": {
       "response": "Allowed"
     }
+  },
+  {
+    "name": "Should ignore empty permission boundary array",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:role/test-role",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::mybucket/testobject"
+          }
+        ]
+      }
+    ],
+    "permissionBoundaries": [],
+    "expected": {
+      "response": "Allowed"
+    }
   }
 ]
