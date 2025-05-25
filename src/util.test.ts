@@ -1,14 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { AwsRequest, AwsRequestImpl } from './request/request.js'
 import { RequestContextImpl } from './requestContext.js'
-import {
-  convertIamString,
-  getResourceTypesForAction,
-  getVariablesFromString,
-  isAssumedRoleArn,
-  isFederatedUserArn,
-  isIamUserArn
-} from './util.js'
+import { convertIamString, getResourceTypesForAction, getVariablesFromString } from './util.js'
 
 function testRequestWithContext(context: any, validContextVariables?: string[]): AwsRequest {
   validContextVariables = validContextVariables || []
@@ -381,77 +374,5 @@ describe('getResourceTypesForAction', () => {
 
     //Then the result should be returned
     expect(result).toEqual([])
-  })
-})
-
-describe('isAssumedRoleArn', () => {
-  it('should return true for assumed role ARN', () => {
-    //Given an assumed role ARN
-    const assumedRoleArn = 'arn:aws:sts::123456789012:assumed-role/role-name/session-name'
-
-    //When we check if it is an assumed role ARN
-    const result = isAssumedRoleArn(assumedRoleArn)
-
-    //Then it should return true
-    expect(result).toBe(true)
-  })
-
-  it('should return false for non-assumed role ARN', () => {
-    //Given a non-assumed role ARN
-    const userArn = 'arn:aws:iam::123456789012:user/user-name'
-
-    //When we check if it is an assumed role ARN
-    const result = isAssumedRoleArn(userArn)
-
-    //Then it should return false
-    expect(result).toBe(false)
-  })
-})
-
-describe('isIamUserArn', () => {
-  it('should return true for IAM user ARN', () => {
-    //Given an IAM user ARN
-    const userArn = 'arn:aws:iam::123456789012:user/user-name'
-
-    //When we check if it is an IAM user ARN
-    const result = isIamUserArn(userArn)
-
-    //Then it should return true
-    expect(result).toBe(true)
-  })
-
-  it('should return false for non-IAM user ARN', () => {
-    //Given a non-IAM user ARN
-    const roleArn = 'arn:aws:sts::123456789012:assumed-role/role-name/session-name'
-
-    //When we check if it is an IAM user ARN
-    const result = isIamUserArn(roleArn)
-
-    //Then it should return false
-    expect(result).toBe(false)
-  })
-})
-
-describe('isFederatedUserArn', () => {
-  it('should return true for federated user ARN', () => {
-    //Given a federated user ARN
-    const federatedUserArn = 'arn:aws:sts::123456789012:federated-user/user-name'
-
-    //When we check if it is a federated user ARN
-    const result = isFederatedUserArn(federatedUserArn)
-
-    //Then it should return true
-    expect(result).toBe(true)
-  })
-
-  it('should return false for non-federated user ARN', () => {
-    //Given a non-federated user ARN
-    const roleArn = 'arn:aws:sts::123456789012:assumed-role/role-name/session-name'
-
-    //When we check if it is a federated user ARN
-    const result = isFederatedUserArn(roleArn)
-
-    //Then it should return false
-    expect(result).toBe(false)
   })
 })
