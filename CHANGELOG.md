@@ -1,3 +1,10 @@
+## [0.1.40](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.39...v0.1.40) (2025-05-25)
+
+
+### Bug Fixes
+
+* Ignore an empty array of permission boundaries. ([02e557c](https://github.com/cloud-copilot/iam-simulate/commit/02e557cc16b431004e07767d85fc2e18aef423bc))
+
 ## [0.1.39](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.38...v0.1.39) (2025-05-25)
 
 
