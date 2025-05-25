@@ -430,7 +430,7 @@ export function analyzePermissionBoundaryPolicies(
   permissionBoundaries: Policy[] | undefined,
   request: AwsRequest
 ): IdentityAnalysis | undefined {
-  if (!permissionBoundaries) {
+  if (!permissionBoundaries || permissionBoundaries.length === 0) {
     return undefined
   }
 
