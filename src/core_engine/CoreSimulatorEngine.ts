@@ -41,7 +41,7 @@ export interface ControlPolicies {
 }
 
 /**
- * A reqest to authorize a service action.
+ * A request to authorize a service action.
  */
 export interface AuthorizationRequest {
   /**
@@ -56,13 +56,13 @@ export interface AuthorizationRequest {
 
   /**
    * The service control policies that apply to the principal making the request. In
-   * order of the orgnaization hierarchy. So the root ou SCPs should be first.
+   * order of the organization hierarchy. So the root ou SCPs should be first.
    */
   serviceControlPolicies: ControlPolicies[]
 
   /**
    * The resource control policies that apply to the resource being accessed. In
-   * order of the orgnaization hierarchy. So the root ou RCPs should be first.
+   * order of the organization hierarchy. So the root ou RCPs should be first.
    */
   resourceControlPolicies: ControlPolicies[]
 

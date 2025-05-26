@@ -117,7 +117,7 @@
     }
   },
   {
-    "name": "Permission boundary explicity deny and identity deny",
+    "name": "Permission boundary explicitly deny and identity deny",
     "request": {
       "action": "s3:GetObject",
       "resource": {
@@ -156,7 +156,7 @@
     }
   },
   {
-    "name": "Permission boundary implicity deny and identity explicit deny",
+    "name": "Permission boundary implicitly deny and identity explicit deny",
     "request": {
       "action": "s3:GetObject",
       "resource": {

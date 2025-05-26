@@ -1,0 +1,75 @@
+[
+  {
+    "name": "Allow Service Principal When Explicitly Allowed",
+    "request": {
+      "action": "sts:AssumeRole",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/aws-service-role/test-role",
+        "accountId": "123456789012"
+      },
+      "principal": "lambda.amazonaws.com",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "sts:AssumeRole",
+          "Principal": {
+            "Service": "lambda.amazonaws.com"
+          }
+        }
+      ]
+    },
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Implicitly Deny Service Principal When Not Explicitly Allowed",
+    "request": {
+      "action": "sts:AssumeRole",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/aws-service-role/test-role",
+        "accountId": "123456789012"
+      },
+      "principal": "lambda.amazonaws.com",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "sts:AssumeRole",
+          "Principal": {
+            "Service": "logs.amazonaws.com"
+          }
+        }
+      ]
+    },
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Implicitly Deny Service Principal When No Resource Policy",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/myobject",
+        "accountId": "123456789012"
+      },
+      "principal": "lambda.amazonaws.com",
+      "context": {}
+    },
+    "identityPolicies": [],
+
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  }
+]

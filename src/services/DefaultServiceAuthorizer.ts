@@ -1,4 +1,9 @@
-import { isAssumedRoleArn, isFederatedUserArn, isIamUserArn } from '@cloud-copilot/iam-utils'
+import {
+  isAssumedRoleArn,
+  isFederatedUserArn,
+  isIamUserArn,
+  isServicePrincipal
+} from '@cloud-copilot/iam-utils'
 import { RequestAnalysis, ResourceAnalysis } from '../evaluate.js'
 import { RequestResource } from '../request/requestResource.js'
 import { ServiceAuthorizationRequest, ServiceAuthorizer } from './ServiceAuthorizer.js'
@@ -73,6 +78,21 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
       }
     }
 
+    // Service Principals
+    if (isServicePrincipal(request.request.principal.value())) {
+      // Service principals are allowed if the resource policy allows them
+      if (resourcePolicyResult === 'Allowed') {
+        return {
+          result: 'Allowed',
+          ...baseResult
+        }
+      }
+      return {
+        result: 'ImplicitlyDenied',
+        ...baseResult
+      }
+    }
+
     //Same Account
     if (principalAccount === resourceAccount) {
       if (permissionBoundaryResult === 'ImplicitlyDenied') {
@@ -112,7 +132,7 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
       /*
         TODO: Implicit denies in identity policies
         I think if the identity policy has an implicit deny for assumed roles or federated users,
-        then the resource policy must have the federerated or assumed role ARN exactly.
+        then the resource policy must have the federated or assumed role ARN exactly.
 
         That doesn't seem right though. I know many cases where the resource policy has the role ARN and it works
 
