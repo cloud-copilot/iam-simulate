@@ -1,3 +1,11 @@
+## [0.1.42](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.41...v0.1.42) (2025-05-26)
+
+
+### Features
+
+* Properly support service principals in resource policies ([02164b9](https://github.com/cloud-copilot/iam-simulate/commit/02164b988a68070da7d4006de8e7c3e8a5977446))
+* sts:GetCallerIdentity is always allowed ([be26ed8](https://github.com/cloud-copilot/iam-simulate/commit/be26ed88e51da293e44e2dac721531bbdae6a0b8))
+
 ## [0.1.41](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.40...v0.1.41) (2025-05-26)
 
 ## [0.1.40](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.39...v0.1.40) (2025-05-25)
