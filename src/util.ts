@@ -77,14 +77,14 @@ export function convertIamString(
     )
 
     if (requestValue) {
-      //TODO: Maybe escpae the * in the resolved value to ${*}
+      //TODO: Maybe escape the * in the resolved value to ${*}
       return options.convertToRegex ? escapeRegexCharacters(requestValue) : requestValue
     } else if (defaultValue) {
       /*
         TODO: What happens in a request if a multi value context key is used in a string and there
         is a default value? Will it use the default value or will it fail the condition test?
       */
-      //TODO: Maybe escpae the * in the resolved value to ${*}
+      //TODO: Maybe escape the * in the resolved value to ${*}
       return options.convertToRegex ? escapeRegexCharacters(defaultValue) : defaultValue
     } else {
       if (requestValueError == 'missing') {
@@ -278,7 +278,7 @@ export async function isWildcardOnlyAction(service: string, action: string): Pro
 }
 
 /**
- * Get the the possible reource types for an action and resource
+ * Get the the possible resource types for an action and resource
  *
  * @param service the service the action belongs to
  * @param action the action to get the resource type for
