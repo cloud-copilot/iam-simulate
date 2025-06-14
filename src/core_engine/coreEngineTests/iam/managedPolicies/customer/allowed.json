@@ -1,0 +1,354 @@
+[
+  {
+    "name": "allow iam:GenerateServiceLastAccessedDetails for customer managed policies",
+    "request": {
+      "action": "iam:GenerateServiceLastAccessedDetails",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:GetPolicy for customer managed policies",
+    "request": {
+      "action": "iam:GetPolicy",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:GetPolicyVersion for customer managed policies",
+    "request": {
+      "action": "iam:GetPolicyVersion",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:ListEntitiesForPolicy for customer managed policies",
+    "request": {
+      "action": "iam:ListEntitiesForPolicy",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:ListPolicyTags for customer managed policies",
+    "request": {
+      "action": "iam:ListPolicyTags",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:ListPolicyVersions for customer managed policies",
+    "request": {
+      "action": "iam:ListPolicyVersions",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+
+  {
+    "name": "allow iam:CreatePolicy for customer managed policies",
+    "request": {
+      "action": "iam:CreatePolicy",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:CreatePolicyVersion for customer managed policies",
+    "request": {
+      "action": "iam:CreatePolicyVersion",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:DeletePolicy for customer managed policies",
+    "request": {
+      "action": "iam:DeletePolicy",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:DeletePolicyVersion for customer managed policies",
+    "request": {
+      "action": "iam:DeletePolicyVersion",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:SetDefaultPolicyVersion for customer managed policies",
+    "request": {
+      "action": "iam:SetDefaultPolicyVersion",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:TagPolicy for customer managed policies",
+    "request": {
+      "action": "iam:TagPolicy",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:UntagPolicy for customer managed policies",
+    "request": {
+      "action": "iam:UntagPolicy",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  }
+]

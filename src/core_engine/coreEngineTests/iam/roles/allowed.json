@@ -1,0 +1,731 @@
+[
+  {
+    "name": "allow iam:GenerateServiceLastAccessedDetails for roles",
+    "request": {
+      "action": "iam:GenerateServiceLastAccessedDetails",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:GetContextKeysForPrincipalPolicy for roles",
+    "request": {
+      "action": "iam:GetContextKeysForPrincipalPolicy",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:GetRole for roles",
+    "request": {
+      "action": "iam:GetRole",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:GetRolePolicy for roles",
+    "request": {
+      "action": "iam:GetRolePolicy",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:GetServiceLinkedRoleDeletionStatus for roles",
+    "request": {
+      "action": "iam:GetServiceLinkedRoleDeletionStatus",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:ListAttachedRolePolicies for roles",
+    "request": {
+      "action": "iam:ListAttachedRolePolicies",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:ListInstanceProfilesForRole for roles",
+    "request": {
+      "action": "iam:ListInstanceProfilesForRole",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:ListPoliciesGrantingServiceAccess for roles",
+    "request": {
+      "action": "iam:ListPoliciesGrantingServiceAccess",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:ListRolePolicies for roles",
+    "request": {
+      "action": "iam:ListRolePolicies",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:ListRoleTags for roles",
+    "request": {
+      "action": "iam:ListRoleTags",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:SimulatePrincipalPolicy for roles",
+    "request": {
+      "action": "iam:SimulatePrincipalPolicy",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:AttachRolePolicy for roles",
+    "request": {
+      "action": "iam:AttachRolePolicy",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:CreateRole for roles",
+    "request": {
+      "action": "iam:CreateRole",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:CreateServiceLinkedRole for roles",
+    "request": {
+      "action": "iam:CreateServiceLinkedRole",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:DeleteRole for roles",
+    "request": {
+      "action": "iam:DeleteRole",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:DeleteRolePermissionsBoundary for roles",
+    "request": {
+      "action": "iam:DeleteRolePermissionsBoundary",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:DeleteRolePolicy for roles",
+    "request": {
+      "action": "iam:DeleteRolePolicy",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:DeleteServiceLinkedRole for roles",
+    "request": {
+      "action": "iam:DeleteServiceLinkedRole",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:DetachRolePolicy for roles",
+    "request": {
+      "action": "iam:DetachRolePolicy",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:PassRole for roles",
+    "request": {
+      "action": "iam:PassRole",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:PutRolePermissionsBoundary for roles",
+    "request": {
+      "action": "iam:PutRolePermissionsBoundary",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:PutRolePolicy for roles",
+    "request": {
+      "action": "iam:PutRolePolicy",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:TagRole for roles",
+    "request": {
+      "action": "iam:TagRole",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:UntagRole for roles",
+    "request": {
+      "action": "iam:UntagRole",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:UpdateAssumeRolePolicy for roles",
+    "request": {
+      "action": "iam:UpdateAssumeRolePolicy",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:UpdateRole for roles",
+    "request": {
+      "action": "iam:UpdateRole",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:UpdateRoleDescription for roles",
+    "request": {
+      "action": "iam:UpdateRoleDescription",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/UnreservedRole",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  }
+]

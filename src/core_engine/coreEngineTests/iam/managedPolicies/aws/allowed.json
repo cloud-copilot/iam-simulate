@@ -1,0 +1,164 @@
+[
+  {
+    "name": "allow iam:GenerateServiceLastAccessedDetails for AWS managed policies",
+    "request": {
+      "action": "iam:GenerateServiceLastAccessedDetails",
+      "resource": {
+        "resource": "arn:aws:iam::aws:policy/AdministratorAccess",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:GetPolicy for AWS managed policies",
+    "request": {
+      "action": "iam:GetPolicy",
+      "resource": {
+        "resource": "arn:aws:iam::aws:policy/AdministratorAccess",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:GetPolicyVersion for AWS managed policies",
+    "request": {
+      "action": "iam:GetPolicyVersion",
+      "resource": {
+        "resource": "arn:aws:iam::aws:policy/AdministratorAccess",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:ListEntitiesForPolicy for AWS managed policies",
+    "request": {
+      "action": "iam:ListEntitiesForPolicy",
+      "resource": {
+        "resource": "arn:aws:iam::aws:policy/AdministratorAccess",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:ListPolicyTags for AWS managed policies",
+    "request": {
+      "action": "iam:ListPolicyTags",
+      "resource": {
+        "resource": "arn:aws:iam::aws:policy/AdministratorAccess",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "allow iam:ListPolicyVersions for AWS managed policies",
+    "request": {
+      "action": "iam:ListPolicyVersions",
+      "resource": {
+        "resource": "arn:aws:iam::aws:policy/AdministratorAccess",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  }
+]
