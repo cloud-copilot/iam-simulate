@@ -1,0 +1,191 @@
+[
+  {
+    "name": "deny iam:CreatePolicy for AWS managed policies",
+    "request": {
+      "action": "iam:CreatePolicy",
+      "resource": {
+        "resource": "arn:aws:iam::aws:policy/AdministratorAccess",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "deny iam:CreatePolicyVersion for AWS managed policies",
+    "request": {
+      "action": "iam:CreatePolicyVersion",
+      "resource": {
+        "resource": "arn:aws:iam::aws:policy/AdministratorAccess",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "deny iam:DeletePolicy for AWS managed policies",
+    "request": {
+      "action": "iam:DeletePolicy",
+      "resource": {
+        "resource": "arn:aws:iam::aws:policy/AdministratorAccess",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "deny iam:DeletePolicyVersion for AWS managed policies",
+    "request": {
+      "action": "iam:DeletePolicyVersion",
+      "resource": {
+        "resource": "arn:aws:iam::aws:policy/AdministratorAccess",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "deny iam:SetDefaultPolicyVersion for AWS managed policies",
+    "request": {
+      "action": "iam:SetDefaultPolicyVersion",
+      "resource": {
+        "resource": "arn:aws:iam::aws:policy/AdministratorAccess",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "deny iam:TagPolicy for AWS managed policies",
+    "request": {
+      "action": "iam:TagPolicy",
+      "resource": {
+        "resource": "arn:aws:iam::aws:policy/AdministratorAccess",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "deny iam:UntagPolicy for AWS managed policies",
+    "request": {
+      "action": "iam:UntagPolicy",
+      "resource": {
+        "resource": "arn:aws:iam::aws:policy/AdministratorAccess",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  }
+]

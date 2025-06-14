@@ -15,6 +15,7 @@ import { PrincipalMatchResult, requestMatchesStatementPrincipals } from '../prin
 import { AwsRequest } from '../request/request.js'
 import { requestMatchesStatementResources } from '../resource/resource.js'
 import { DefaultServiceAuthorizer } from '../services/DefaultServiceAuthorizer.js'
+import { IamServiceAuthorizer } from '../services/IamServiceAuthorizer.js'
 import { KmsServiceAuthorizer } from '../services/KmsServiceAuthorizer.js'
 import { ServiceAuthorizer } from '../services/ServiceAuthorizer.js'
 import { StsServiceAuthorizer } from '../services/StsServiceAuthorizer.js'
@@ -79,7 +80,8 @@ export interface AuthorizationRequest {
 
 const serviceEngines: Record<string, new () => ServiceAuthorizer> = {
   kms: KmsServiceAuthorizer,
-  sts: StsServiceAuthorizer
+  sts: StsServiceAuthorizer,
+  iam: IamServiceAuthorizer
 }
 
 /**

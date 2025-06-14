@@ -12,6 +12,12 @@ import { ServiceAuthorizationRequest, ServiceAuthorizer } from './ServiceAuthori
  * The default authorizer for services.
  */
 export class DefaultServiceAuthorizer implements ServiceAuthorizer {
+  /**
+   * Authorize a service request after all policy analysis has been completed.
+   *
+   * @param request the service authorization request containing all analyses
+   * @returns the result of the authorization
+   */
   public authorize(request: ServiceAuthorizationRequest): RequestAnalysis {
     const scpResult = request.scpAnalysis.result
     const rcpResult = request.rcpAnalysis.result
