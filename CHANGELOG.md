@@ -1,3 +1,11 @@
+## [0.1.46](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.45...v0.1.46) (2025-06-14)
+
+
+### Features
+
+* Deny change actions to AWS managed policies ([b8d74fb](https://github.com/cloud-copilot/iam-simulate/commit/b8d74fb2ec8a24a9f98f9aad3bbce2d5b2bfc3ee))
+* Implicitly deny modification of aws reserved roles ([ae280b9](https://github.com/cloud-copilot/iam-simulate/commit/ae280b9a0ed53b2de8fdcf78cf90e4e09a2e9177))
+
 ## [0.1.45](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.44...v0.1.45) (2025-06-08)
 
 ## [0.1.44](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.43...v0.1.44) (2025-05-31)
