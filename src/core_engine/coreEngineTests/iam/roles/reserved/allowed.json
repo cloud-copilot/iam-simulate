@@ -1,10 +1,10 @@
 [
   {
-    "name": "allow iam:GenerateServiceLastAccessedDetails for customer managed policies",
+    "name": "allow iam:GenerateServiceLastAccessedDetails for AWS managed roles",
     "request": {
       "action": "iam:GenerateServiceLastAccessedDetails",
       "resource": {
-        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "resource": "arn:aws:iam::123456789012:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_9999999999",
         "accountId": "123456789012"
       },
       "principal": "arn:aws:iam::123456789012:user/test-user",
@@ -27,11 +27,11 @@
     }
   },
   {
-    "name": "allow iam:GetPolicy for customer managed policies",
+    "name": "allow iam:GetContextKeysForPrincipalPolicy for AWS managed roles",
     "request": {
-      "action": "iam:GetPolicy",
+      "action": "iam:GetContextKeysForPrincipalPolicy",
       "resource": {
-        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "resource": "arn:aws:iam::123456789012:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_9999999999",
         "accountId": "123456789012"
       },
       "principal": "arn:aws:iam::123456789012:user/test-user",
@@ -54,11 +54,11 @@
     }
   },
   {
-    "name": "allow iam:GetPolicyVersion for customer managed policies",
+    "name": "allow iam:GetRole for AWS managed roles",
     "request": {
-      "action": "iam:GetPolicyVersion",
+      "action": "iam:GetRole",
       "resource": {
-        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "resource": "arn:aws:iam::123456789012:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_9999999999",
         "accountId": "123456789012"
       },
       "principal": "arn:aws:iam::123456789012:user/test-user",
@@ -81,11 +81,11 @@
     }
   },
   {
-    "name": "allow iam:ListEntitiesForPolicy for customer managed policies",
+    "name": "allow iam:GetRolePolicy for AWS managed roles",
     "request": {
-      "action": "iam:ListEntitiesForPolicy",
+      "action": "iam:GetRolePolicy",
       "resource": {
-        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "resource": "arn:aws:iam::123456789012:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_9999999999",
         "accountId": "123456789012"
       },
       "principal": "arn:aws:iam::123456789012:user/test-user",
@@ -108,11 +108,11 @@
     }
   },
   {
-    "name": "allow iam:ListPolicyTags for customer managed policies",
+    "name": "allow iam:GetServiceLinkedRoleDeletionStatus for AWS managed roles",
     "request": {
-      "action": "iam:ListPolicyTags",
+      "action": "iam:GetServiceLinkedRoleDeletionStatus",
       "resource": {
-        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "resource": "arn:aws:iam::123456789012:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_9999999999",
         "accountId": "123456789012"
       },
       "principal": "arn:aws:iam::123456789012:user/test-user",
@@ -135,39 +135,11 @@
     }
   },
   {
-    "name": "allow iam:ListPolicyVersions for customer managed policies",
+    "name": "allow iam:ListAttachedRolePolicies for AWS managed roles",
     "request": {
-      "action": "iam:ListPolicyVersions",
+      "action": "iam:ListAttachedRolePolicies",
       "resource": {
-        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
-        "accountId": "123456789012"
-      },
-      "principal": "arn:aws:iam::123456789012:user/test-user",
-      "context": {}
-    },
-    "identityPolicies": [
-      {
-        "Version": "2012-10-17",
-        "Statement": [
-          {
-            "Effect": "Allow",
-            "Action": "*",
-            "Resource": "*"
-          }
-        ]
-      }
-    ],
-    "expected": {
-      "response": "Allowed"
-    }
-  },
-
-  {
-    "name": "allow iam:CreatePolicy for customer managed policies",
-    "request": {
-      "action": "iam:CreatePolicy",
-      "resource": {
-        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "resource": "arn:aws:iam::123456789012:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_9999999999",
         "accountId": "123456789012"
       },
       "principal": "arn:aws:iam::123456789012:user/test-user",
@@ -190,11 +162,11 @@
     }
   },
   {
-    "name": "allow iam:CreatePolicyVersion for customer managed policies",
+    "name": "allow iam:ListInstanceProfilesForRole for AWS managed roles",
     "request": {
-      "action": "iam:CreatePolicyVersion",
+      "action": "iam:ListInstanceProfilesForRole",
       "resource": {
-        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "resource": "arn:aws:iam::123456789012:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_9999999999",
         "accountId": "123456789012"
       },
       "principal": "arn:aws:iam::123456789012:user/test-user",
@@ -217,11 +189,11 @@
     }
   },
   {
-    "name": "allow iam:DeletePolicy for customer managed policies",
+    "name": "allow iam:ListPoliciesGrantingServiceAccess for AWS managed roles",
     "request": {
-      "action": "iam:DeletePolicy",
+      "action": "iam:ListPoliciesGrantingServiceAccess",
       "resource": {
-        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "resource": "arn:aws:iam::123456789012:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_9999999999",
         "accountId": "123456789012"
       },
       "principal": "arn:aws:iam::123456789012:user/test-user",
@@ -244,11 +216,11 @@
     }
   },
   {
-    "name": "allow iam:DeletePolicyVersion for customer managed policies",
+    "name": "allow iam:ListRolePolicies for AWS managed roles",
     "request": {
-      "action": "iam:DeletePolicyVersion",
+      "action": "iam:ListRolePolicies",
       "resource": {
-        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "resource": "arn:aws:iam::123456789012:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_9999999999",
         "accountId": "123456789012"
       },
       "principal": "arn:aws:iam::123456789012:user/test-user",
@@ -271,11 +243,11 @@
     }
   },
   {
-    "name": "allow iam:SetDefaultPolicyVersion for customer managed policies",
+    "name": "allow iam:ListRoleTags for AWS managed roles",
     "request": {
-      "action": "iam:SetDefaultPolicyVersion",
+      "action": "iam:ListRoleTags",
       "resource": {
-        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "resource": "arn:aws:iam::123456789012:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_9999999999",
         "accountId": "123456789012"
       },
       "principal": "arn:aws:iam::123456789012:user/test-user",
@@ -298,38 +270,11 @@
     }
   },
   {
-    "name": "allow iam:TagPolicy for customer managed policies",
+    "name": "allow iam:SimulatePrincipalPolicy for AWS managed roles",
     "request": {
-      "action": "iam:TagPolicy",
+      "action": "iam:SimulatePrincipalPolicy",
       "resource": {
-        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
-        "accountId": "123456789012"
-      },
-      "principal": "arn:aws:iam::123456789012:user/test-user",
-      "context": {}
-    },
-    "identityPolicies": [
-      {
-        "Version": "2012-10-17",
-        "Statement": [
-          {
-            "Effect": "Allow",
-            "Action": "*",
-            "Resource": "*"
-          }
-        ]
-      }
-    ],
-    "expected": {
-      "response": "Allowed"
-    }
-  },
-  {
-    "name": "allow iam:UntagPolicy for customer managed policies",
-    "request": {
-      "action": "iam:UntagPolicy",
-      "resource": {
-        "resource": "arn:aws:iam::123456789012:policy/CustomPolicy",
+        "resource": "arn:aws:iam::123456789012:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_9999999999",
         "accountId": "123456789012"
       },
       "principal": "arn:aws:iam::123456789012:user/test-user",

@@ -13,6 +13,24 @@ const deniedActionsForManagedPolicies = new Set([
   'iam:untagpolicy'
 ])
 
+const deniedActionsForAwsManagedRoles = new Set([
+  'iam:attachrolepolicy',
+  'iam:createrole',
+  'iam:createservicelinkedrole',
+  'iam:deleterole',
+  'iam:deleterolepermissionsboundary',
+  'iam:deleterolepolicy',
+  'iam:deleteservicelinkedrole',
+  'iam:detachrolepolicy',
+  'iam:passrole',
+  'iam:putrolepermissionsboundary',
+  'iam:putrolepolicy',
+  'iam:tagrole',
+  'iam:untagrole',
+  'iam:updateassumerolepolicy',
+  'iam:updaterole',
+  'iam:updateroledescription'
+])
 /**
  * Service authorizer for IAM service requests.
  */
@@ -25,8 +43,20 @@ export class IamServiceAuthorizer extends DefaultServiceAuthorizer {
     // we return implicitly denied.
     if (
       deniedActionsForManagedPolicies.has(request.request.action.value().toLowerCase()) &&
-      resourceParts.resource?.startsWith('policy/') &&
+      resourceParts.resource?.toLowerCase()?.startsWith('policy/') &&
       resourceParts.accountId == 'aws'
+    ) {
+      return {
+        ...baseResult,
+        result: 'ImplicitlyDenied'
+      }
+    }
+
+    // If the request is for an AWS managed role and the action is one of the denied actions,
+    // we return implicitly denied.
+    if (
+      deniedActionsForAwsManagedRoles.has(request.request.action.value().toLowerCase()) &&
+      resourceParts.resource?.toLowerCase()?.startsWith('role/aws-reserved/')
     ) {
       return {
         ...baseResult,
