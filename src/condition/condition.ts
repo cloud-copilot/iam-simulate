@@ -5,7 +5,7 @@ import {
   StatementExplain
 } from '../explain/statementExplain.js'
 import { AwsRequest } from '../request/request'
-import { ContextKey } from '../requestContext.js'
+import { ContextKey, ContextKeyImpl } from '../requestContext.js'
 import { ArnEquals } from './arn/ArnEquals.js'
 import { ArnLike } from './arn/ArnLike.js'
 import { ArnNotEquals } from './arn/ArnNotEquals.js'
@@ -180,6 +180,7 @@ export function singleValueMatch(
 
   if (!keyValue || !keyValue.isStringValue()) {
     //Set operator is required for a multi-value key
+    //Confirmed this at re:Inforce 2025 IAM431.
     const valueExplains: ConditionValueExplain[] = condition.conditionValues().map((value) => ({
       value,
       matches: false
@@ -261,19 +262,17 @@ export function forAllValuesMatch(
       matches: true,
       matchedBecauseMissing: true
     }
-    // return 'Match'
   }
-  if (!keyValue || !keyValue.isArrayValue()) {
-    return {
-      operator: condition.operation().value(),
-      conditionKeyValue: condition.conditionKey(),
-      values: notMatchingValueExplains,
-      matches: false,
-      failedBecauseMissing: !keyValue,
-      failedBecauseNotArray: !!keyValue && !keyValue.isArrayValue()
-    }
-    // return 'NoMatch'
+
+  // If the key only has a single value, convert it to an array to process
+  if (keyValue.isStringValue()) {
+    keyValue = new ContextKeyImpl(keyValue.name, [keyValue.value])
   }
+
+  if (!keyValue.isArrayValue()) {
+    throw new Error('Key value is not an array, this is a bug.')
+  }
+
   if (!baseOperation) {
     return {
       operator: condition.operation().value(),
@@ -356,16 +355,24 @@ export function forAnyValueMatch(
       }) as ConditionValueExplain
   )
 
-  if (!keyValue || !keyValue.isArrayValue()) {
+  if (!keyValue) {
     return {
       operator: condition.operation().value(),
       conditionKeyValue: condition.conditionKey(),
       values: failedValueExplains,
       matches: false,
-      failedBecauseMissing: !keyValue,
-      failedBecauseNotArray: keyValue && !keyValue.isArrayValue()
+      failedBecauseMissing: true
     }
     // return 'NoMatch'
+  }
+
+  // If the key only has a single value, convert it to an array to process
+  if (keyValue.isStringValue()) {
+    keyValue = new ContextKeyImpl(keyValue.name, [keyValue.value])
+  }
+
+  if (!keyValue.isArrayValue()) {
+    throw new Error('Key value is not an array, this is a bug.')
   }
 
   if (!baseOperation) {

@@ -1,0 +1,71 @@
+[
+  {
+    "name": "ForAllValues:StringEquals Single Value Key: Match",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:PrincipalOrgId": "o-abcdefg"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*",
+            "Condition": {
+              "ForAllValues:StringEquals": {
+                "aws:PrincipalOrgId": ["o-abcdefg", "o-zyxwvu"]
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+
+  {
+    "name": "ForAllValues:StringEquals Single Value Key: No Match",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:PrincipalOrgId": "o-zzzzzz"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*",
+            "Condition": {
+              "ForAllValues:StringEquals": {
+                "aws:PrincipalOrgId": ["o-abcdefg", "o-zyxwvu"]
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  }
+]
