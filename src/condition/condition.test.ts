@@ -604,13 +604,51 @@ describe('singleConditionMatchesRequest', () => {
       expect(response.resolvedConditionKeyValue).toEqual(undefined)
     })
 
-    it('should return no match if the value is not an array', () => {
+    it('should implicitly convert single values to arrays if present: match', () => {
       //Given a request
       const request = new AwsRequestImpl(
         '',
         { resource: '', accountId: '' },
         '',
-        new RequestContextImpl({ 'aws:PrincipalOrgId': 'o-12345' })
+        new RequestContextImpl({ 'aws:PrincipalOrgId': 'o-abcdefg' })
+      )
+      //And a condition that test for an operation that does not exist
+      const policy = loadPolicy({
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Effect: 'Allow',
+            Action: '*',
+            Resource: '*',
+            Condition: {
+              'ForAllValues:StringEquals': {
+                'aws:PrincipalOrgId': ['o-abcdefg', 'o-zyxwvu']
+              }
+            }
+          }
+        ]
+      })
+      const condition = policy.statements()[0].conditions()[0]
+      //When the request is checked against the condition
+      const response = singleConditionMatchesRequest(request, condition)
+
+      //Then the result should be 'NoMatch'
+      expect(response.matches).toEqual(true)
+      expect(response.resolvedConditionKeyValue).toEqual(undefined)
+      expect(response.failedBecauseNotArray).toEqual(undefined)
+      expect(response.values).toEqual([
+        { value: 'o-abcdefg', matches: true, matchingValues: ['o-abcdefg'] },
+        { value: 'o-zyxwvu', matches: true }
+      ])
+    })
+
+    it('should implicitly convert single values to arrays if present: no match', () => {
+      //Given a request
+      const request = new AwsRequestImpl(
+        '',
+        { resource: '', accountId: '' },
+        '',
+        new RequestContextImpl({ 'aws:PrincipalOrgId': 'o-zzzzzzz' })
       )
       //And a condition that test for an operation that does not exist
       const policy = loadPolicy({
@@ -635,7 +673,7 @@ describe('singleConditionMatchesRequest', () => {
       //Then the result should be 'NoMatch'
       expect(response.matches).toEqual(false)
       expect(response.resolvedConditionKeyValue).toEqual(undefined)
-      expect(response.failedBecauseNotArray).toEqual(true)
+      expect(response.failedBecauseNotArray).toEqual(undefined)
       expect(response.values).toEqual([
         { value: 'o-abcdefg', matches: false },
         { value: 'o-zyxwvu', matches: false }
@@ -1161,6 +1199,83 @@ describe('forAnyValueMatch', () => {
       //And the unmatched values should be the values that did not match
       expect(result.unmatchedValues).toEqual(['Cherry', 'Cranberry'])
       expect(result.resolvedConditionKeyValue).toEqual(undefined)
+    })
+
+    it('single value context key: match', () => {
+      //Given a request
+      const request = new AwsRequestImpl(
+        '',
+        { resource: '', accountId: '' },
+        '',
+        new RequestContextImpl({ 'aws:PrincipalOrgId': 'o-abcdefg' })
+      )
+      //And a condition that test for an operation that does not exist
+      const policy = loadPolicy({
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Effect: 'Allow',
+            Action: '*',
+            Resource: '*',
+            Condition: {
+              'ForAnyValue:StringEquals': {
+                'aws:PrincipalOrgId': ['o-abcdefg', 'o-zyxwvu']
+              }
+            }
+          }
+        ]
+      })
+      const condition = policy.statements()[0].conditions()[0]
+      //When the request is checked against the condition
+      const response = singleConditionMatchesRequest(request, condition)
+
+      //Then the result should be 'NoMatch'
+      expect(response.matches).toEqual(true)
+      expect(response.resolvedConditionKeyValue).toEqual(undefined)
+      expect(response.failedBecauseNotArray).toEqual(undefined)
+      expect(response.values).toEqual([
+        { value: 'o-abcdefg', matches: true, matchingValues: ['o-abcdefg'] },
+        { value: 'o-zyxwvu', matches: true }
+      ])
+    })
+
+    it('single value context key: no match', () => {
+      //Given a request
+      const request = new AwsRequestImpl(
+        '',
+        { resource: '', accountId: '' },
+        '',
+        new RequestContextImpl({ 'aws:PrincipalOrgId': 'o-zzzzzzz' })
+      )
+      //And a condition that test for an operation that does not exist
+      const policy = loadPolicy({
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Effect: 'Allow',
+            Action: '*',
+            Resource: '*',
+            Condition: {
+              'ForAnyValue:StringEquals': {
+                'aws:PrincipalOrgId': ['o-abcdefg', 'o-zyxwvu']
+              }
+            }
+          }
+        ]
+      })
+      const condition = policy.statements()[0].conditions()[0]
+      //When the request is checked against the condition
+      const response = singleConditionMatchesRequest(request, condition)
+
+      //Then the result should be 'NoMatch'
+      expect(response.matches).toEqual(false)
+      expect(response.resolvedConditionKeyValue).toEqual(undefined)
+      expect(response.failedBecauseNotArray).toEqual(undefined)
+      expect(response.unmatchedValues).toEqual(['o-zzzzzzz'])
+      expect(response.values).toEqual([
+        { value: 'o-abcdefg', matches: false },
+        { value: 'o-zyxwvu', matches: false }
+      ])
     })
   })
 
