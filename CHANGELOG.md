@@ -1,3 +1,10 @@
+## [0.1.48](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.47...v0.1.48) (2025-06-20)
+
+
+### Bug Fixes
+
+* When a condition set operator is used on a context key that has a single value, treat it like a multi value context key. ([d871729](https://github.com/cloud-copilot/iam-simulate/commit/d871729de5505a575a841befc567b5788ce5a25f))
+
 ## [0.1.47](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.46...v0.1.47) (2025-06-17)
 
 ## [0.1.46](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.45...v0.1.46) (2025-06-14)
