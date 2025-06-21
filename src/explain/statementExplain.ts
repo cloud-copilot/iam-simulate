@@ -46,7 +46,7 @@ export interface ConditionExplain {
   conditionKeyValue: string
 
   /**
-   * The resolved vaue of the condition key
+   * The resolved value of the condition key
    */
   resolvedConditionKeyValue?: string
   values: ConditionValueExplain | ConditionValueExplain[]
@@ -79,12 +79,7 @@ export interface ConditionExplain {
   failedBecauseArray?: boolean
 
   /**
-   * Failed because the context value was required to be an array but was not.
-   * Caused by a set operation being used on a context key that was not an array.
-   */
-  failedBecauseNotArray?: boolean
-  /**
-   * Was the base operator in the condition statment not found
+   * Was the base operator in the condition statement not found
    */
   missingOperator?: boolean
 }

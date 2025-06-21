@@ -197,7 +197,7 @@
     }
   },
   {
-    "name": "Implictly Denied when allowed by all SCPs But not Identity Policy",
+    "name": "Implicitly Denied when allowed by all SCPs But not Identity Policy",
     "request": {
       "action": "s3:ListAllMyBuckets",
       "resource": {

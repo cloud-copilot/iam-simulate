@@ -1,6 +1,7 @@
 import {
   isAssumedRoleArn,
   isFederatedUserArn,
+  isIamRoleArn,
   isIamUserArn,
   isServicePrincipal
 } from '@cloud-copilot/iam-utils'
@@ -112,6 +113,23 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
          */
         if (resourcePolicyResult === 'Allowed') {
           const principal = request.request.principal.value()
+          if (
+            isIamRoleArn(principal) &&
+            request.simulationParameters.simulationMode === 'Discovery'
+          ) {
+            if (
+              request.resourceAnalysis.allowStatements.some(
+                (statement) =>
+                  statement.principalMatch === 'Match' && statement.ignoredRoleSessionName
+              )
+            ) {
+              return {
+                result: 'Allowed',
+                ...baseResult
+              }
+            }
+          }
+
           if (
             isAssumedRoleArn(principal) ||
             isIamUserArn(principal) ||

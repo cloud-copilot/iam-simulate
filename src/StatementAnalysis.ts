@@ -1,4 +1,4 @@
-import { Statement } from '@cloud-copilot/iam-policy'
+import { Condition, Statement } from '@cloud-copilot/iam-policy'
 import { ConditionMatchResult } from './condition/condition.js'
 import { StatementExplain } from './explain/statementExplain.js'
 import { PrincipalMatchResult } from './principal/principal.js'
@@ -33,7 +33,20 @@ export interface StatementAnalysis {
    */
   conditionMatch: ConditionMatchResult
 
+  /**
+   * The explain of evaluating the statement.
+   */
   explain: StatementExplain
+
+  /**
+   * Any conditions that were ignored during discovery mode.
+   */
+  ignoredConditions?: Condition[]
+
+  /**
+   * Role Session Name ignored during discovery mode.
+   */
+  ignoredRoleSessionName?: boolean
 }
 
 /**

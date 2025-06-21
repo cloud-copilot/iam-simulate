@@ -4,48 +4,27 @@ import {
   isAssumedRoleArn,
   isFederatedUserArn
 } from '@cloud-copilot/iam-utils'
+import { SimulationParameters } from '../core_engine/CoreSimulatorEngine.js'
 import { PrincipalExplain, StatementExplain } from '../explain/statementExplain.js'
 import { AwsRequest } from '../request/request.js'
+
+interface PrincipalAnalysis {
+  explain: PrincipalExplain
+  ignoredRoleSessionName?: boolean
+}
 
 //Wildcards are not allowed in the principal element https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html
 // The only exception is the "*" wildcard, which you can use to match all principals, including anonymous principals.
 
 /*
-//AWS account and root user
-
-
-When an IAM account is specified, the account must grant access in an IAM policy.
-Account ID or account ARN
-
-We need a way to indicate the principal is an explicit match or if it is delegated to IAM.
-
-
-//Canonical User ID
-CanonicalUser: just match the string
-
-//IAM roles
-Role ARN
-
-//Role sessions
-"AWS": "arn:aws:sts::AWS-account-ID:assumed-role/role-name/role-session-name"
-"AWS": "arn:aws:sts::AWS-account-ID:assumed-role/role-path/role-name/role-session-name"
-
 OIDC Session Principals:
 Check federated and see if the string matches
 SAML Session Principals:
 Check the Federated string and see if it matches
 
-//IAM users
-Just make sure the ARN Matches
-
 IAM Identity Center principals // Ignore this for now.
 
-//Federated user sessions
-"Principal": { "AWS": "arn:aws:sts::AWS-account-ID:federated-user/user-name" }
-
-
-//AWS services
-//Look at the service name and see if it matches the string
+//Federated user sessions, need to fix this see todo below
 */
 
 export type PrincipalMatchResult =
@@ -64,12 +43,21 @@ export type PrincipalMatchResult =
  */
 export function requestMatchesPrincipal(
   request: AwsRequest,
-  principal: Principal[]
-): { matches: PrincipalMatchResult; explains: PrincipalExplain[] } {
-  const explains = principal.map((principalStatement) =>
-    requestMatchesPrincipalStatement(request, principalStatement)
+  principal: Principal[],
+  simulationParameters: SimulationParameters
+): {
+  matches: PrincipalMatchResult
+  explains: PrincipalExplain[]
+  ignoredRoleSessionName?: boolean
+} {
+  const analyses = principal.map((principalStatement) =>
+    requestMatchesPrincipalStatement(request, principalStatement, simulationParameters)
   )
-  if (explains.some((exp) => exp.matches === 'Match')) {
+
+  const explains = analyses.map((a) => a.explain)
+
+  // First check if any principal match without ignoring the role session name
+  if (analyses.some((anys) => anys.explain.matches === 'Match' && !anys.ignoredRoleSessionName)) {
     return {
       matches: 'Match',
       explains
@@ -87,6 +75,18 @@ export function requestMatchesPrincipal(
     return {
       matches: 'SessionRoleMatch',
       explains
+    }
+  }
+
+  // If there was a match, ignoring the role session name, and the simulation mode is Discovery,
+  if (
+    simulationParameters.simulationMode === 'Discovery' &&
+    analyses.some((any) => any.explain.matches === 'Match' && any.ignoredRoleSessionName)
+  ) {
+    return {
+      matches: 'Match',
+      explains,
+      ignoredRoleSessionName: true // This matched one role session, but it was ignored
     }
   }
 
@@ -112,51 +112,48 @@ export function requestMatchesPrincipal(
  */
 export function requestMatchesNotPrincipal(
   request: AwsRequest,
-  notPrincipal: Principal[]
+  notPrincipal: Principal[],
+  simulationParameters: SimulationParameters
 ): { matches: PrincipalMatchResult; explains: PrincipalExplain[] } {
   // const matches = notPrincipal.map(principalStatement => requestMatchesPrincipalStatement(request, principalStatement))
-  const explains = notPrincipal.map((principalStatement) => {
-    const explain = requestMatchesPrincipalStatement(request, principalStatement)
+  const analyses = notPrincipal.map((principalStatement) => {
+    const analysis = requestMatchesPrincipalStatement(
+      request,
+      principalStatement,
+      simulationParameters
+    )
     /**
      * Need to do research on this. If there is an account level match on a NotPrincipal, does that
      * mean it tentatively matches the NotPrincipal, or does it mean it does not match the NotPrincipal?
      *
      * We need to test this.
      */
+
+    // Invert the match result for NotPrincipal
     if (
-      explain.matches === 'Match' ||
-      explain.matches === 'AccountLevelMatch' ||
-      explain.matches === 'SessionRoleMatch' ||
-      explain.matches === 'SessionUserMatch'
+      analysis.explain.matches === 'Match' ||
+      analysis.explain.matches === 'AccountLevelMatch' ||
+      analysis.explain.matches === 'SessionRoleMatch' ||
+      analysis.explain.matches === 'SessionUserMatch'
     ) {
-      explain.matches = 'NoMatch'
+      analysis.explain.matches = 'NoMatch'
     } else {
-      explain.matches = 'Match'
+      analysis.explain.matches = 'Match'
     }
-    return explain
+    return analysis
   })
 
-  if (explains.some((exp) => exp.matches === 'NoMatch')) {
+  if (analyses.some((exp) => exp.explain.matches === 'NoMatch')) {
     return {
       matches: 'NoMatch',
-      explains
+      explains: analyses.map((a) => a.explain)
     }
   }
 
   return {
     matches: 'Match',
-    explains
+    explains: analyses.map((a) => a.explain)
   }
-
-  // if(matches.includes('Match')) {
-  //   return 'NoMatch'
-  // }
-
-  // if(matches.includes('AccountLevelMatch')) {
-  //   return 'NoMatch'
-  // }
-
-  // return 'Match'
 }
 
 /**
@@ -168,64 +165,83 @@ export function requestMatchesNotPrincipal(
  */
 export function requestMatchesPrincipalStatement(
   request: AwsRequest,
-  principalStatement: Principal
-): PrincipalExplain {
+  principalStatement: Principal,
+  simulationParameters: SimulationParameters
+): PrincipalAnalysis {
   if (principalStatement.isServicePrincipal()) {
     if (principalStatement.service() === request.principal.value()) {
       return {
-        matches: 'Match',
-        principal: principalStatement.value()
+        explain: {
+          matches: 'Match',
+          principal: principalStatement.value()
+        }
       }
     }
     return {
-      matches: 'NoMatch',
-      principal: principalStatement.value()
+      explain: {
+        matches: 'NoMatch',
+        principal: principalStatement.value()
+      }
     }
   }
 
   if (principalStatement.isCanonicalUserPrincipal()) {
     if (principalStatement.canonicalUser() === request.principal.value()) {
       return {
-        matches: 'Match',
-        principal: principalStatement.value()
+        explain: {
+          matches: 'Match',
+          principal: principalStatement.value()
+        }
       }
     }
     return {
-      matches: 'NoMatch',
-      principal: principalStatement.value()
+      explain: {
+        matches: 'NoMatch',
+        principal: principalStatement.value()
+      }
     }
   }
 
   if (principalStatement.isFederatedPrincipal()) {
     if (principalStatement.federated() === request.principal.value()) {
       return {
-        matches: 'Match',
-        principal: principalStatement.value()
+        explain: {
+          matches: 'Match',
+          principal: principalStatement.value()
+        }
       }
     }
     return {
-      matches: 'NoMatch',
-      principal: principalStatement.value()
+      explain: {
+        matches: 'NoMatch',
+        principal: principalStatement.value()
+      }
     }
   }
 
   if (principalStatement.isWildcardPrincipal()) {
     return {
-      matches: 'Match',
-      principal: principalStatement.value()
+      explain: {
+        matches: 'Match',
+        principal: principalStatement.value()
+      }
     }
   }
 
   if (principalStatement.isAccountPrincipal()) {
     if (principalStatement.accountId() === request.principal.accountId()) {
       return {
-        matches: 'AccountLevelMatch',
-        principal: principalStatement.value()
+        explain: {
+          matches: 'AccountLevelMatch',
+          principal: principalStatement.value()
+        }
       }
     }
     return {
-      matches: 'NoMatch',
-      principal: principalStatement.value()
+      explain: {
+        matches: 'NoMatch',
+        principal: principalStatement.value()
+      }
     }
   }
 
@@ -235,34 +251,74 @@ export function requestMatchesPrincipalStatement(
       const roleArn = convertAssumedRoleArnToRoleArn(sessionArn)
       if (principalStatement.arn() === roleArn) {
         return {
-          matches: 'SessionRoleMatch',
-          principal: principalStatement.value(),
-          roleForSessionArn: roleArn
+          explain: {
+            matches: 'SessionRoleMatch',
+            principal: principalStatement.value(),
+            roleForSessionArn: roleArn
+          }
         }
       }
     } else if (isFederatedUserArn(request.principal.value())) {
+      // TODO: This is wrong, have to receive the User ARN from the request
       const sessionArn = request.principal.value()
       const userArn = userArnFromFederatedUserArn(sessionArn)
       if (principalStatement.arn() === userArn) {
         return {
-          matches: 'SessionUserMatch',
-          principal: principalStatement.value(),
-          userForSessionArn: userArn
+          explain: {
+            matches: 'SessionUserMatch',
+            principal: principalStatement.value(),
+            userForSessionArn: userArn
+          }
         }
       }
     }
 
     if (principalStatement.arn() === request.principal.value()) {
       return {
-        matches: 'Match',
-        principal: principalStatement.value()
+        explain: {
+          matches: 'Match',
+          principal: principalStatement.value()
+        }
+      }
+    }
+
+    /*
+      If:
+        - The simulation mode is Discovery
+        - The principal in the statement is an assumed role ARN
+        - The principal in the request is a Role or assumed role ARN
+        - The base role ARN of the principal in the request matches the base role ARN in the statement
+      Then:
+        - Return a Match for the principal
+        - Indicate that the role session name was ignored for evaluation purposes
+    */
+    if (
+      simulationParameters.simulationMode === 'Discovery' &&
+      isAssumedRoleArn(principalStatement.arn())
+    ) {
+      const principalRoleArn = convertAssumedRoleArnToRoleArn(principalStatement.arn())
+      let requestRoleArn = request.principal.value()
+      if (isAssumedRoleArn(requestRoleArn)) {
+        requestRoleArn = convertAssumedRoleArnToRoleArn(requestRoleArn)
+      }
+
+      if (principalRoleArn === requestRoleArn) {
+        return {
+          explain: {
+            matches: 'Match',
+            principal: principalStatement.value()
+          },
+          ignoredRoleSessionName: true // This is a role session math with the session name ignored
+        }
       }
     }
   }
 
   return {
-    matches: 'NoMatch',
-    principal: principalStatement.value()
+    explain: {
+      matches: 'NoMatch',
+      principal: principalStatement.value()
+    }
   }
 }
 
@@ -288,16 +344,26 @@ export function userArnFromFederatedUserArn(federatedUserArn: string): string {
  */
 export function requestMatchesStatementPrincipals(
   request: AwsRequest,
-  statement: Statement
+  statement: Statement,
+  simulationParameters: SimulationParameters
 ): {
   matches: PrincipalMatchResult
   details: Pick<StatementExplain, 'principals' | 'notPrincipals'>
+  ignoredRoleSessionName?: boolean
 } {
   if (statement.isPrincipalStatement()) {
-    const { matches, explains } = requestMatchesPrincipal(request, statement.principals())
-    return { matches, details: { principals: explains } }
+    const { matches, explains, ignoredRoleSessionName } = requestMatchesPrincipal(
+      request,
+      statement.principals(),
+      simulationParameters
+    )
+    return { matches, details: { principals: explains }, ignoredRoleSessionName }
   } else if (statement.isNotPrincipalStatement()) {
-    const { matches, explains } = requestMatchesNotPrincipal(request, statement.notPrincipals())
+    const { matches, explains } = requestMatchesNotPrincipal(
+      request,
+      statement.notPrincipals(),
+      simulationParameters
+    )
     return { matches, details: { notPrincipals: explains } }
   }
   throw new Error('Statement should have Principal or NotPrincipal')

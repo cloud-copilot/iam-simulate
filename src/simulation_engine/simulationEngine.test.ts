@@ -899,4 +899,107 @@ describe('runSimulation', () => {
     expect(result.errors).toBeUndefined()
     expect(result.ignoredContextKeys).toEqual(['s3:DataAccessPointArn'])
   })
+
+  it('should pass the simulation mode', async () => {
+    //Given a valid simulation with strict keys
+    const simulation: Simulation = {
+      identityPolicies: [
+        {
+          name: 'readbuckets',
+          policy: {
+            Statement: {
+              Effect: 'Allow',
+              Action: 's3:GetObject',
+              Resource: 'arn:aws:s3:::examplebucket/*',
+              Condition: {
+                StringEquals: {
+                  'aws:SourceVpc': 'vpc-12345678'
+                }
+              }
+            }
+          }
+        }
+      ],
+      serviceControlPolicies: [],
+      resourceControlPolicies: [],
+      resourcePolicy: undefined,
+      request: {
+        action: 's3:GetObject',
+        resource: {
+          resource: 'arn:aws:s3:::examplebucket/1234',
+          accountId: '123456789012'
+        },
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        contextVariables: {
+          's3:RequestObjectTagKeys': ['tag1', 'tag2'],
+          's3:ResourceAccount': '123456789012'
+        }
+      }
+    }
+
+    //When the simulation is run with strict keys
+    const result = await runSimulation(simulation, {
+      simulationMode: 'Discovery'
+    })
+
+    //Then there should be no errors
+    expect(result.errors).toBeUndefined()
+    expect(result.analysis?.result).toEqual('Allowed')
+    expect(result.ignoredContextKeys).toEqual([])
+    expect(result.analysis?.ignoredConditions?.identity.allow.length).toEqual(1)
+    const ignoredCondition = result.analysis?.ignoredConditions?.identity.allow[0]!
+    expect(ignoredCondition.conditionKey()).toEqual('aws:SourceVpc')
+    expect(ignoredCondition.conditionValues()).toEqual(['vpc-12345678'])
+    expect(ignoredCondition.operation().value()).toEqual('StringEquals')
+  })
+
+  it('should pass the simulation mode with strict keys', async () => {
+    //Given a valid simulation with strict keys
+    const simulation: Simulation = {
+      identityPolicies: [
+        {
+          name: 'readbuckets',
+          policy: {
+            Statement: {
+              Effect: 'Allow',
+              Action: 's3:GetObject',
+              Resource: 'arn:aws:s3:::examplebucket/*',
+              Condition: {
+                StringEquals: {
+                  'aws:SourceVpc': 'vpc-12345678'
+                }
+              }
+            }
+          }
+        }
+      ],
+      serviceControlPolicies: [],
+      resourceControlPolicies: [],
+      resourcePolicy: undefined,
+      request: {
+        action: 's3:GetObject',
+        resource: {
+          resource: 'arn:aws:s3:::examplebucket/1234',
+          accountId: '123456789012'
+        },
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        contextVariables: {
+          's3:RequestObjectTagKeys': ['tag1', 'tag2'],
+          's3:ResourceAccount': '123456789012'
+        }
+      }
+    }
+
+    //When the simulation is run with strict keys
+    const result = await runSimulation(simulation, {
+      simulationMode: 'Discovery',
+      strictConditionKeys: ['aws:SourceVpc']
+    })
+
+    //Then there should be no errors
+    expect(result.errors).toBeUndefined()
+    expect(result.analysis?.result).toEqual('ImplicitlyDenied')
+    expect(result.ignoredContextKeys).toEqual([])
+    expect(result.analysis?.ignoredConditions?.identity.allow.length).toEqual(0)
+  })
 })

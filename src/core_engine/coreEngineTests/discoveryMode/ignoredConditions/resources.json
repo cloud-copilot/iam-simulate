@@ -1,0 +1,96 @@
+[
+  {
+    "name": "Allow When Resource Policy Condition is Ignored",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:role/test-role",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:ListBucket",
+          "Resource": "arn:aws:s3:::mybucket",
+          "Principal": {
+            "AWS": "arn:aws:iam::123456789012:role/test-role"
+          },
+          "Condition": {
+            "StringEquals": {
+              "aws:SourceVpc": "vpc-123456"
+            }
+          }
+        }
+      ]
+    },
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "resource": {
+          "allow": [{ "key": "aws:SourceVpc", "op": "StringEquals", "values": ["vpc-123456"] }]
+        }
+      }
+    }
+  },
+
+  {
+    "name": "Allow When Resource Policy Deny Condition is Ignored",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:role/test-role",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::mybucket"
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Deny",
+          "Action": "s3:ListBucket",
+          "Resource": "arn:aws:s3:::mybucket",
+          "Principal": "*",
+          "Condition": {
+            "StringNotEquals": {
+              "aws:SourceVpc": "vpc-123456"
+            }
+          }
+        }
+      ]
+    },
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "resource": {
+          "deny": [{ "key": "aws:SourceVpc", "op": "StringNotEquals", "values": ["vpc-123456"] }]
+        }
+      }
+    }
+  }
+]

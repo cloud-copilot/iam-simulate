@@ -1,3 +1,6 @@
+import { SimulationMode } from '../core_engine/CoreSimulatorEngine.js'
+
 export interface SimulationOptions {
-  assumeSecureTransport: boolean
+  simulationMode?: SimulationMode
+  strictConditionKeys?: string[]
 }
