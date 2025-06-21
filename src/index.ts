@@ -5,7 +5,8 @@ export {
   type ConditionKeyType
 } from './context_keys/contextKeyTypes.js'
 export { findContextKeys } from './context_keys/findContextKeys.js'
-export { type EvaluationResult } from './evaluate.js'
+export type { SimulationMode } from './core_engine/CoreSimulatorEngine.js'
+export type { EvaluationResult } from './evaluate.js'
 export type {
   ActionExplain,
   ConditionExplain,
@@ -23,6 +24,6 @@ export type {
 } from './simulation_engine/simulation.js'
 export { runSimulation } from './simulation_engine/simulationEngine.js'
 export type { SimulationErrors, SimulationResult } from './simulation_engine/simulationEngine.js'
-export { type SimulationOptions } from './simulation_engine/simulationOptions.js'
+export type { SimulationOptions } from './simulation_engine/simulationOptions.js'
 export { runUnsafeSimulation } from './simulation_engine/unsafeSimulationEngine.js'
 export { isWildcardOnlyAction } from './util.js'
