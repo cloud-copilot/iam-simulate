@@ -7,6 +7,7 @@ import { isIpInCidrV6, isValidIpCidrV6, isValidIpV6 } from './ipv6.js'
  *
  * @param policyValue - The CIDR block to check against.
  * @param requestValue - The IP address to check.
+ * @param expectInCidr - If true, the function checks if the request value is within the CIDR block; if false, it checks if it is outside.
  * @returns An object explaining the result.
  */
 export function checkIfIpAddress(
@@ -33,6 +34,14 @@ export function checkIfIpAddress(
       value: policyValue
     }
   }
+
+  if (isValidIpV4(policyValue)) {
+    return {
+      matches: isValidIpV4(requestValue) && (policyValue === requestValue) == expectInCidr,
+      value: policyValue
+    }
+  }
+
   if (isValidIpCidrV6(policyValue)) {
     if (isValidIpV4(requestValue)) {
       return {
@@ -50,6 +59,13 @@ export function checkIfIpAddress(
 
     return {
       matches: isIpInCidrV6(requestValue, policyValue) == expectInCidr,
+      value: policyValue
+    }
+  }
+
+  if (isValidIpV6(policyValue)) {
+    return {
+      matches: isValidIpV6(requestValue) && (policyValue === requestValue) == expectInCidr,
       value: policyValue
     }
   }
