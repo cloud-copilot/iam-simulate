@@ -92,7 +92,7 @@ describe('coreSimulatorEngine', () => {
           const simulationParameters: SimulationParameters = {
             simulationMode: testCase.simulation?.mode || 'Strict',
             strictConditionKeys: new Set(
-              testCase.simulation?.strictConditionKeys?.map((k: string) => k.toLowerCase() || [])
+              testCase.simulation?.strictConditionKeys?.map((k: string) => k.toLowerCase())
             )
           }
 
