@@ -1,3 +1,4 @@
+import { SimulationParameters } from '../core_engine/CoreSimulatorEngine.js'
 import {
   IdentityAnalysis,
   RcpAnalysis,
@@ -14,6 +15,7 @@ export interface ServiceAuthorizationRequest {
   resourceAnalysis: ResourceAnalysis
   rcpAnalysis: RcpAnalysis
   permissionBoundaryAnalysis: IdentityAnalysis | undefined
+  simulationParameters: SimulationParameters
 }
 
 export interface ServiceAuthorizer {

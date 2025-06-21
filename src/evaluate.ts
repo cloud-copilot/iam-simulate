@@ -1,3 +1,4 @@
+import { Condition } from '@cloud-copilot/iam-policy'
 import { StatementAnalysis } from './StatementAnalysis.js'
 
 export type EvaluationResult = 'Allowed' | 'ExplicitlyDenied' | 'ImplicitlyDenied'
@@ -56,6 +57,32 @@ export interface RcpAnalysis {
 }
 
 /**
+ * Conditions that were ignored during discovery mode.
+ */
+export interface IgnoredConditions {
+  scp: {
+    allow: Condition[]
+    deny: Condition[]
+  }
+  rcp: {
+    allow: Condition[]
+    deny: Condition[]
+  }
+  identity: {
+    allow: Condition[]
+    deny: Condition[]
+  }
+  resource: {
+    allow: Condition[]
+    deny: Condition[]
+  }
+  permissionBoundary: {
+    allow: Condition[]
+    deny: Condition[]
+  }
+}
+
+/**
  * The analysis of a request.
  */
 export interface RequestAnalysis {
@@ -93,4 +120,14 @@ export interface RequestAnalysis {
    * The result of the evaluation of the permission boundary.
    */
   permissionBoundaryAnalysis?: IdentityAnalysis | undefined
+
+  /**
+   * Any conditions that were ignored during discovery mode.
+   */
+  ignoredConditions?: IgnoredConditions
+
+  /**
+   * If the role session name was ignored during discovery mode.
+   */
+  ignoredRoleSessionName?: boolean
 }

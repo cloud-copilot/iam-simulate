@@ -1,8 +1,18 @@
 import { Condition, loadPolicy } from '@cloud-copilot/iam-policy'
 import { describe, expect, it } from 'vitest'
+import { SimulationParameters } from '../core_engine/CoreSimulatorEngine.js'
 import { AwsRequestImpl } from '../request/request.js'
 import { RequestContextImpl } from '../requestContext.js'
 import { requestMatchesConditions, singleConditionMatchesRequest } from './condition.js'
+
+const defaultSimulationParameters: SimulationParameters = {
+  simulationMode: 'Strict',
+  strictConditionKeys: new Set()
+}
+
+const discoverySimulationParameters: Pick<SimulationParameters, 'simulationMode'> = {
+  simulationMode: 'Discovery'
+}
 
 describe('singleConditionMatchesRequest', () => {
   it('should return no match if the base operation is not found', () => {
@@ -32,7 +42,7 @@ describe('singleConditionMatchesRequest', () => {
     const condition = policy.statements()[0].conditions()[0]
 
     //When the request is checked against the condition
-    const result = singleConditionMatchesRequest(request, condition)
+    const result = singleConditionMatchesRequest(request, condition, defaultSimulationParameters)
 
     //Then the result should not match
     expect(result.matches).toEqual(false)
@@ -65,7 +75,7 @@ describe('singleConditionMatchesRequest', () => {
     })
     const condition = policy.statements()[0].conditions()[0]
     //When the request is checked against the condition
-    const response = singleConditionMatchesRequest(request, condition)
+    const response = singleConditionMatchesRequest(request, condition, defaultSimulationParameters)
 
     //Then the result should be 'Match'
     expect(response.matches).toEqual(true)
@@ -100,7 +110,7 @@ describe('singleConditionMatchesRequest', () => {
     })
     const condition = policy.statements()[0].conditions()[0]
     //When the request is checked against the condition
-    const response = singleConditionMatchesRequest(request, condition)
+    const response = singleConditionMatchesRequest(request, condition, defaultSimulationParameters)
 
     //Then the result should be 'Match'
     expect(response.matches).toEqual(true)
@@ -140,7 +150,7 @@ describe('singleConditionMatchesRequest', () => {
     const condition = policy.statements()[0].conditions()[0]
 
     //When the request is checked against the condition
-    const response = singleConditionMatchesRequest(request, condition)
+    const response = singleConditionMatchesRequest(request, condition, defaultSimulationParameters)
 
     //Then the result should be 'NoMatch'
     expect(response.matches).toEqual(false)
@@ -177,7 +187,7 @@ describe('singleConditionMatchesRequest', () => {
     const condition = policy.statements()[0].conditions()[0]
 
     //When the request is checked against the condition
-    const response = singleConditionMatchesRequest(request, condition)
+    const response = singleConditionMatchesRequest(request, condition, defaultSimulationParameters)
 
     //Then the result should be 'Match'
     expect(response.matches).toEqual(false)
@@ -213,7 +223,7 @@ describe('singleConditionMatchesRequest', () => {
     const condition = policy.statements()[0].conditions()[0]
 
     //When the request is checked against the condition
-    const response = singleConditionMatchesRequest(request, condition)
+    const response = singleConditionMatchesRequest(request, condition, defaultSimulationParameters)
 
     //Then the result should be 'Match'
     expect(response.matches).toEqual(false)
@@ -252,7 +262,7 @@ describe('singleConditionMatchesRequest', () => {
     const condition = policy.statements()[0].conditions()[0]
 
     //When the request is checked against the condition
-    const response = singleConditionMatchesRequest(request, condition)
+    const response = singleConditionMatchesRequest(request, condition, defaultSimulationParameters)
 
     //Then the result should be 'Match'
     expect(response.matches).toEqual(true)
@@ -287,7 +297,7 @@ describe('singleConditionMatchesRequest', () => {
     const condition = policy.statements()[0].conditions()[0]
 
     //When the request is checked against the condition
-    const response = singleConditionMatchesRequest(request, condition)
+    const response = singleConditionMatchesRequest(request, condition, defaultSimulationParameters)
 
     //Then the result should be 'NoMatch'
     expect(response.matches).toEqual(false)
@@ -321,7 +331,11 @@ describe('singleConditionMatchesRequest', () => {
       })
       const condition = policy.statements()[0].conditions()[0]
       //When the request is checked against the condition
-      const response = singleConditionMatchesRequest(request, condition)
+      const response = singleConditionMatchesRequest(
+        request,
+        condition,
+        defaultSimulationParameters
+      )
 
       //Then the result should be 'NoMatch'
       expect(response.matches).toEqual(false)
@@ -354,7 +368,11 @@ describe('singleConditionMatchesRequest', () => {
       })
       const condition = policy.statements()[0].conditions()[0]
       //When the request is checked against the condition
-      const response = singleConditionMatchesRequest(request, condition)
+      const response = singleConditionMatchesRequest(
+        request,
+        condition,
+        defaultSimulationParameters
+      )
 
       //Then the result should be 'NoMatch'
       expect(response.matches).toEqual(false)
@@ -387,7 +405,11 @@ describe('singleConditionMatchesRequest', () => {
       })
       const condition = policy.statements()[0].conditions()[0]
       //When the request is checked against the condition
-      const response = singleConditionMatchesRequest(request, condition)
+      const response = singleConditionMatchesRequest(
+        request,
+        condition,
+        defaultSimulationParameters
+      )
 
       //Then the result should be 'Match'
       expect(response.matches).toEqual(true)
@@ -420,7 +442,11 @@ describe('singleConditionMatchesRequest', () => {
       })
       const condition = policy.statements()[0].conditions()[0]
       //When the request is checked against the condition
-      const response = singleConditionMatchesRequest(request, condition)
+      const response = singleConditionMatchesRequest(
+        request,
+        condition,
+        defaultSimulationParameters
+      )
 
       //Then the result should be 'Match'
       expect(response.matches).toEqual(true)
@@ -454,7 +480,7 @@ describe('singleConditionMatchesRequest', () => {
       const condition = policy.statements()[0].conditions()[0]
 
       //When the request is checked against the condition
-      const result = singleConditionMatchesRequest(request, condition)
+      const result = singleConditionMatchesRequest(request, condition, defaultSimulationParameters)
 
       //Then it should not be a match
       expect(result.matches).toEqual(false)
@@ -489,7 +515,11 @@ describe('singleConditionMatchesRequest', () => {
       })
       const condition = policy.statements()[0].conditions()[0]
       //When the request is checked against the condition
-      const response = singleConditionMatchesRequest(request, condition)
+      const response = singleConditionMatchesRequest(
+        request,
+        condition,
+        defaultSimulationParameters
+      )
 
       //Then the result should be 'Match'
       expect(response.matches).toEqual(true)
@@ -527,7 +557,11 @@ describe('singleConditionMatchesRequest', () => {
       })
       const condition = policy.statements()[0].conditions()[0]
       //When the request is checked against the condition
-      const response = singleConditionMatchesRequest(request, condition)
+      const response = singleConditionMatchesRequest(
+        request,
+        condition,
+        defaultSimulationParameters
+      )
 
       //Then the result should be 'NoMatch'
       expect(response.matches).toEqual(false)
@@ -564,7 +598,11 @@ describe('singleConditionMatchesRequest', () => {
       })
       const condition = policy.statements()[0].conditions()[0]
       //When the request is checked against the condition
-      const response = singleConditionMatchesRequest(request, condition)
+      const response = singleConditionMatchesRequest(
+        request,
+        condition,
+        defaultSimulationParameters
+      )
 
       //Then the result should be 'NoMatch'
       expect(response.matches).toEqual(false)
@@ -597,7 +635,11 @@ describe('singleConditionMatchesRequest', () => {
       })
       const condition = policy.statements()[0].conditions()[0]
       //When the request is checked against the condition
-      const response = singleConditionMatchesRequest(request, condition)
+      const response = singleConditionMatchesRequest(
+        request,
+        condition,
+        defaultSimulationParameters
+      )
 
       //Then the result should be 'Match'
       expect(response.matches).toEqual(true)
@@ -630,12 +672,15 @@ describe('singleConditionMatchesRequest', () => {
       })
       const condition = policy.statements()[0].conditions()[0]
       //When the request is checked against the condition
-      const response = singleConditionMatchesRequest(request, condition)
+      const response = singleConditionMatchesRequest(
+        request,
+        condition,
+        defaultSimulationParameters
+      )
 
       //Then the result should be 'NoMatch'
       expect(response.matches).toEqual(true)
       expect(response.resolvedConditionKeyValue).toEqual(undefined)
-      expect(response.failedBecauseNotArray).toEqual(undefined)
       expect(response.values).toEqual([
         { value: 'o-abcdefg', matches: true, matchingValues: ['o-abcdefg'] },
         { value: 'o-zyxwvu', matches: true }
@@ -668,54 +713,18 @@ describe('singleConditionMatchesRequest', () => {
       })
       const condition = policy.statements()[0].conditions()[0]
       //When the request is checked against the condition
-      const response = singleConditionMatchesRequest(request, condition)
+      const response = singleConditionMatchesRequest(
+        request,
+        condition,
+        defaultSimulationParameters
+      )
 
       //Then the result should be 'NoMatch'
       expect(response.matches).toEqual(false)
       expect(response.resolvedConditionKeyValue).toEqual(undefined)
-      expect(response.failedBecauseNotArray).toEqual(undefined)
       expect(response.values).toEqual([
         { value: 'o-abcdefg', matches: false },
         { value: 'o-zyxwvu', matches: false }
-      ])
-    })
-
-    it('should return no match if the base operation is not found', () => {
-      //Given a request
-      const request = new AwsRequestImpl(
-        '',
-        { resource: '', accountId: '' },
-        '',
-        new RequestContextImpl({ 'aws:CalledVia': ['B', 'A'] })
-      )
-      //And a condition that test for an operation that does not exist
-      const policy = loadPolicy({
-        Version: '2012-10-17',
-        Statement: [
-          {
-            Effect: 'Allow',
-            Action: '*',
-            Resource: '*',
-            Condition: {
-              'ForAllValues:FakeOperator': {
-                'aws:CalledVia': ['A', 'B']
-              }
-            }
-          }
-        ]
-      })
-      const condition = policy.statements()[0].conditions()[0]
-
-      //When the request is checked against the condition
-      const result = singleConditionMatchesRequest(request, condition)
-
-      //Then the should not be a match
-      expect(result.matches).toEqual(false)
-      expect(result.resolvedConditionKeyValue).toEqual(undefined)
-      expect(result.missingOperator).toEqual(true)
-      expect(result.values).toEqual([
-        { value: 'A', matches: false },
-        { value: 'B', matches: false }
       ])
     })
   })
@@ -747,7 +756,11 @@ describe('singleConditionMatchesRequest', () => {
       })
       const condition = policy.statements()[0].conditions()[0]
       //When the request is checked against the condition
-      const response = singleConditionMatchesRequest(request, condition)
+      const response = singleConditionMatchesRequest(
+        request,
+        condition,
+        defaultSimulationParameters
+      )
 
       //Then the result should be 'Match'
       expect(response.matches).toEqual(true)
@@ -781,7 +794,11 @@ describe('singleConditionMatchesRequest', () => {
       })
       const condition = policy.statements()[0].conditions()[0]
       //When the request is checked against the condition
-      const response = singleConditionMatchesRequest(request, condition)
+      const response = singleConditionMatchesRequest(
+        request,
+        condition,
+        defaultSimulationParameters
+      )
 
       //Then the result should be 'NoMatch'
       expect(response.matches).toEqual(false)
@@ -815,7 +832,11 @@ describe('singleConditionMatchesRequest', () => {
       })
       const condition = policy.statements()[0].conditions()[0]
       //When the request is checked against the condition
-      const response = singleConditionMatchesRequest(request, condition)
+      const response = singleConditionMatchesRequest(
+        request,
+        condition,
+        defaultSimulationParameters
+      )
 
       //Then the result should be 'Match'
       expect(response.matches).toEqual(false)
@@ -849,7 +870,11 @@ describe('singleConditionMatchesRequest', () => {
       })
       const condition = policy.statements()[0].conditions()[0]
       //When the request is checked against the condition
-      const response = singleConditionMatchesRequest(request, condition)
+      const response = singleConditionMatchesRequest(
+        request,
+        condition,
+        defaultSimulationParameters
+      )
 
       //Then the result should be 'Match'
       expect(response.matches).toEqual(true)
@@ -883,7 +908,11 @@ describe('singleConditionMatchesRequest', () => {
       })
       const condition = policy.statements()[0].conditions()[0]
       //When the request is checked against the condition
-      const response = singleConditionMatchesRequest(request, condition)
+      const response = singleConditionMatchesRequest(
+        request,
+        condition,
+        defaultSimulationParameters
+      )
 
       //Then the result should be 'Match'
       expect(response.matches).toEqual(true)
@@ -917,7 +946,11 @@ describe('singleConditionMatchesRequest', () => {
       })
       const condition = policy.statements()[0].conditions()[0]
       //When the request is checked against the condition
-      const response = singleConditionMatchesRequest(request, condition)
+      const response = singleConditionMatchesRequest(
+        request,
+        condition,
+        defaultSimulationParameters
+      )
 
       //Then the result should be 'Match'
       expect(response.matches).toEqual(true)
@@ -954,7 +987,9 @@ describe('singleConditionMatchesRequest', () => {
     )
 
     //When the request is checked against the condition
-    expect(() => singleConditionMatchesRequest(request, condition)).toThrow()
+    expect(() =>
+      singleConditionMatchesRequest(request, condition, defaultSimulationParameters)
+    ).toThrow()
   })
 })
 
@@ -989,7 +1024,12 @@ describe('requestMatchesConditions', () => {
 
     const conditions = policy.statements()[0].conditions()
     // When the request is checked against the conditions
-    const response = requestMatchesConditions(request, conditions)
+    const response = requestMatchesConditions(
+      request,
+      conditions,
+      'Allow',
+      defaultSimulationParameters
+    )
 
     // Then the result should be 'Unknown'
     expect(response.matches).toEqual('NoMatch')
@@ -1026,7 +1066,12 @@ describe('requestMatchesConditions', () => {
 
     const conditions = policy.statements()[0].conditions()
     // When the request is checked against the conditions
-    const response = requestMatchesConditions(request, conditions)
+    const response = requestMatchesConditions(
+      request,
+      conditions,
+      'Allow',
+      defaultSimulationParameters
+    )
 
     // Then the result should be 'Unknown'
     expect(response.matches).toEqual('Match')
@@ -1045,7 +1090,12 @@ describe('requestMatchesConditions', () => {
     )
 
     //When the request is checked against the conditions
-    const response = requestMatchesConditions(request, conditions)
+    const response = requestMatchesConditions(
+      request,
+      conditions,
+      'Allow',
+      defaultSimulationParameters
+    )
 
     //Then it should be a match
     expect(response.matches).toEqual('Match')
@@ -1087,7 +1137,7 @@ describe('forAllValuesMatch', () => {
       )
 
       //When the request is checked against the condition
-      const result = singleConditionMatchesRequest(request, condition)
+      const result = singleConditionMatchesRequest(request, condition, defaultSimulationParameters)
 
       //Then the result should not match
       expect(result.matches).toEqual(false)
@@ -1135,7 +1185,7 @@ describe('forAllValuesMatch', () => {
       )
 
       //When the request is checked against the condition
-      const result = singleConditionMatchesRequest(request, condition)
+      const result = singleConditionMatchesRequest(request, condition, defaultSimulationParameters)
 
       // Then the result should not match
       expect(result.matches).toEqual(false)
@@ -1185,7 +1235,7 @@ describe('forAnyValueMatch', () => {
       )
 
       //When the request is checked against the condition
-      const result = singleConditionMatchesRequest(request, condition)
+      const result = singleConditionMatchesRequest(request, condition, defaultSimulationParameters)
 
       //Then the result should match
       expect(result.matches).toEqual(true)
@@ -1227,12 +1277,15 @@ describe('forAnyValueMatch', () => {
       })
       const condition = policy.statements()[0].conditions()[0]
       //When the request is checked against the condition
-      const response = singleConditionMatchesRequest(request, condition)
+      const response = singleConditionMatchesRequest(
+        request,
+        condition,
+        defaultSimulationParameters
+      )
 
       //Then the result should be 'NoMatch'
       expect(response.matches).toEqual(true)
       expect(response.resolvedConditionKeyValue).toEqual(undefined)
-      expect(response.failedBecauseNotArray).toEqual(undefined)
       expect(response.values).toEqual([
         { value: 'o-abcdefg', matches: true, matchingValues: ['o-abcdefg'] },
         { value: 'o-zyxwvu', matches: true }
@@ -1265,12 +1318,15 @@ describe('forAnyValueMatch', () => {
       })
       const condition = policy.statements()[0].conditions()[0]
       //When the request is checked against the condition
-      const response = singleConditionMatchesRequest(request, condition)
+      const response = singleConditionMatchesRequest(
+        request,
+        condition,
+        defaultSimulationParameters
+      )
 
       //Then the result should be 'NoMatch'
       expect(response.matches).toEqual(false)
       expect(response.resolvedConditionKeyValue).toEqual(undefined)
-      expect(response.failedBecauseNotArray).toEqual(undefined)
       expect(response.unmatchedValues).toEqual(['o-zzzzzzz'])
       expect(response.values).toEqual([
         { value: 'o-abcdefg', matches: false },
@@ -1311,7 +1367,7 @@ describe('forAnyValueMatch', () => {
       )
 
       //When the request is checked against the condition
-      const result = singleConditionMatchesRequest(request, condition)
+      const result = singleConditionMatchesRequest(request, condition, defaultSimulationParameters)
 
       //Then the result should match
       expect(result.matches).toEqual(true)
@@ -1330,5 +1386,376 @@ describe('forAnyValueMatch', () => {
       expect(result.unmatchedValues).toEqual(['Cherry', 'Cranberry'])
       expect(result.resolvedConditionKeyValue).toEqual(undefined)
     })
+  })
+})
+
+describe('requestMatchesConditions - Discovery simulationMode (with loadPolicy)', () => {
+  it('ignores non-matching condition not in strictConditionKeys', () => {
+    // Given a condition for username
+    const policy = loadPolicy({
+      Version: '2012-10-17',
+      Statement: [
+        {
+          Effect: 'Allow',
+          Action: 's3:GetObject',
+          Resource: '*',
+          Condition: {
+            StringEquals: { 'aws:username': 'bob' }
+          }
+        }
+      ]
+    })
+    const cond = policy.statements()[0].conditions()
+
+    //And a request with a different username
+    const req = new AwsRequestImpl(
+      '',
+      { resource: '', accountId: '' },
+      '',
+      new RequestContextImpl({ 'aws:username': 'alice' })
+    )
+
+    //And simulation parameters with Discovery mode set
+    const simParams = {
+      ...discoverySimulationParameters,
+      strictConditionKeys: new Set(['aws:userid'])
+    }
+
+    // When checking if the request matches the conditions
+    const result = requestMatchesConditions(req, cond, 'Allow', simParams)
+
+    // Then it should match
+    expect(result.matches).toBe('Match')
+
+    // And the ignored conditions should contain the ignored condition
+    expect(result.ignoredConditions).toHaveLength(1)
+    expect(result.ignoredConditions![0].conditionKey()).toBe('aws:username')
+  })
+
+  it('does not ignore non-matching condition in strictConditionKeys', () => {
+    // Given a condition for username
+    const policy = loadPolicy({
+      Version: '2012-10-17',
+      Statement: [
+        {
+          Effect: 'Allow',
+          Action: 's3:GetObject',
+          Resource: '*',
+          Condition: {
+            StringEquals: { 'aws:username': 'bob' }
+          }
+        }
+      ]
+    })
+    const cond = policy.statements()[0].conditions()
+
+    //And a request with a different username
+    const req = new AwsRequestImpl(
+      '',
+      { resource: '', accountId: '' },
+      '',
+      new RequestContextImpl({ 'aws:username': 'alice' })
+    )
+
+    //And simulation parameters with Discovery mode set and strictConditionKeys including username
+    const simParams = {
+      ...discoverySimulationParameters,
+      strictConditionKeys: new Set(['aws:username'])
+    }
+
+    // When checking if the request matches the conditions
+    const result = requestMatchesConditions(req, cond, 'Allow', simParams)
+
+    // Then it should not match
+    expect(result.matches).toBe('NoMatch')
+
+    // And there should be no ignored conditions
+    expect(result.ignoredConditions).toBeUndefined()
+  })
+
+  it('matches when all conditions match, even in Discovery mode', () => {
+    // Given a condition for aws:username
+    const policy = loadPolicy({
+      Version: '2012-10-17',
+      Statement: [
+        {
+          Effect: 'Allow',
+          Action: 's3:GetObject',
+          Resource: '*',
+          Condition: {
+            StringEquals: { 'aws:username': 'alice' }
+          }
+        }
+      ]
+    })
+    const cond = policy.statements()[0].conditions()
+
+    //And a request with the matching username
+    const req = new AwsRequestImpl(
+      '',
+      { resource: '', accountId: '' },
+      '',
+      new RequestContextImpl({ 'aws:username': 'alice' })
+    )
+    const simParams = {
+      ...discoverySimulationParameters,
+      strictConditionKeys: new Set(['aws:username'])
+    }
+
+    // When checking if the request matches the conditions
+    const result = requestMatchesConditions(req, cond, 'Allow', simParams)
+
+    // Then it should match
+    expect(result.matches).toBe('Match')
+
+    // And there should be no ignored conditions
+    expect(result.ignoredConditions).toBeUndefined()
+  })
+
+  it('returns multiple ignored conditions if multiple non-strict keys do not match', () => {
+    // Given a policy with multiple conditions
+    const policy = loadPolicy({
+      Version: '2012-10-17',
+      Statement: [
+        {
+          Effect: 'Allow',
+          Action: 's3:GetObject',
+          Resource: '*',
+          Condition: {
+            StringEquals: {
+              'aws:username': 'bob',
+              'aws:userid': '123'
+            }
+          }
+        }
+      ]
+    })
+    const cond = policy.statements()[0].conditions()
+
+    //And a request with different values for those keys
+    const req = new AwsRequestImpl(
+      '',
+      { resource: '', accountId: '' },
+      '',
+      new RequestContextImpl({ 'aws:username': 'alice', 'aws:userid': '456' })
+    )
+
+    //And simulation parameters with Discovery mode set and strictConditionKeys including neither
+    const simParams = {
+      ...discoverySimulationParameters,
+      strictConditionKeys: new Set(['aws:accountid'])
+    }
+
+    // When checking if the request matches the conditions
+    const result = requestMatchesConditions(req, cond, 'Allow', simParams)
+
+    // Then it should match
+    expect(result.matches).toBe('Match')
+
+    // And the ignored conditions should contain both non-matching conditions
+    expect(result.ignoredConditions).toHaveLength(2)
+    expect(result.ignoredConditions!.map((c) => c.conditionKey()).sort()).toEqual([
+      'aws:userid',
+      'aws:username'
+    ])
+  })
+
+  it('evaluates strictConditionKeys as normal even if other keys are ignored', () => {
+    // Given a policy with multiple conditions
+    const policy = loadPolicy({
+      Version: '2012-10-17',
+      Statement: [
+        {
+          Effect: 'Allow',
+          Action: 's3:GetObject',
+          Resource: '*',
+          Condition: {
+            StringEquals: {
+              'aws:username': 'bob',
+              'aws:userid': '123'
+            }
+          }
+        }
+      ]
+    })
+    const cond = policy.statements()[0].conditions()
+
+    //And a request with different values for those keys
+    const req = new AwsRequestImpl(
+      '',
+      { resource: '', accountId: '' },
+      '',
+      new RequestContextImpl({ 'aws:username': 'alice', 'aws:userid': '456' })
+    )
+
+    //And simulation parameters with Discovery mode set and strictConditionKeys including aws:userid
+    const simParams = {
+      ...discoverySimulationParameters,
+      strictConditionKeys: new Set(['aws:userid'])
+    }
+
+    // When checking if the request matches the conditions
+    const result = requestMatchesConditions(req, cond, 'Allow', simParams)
+
+    // Then it should not match
+    expect(result.matches).toBe('NoMatch')
+
+    // And the ignored conditions should contain the non-matching, non-strict aws:username condition
+    expect(result.ignoredConditions).toHaveLength(1)
+    expect(result.ignoredConditions![0].conditionKey()).toBe('aws:username')
+  })
+})
+
+describe('requestMatchesConditions - Discovery simulationMode with Deny statements', () => {
+  it('Should not match if none of the keys match', () => {
+    // Given a Deny statement with two conditions
+    const policy = loadPolicy({
+      Version: '2012-10-17',
+      Statement: [
+        {
+          Effect: 'Deny',
+          Action: 's3:GetObject',
+          Resource: '*',
+          Condition: {
+            StringEquals: {
+              'aws:username': 'bob',
+              'aws:userid': '123'
+            }
+          }
+        }
+      ]
+    })
+    const cond = policy.statements()[0].conditions()
+    // And a request with different values for those keys
+    const req = new AwsRequestImpl(
+      '',
+      { resource: '', accountId: '' },
+      '',
+      new RequestContextImpl({ 'aws:username': 'alice', 'aws:userid': '456' })
+    )
+    // And simulation parameters with Discovery mode set and strictConditionKeys including neither
+    const simParams = {
+      ...discoverySimulationParameters,
+      strictConditionKeys: new Set(['aws:accountid'])
+    }
+    // When checking if the request matches the conditions for a Deny statement
+    const result = requestMatchesConditions(req, cond, 'Deny', simParams)
+    // Then it should match (Deny ignored if all non-matching are ignored)
+    expect(result.matches).toBe('NoMatch')
+    // And no conditions should be ignored
+    expect(result.ignoredConditions).toBeUndefined()
+  })
+
+  it('should not match if a non-matching strict key exists for Deny', () => {
+    // Given a Deny statement with two conditions
+    const policy = loadPolicy({
+      Version: '2012-10-17',
+      Statement: [
+        {
+          Effect: 'Deny',
+          Action: 's3:GetObject',
+          Resource: '*',
+          Condition: {
+            StringEquals: {
+              'aws:username': 'bob',
+              'aws:userid': '123'
+            }
+          }
+        }
+      ]
+    })
+    const cond = policy.statements()[0].conditions()
+    // And a request with different values for those keys
+    const req = new AwsRequestImpl(
+      '',
+      { resource: '', accountId: '' },
+      '',
+      new RequestContextImpl({ 'aws:username': 'alice', 'aws:userid': '456' })
+    )
+    // And simulation parameters with Discovery mode set and strictConditionKeys including aws:userid
+    const simParams = {
+      ...discoverySimulationParameters,
+      strictConditionKeys: new Set(['aws:userid'])
+    }
+    // When checking if the request matches the conditions for a Deny statement
+    const result = requestMatchesConditions(req, cond, 'Deny', simParams)
+    // Then it should not match (Deny enforced if strict key does not match)
+    expect(result.matches).toBe('NoMatch')
+    // And the ignored conditions should contain only the non-strict aws:username condition
+    expect(result.ignoredConditions).toBeUndefined()
+  })
+
+  it('should not match if matching keys in a Deny statement are ignored', () => {
+    // Given a Deny statement with a condition
+    const policy = loadPolicy({
+      Version: '2012-10-17',
+      Statement: [
+        {
+          Effect: 'Deny',
+          Action: 's3:GetObject',
+          Resource: '*',
+          Condition: {
+            StringEquals: { 'aws:username': 'alice' }
+          }
+        }
+      ]
+    })
+    const cond = policy.statements()[0].conditions()
+
+    // And a request with the matching username
+    const req = new AwsRequestImpl(
+      '',
+      { resource: '', accountId: '' },
+      '',
+      new RequestContextImpl({ 'aws:username': 'alice' })
+    )
+    // And simulation parameters with Discovery mode set and strictConditionKeys including aws:username
+    const simParams = {
+      ...discoverySimulationParameters,
+      strictConditionKeys: new Set([])
+    }
+    // When checking if the request matches the conditions for a Deny statement
+    const result = requestMatchesConditions(req, cond, 'Deny', simParams)
+    // Then it should not match (Deny enforced if matching key is ignored)
+    expect(result.matches).toBe('NoMatch')
+    // And there should be no ignored conditions
+    expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:username'])
+  })
+
+  it('should match if strict Deny conditions match, in Discovery mode', () => {
+    // Given a Deny statement with a condition
+    const policy = loadPolicy({
+      Version: '2012-10-17',
+      Statement: [
+        {
+          Effect: 'Deny',
+          Action: 's3:GetObject',
+          Resource: '*',
+          Condition: {
+            StringEquals: { 'aws:username': 'alice' }
+          }
+        }
+      ]
+    })
+    const cond = policy.statements()[0].conditions()
+
+    // And a request with the matching username
+    const req = new AwsRequestImpl(
+      '',
+      { resource: '', accountId: '' },
+      '',
+      new RequestContextImpl({ 'aws:username': 'alice' })
+    )
+    // And simulation parameters with Discovery mode set
+    const simParams = {
+      ...discoverySimulationParameters,
+      strictConditionKeys: new Set(['aws:username'])
+    }
+    // When checking if the request matches the conditions for a Deny statement
+    const result = requestMatchesConditions(req, cond, 'Deny', simParams)
+    // Then it should match
+    expect(result.matches).toBe('Match')
+    // And there should be no ignored conditions
+    expect(result.ignoredConditions).toBeUndefined()
   })
 })

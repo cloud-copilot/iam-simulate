@@ -1,0 +1,140 @@
+[
+  {
+    "name": "Allowed when RCP has ignored Deny Condition",
+    "request": {
+      "action": "s3:ListAllMyBuckets",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:Username": "test-user"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "resourceControlPolicies": [
+      {
+        "orgIdentifier": "ou-1",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*",
+                "Principal": "*"
+              }
+            ]
+          },
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Deny",
+                "Action": "s3:ListAllMyBuckets",
+                "Resource": "*",
+                "Principal": "*",
+                "Condition": {
+                  "StringEquals": {
+                    "aws:Username": "test-user"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "rcp": {
+          "deny": [{ "key": "aws:Username", "op": "StringEquals", "values": ["test-user"] }]
+        }
+      }
+    }
+  },
+  {
+    "name": "Block when RCP has strict match Deny Condition",
+    "request": {
+      "action": "s3:ListAllMyBuckets",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:Username": "test-user"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "resourceControlPolicies": [
+      {
+        "orgIdentifier": "ou-1",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Principal": "*",
+                "Resource": "*"
+              }
+            ]
+          },
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Deny",
+                "Action": "s3:ListAllMyBuckets",
+                "Resource": "*",
+                "Principal": "*",
+                "Condition": {
+                  "StringEquals": {
+                    "aws:Username": "test-user"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery",
+      "strictConditionKeys": ["aws:username"]
+    },
+    "expected": {
+      "response": "ExplicitlyDenied"
+    }
+  }
+]

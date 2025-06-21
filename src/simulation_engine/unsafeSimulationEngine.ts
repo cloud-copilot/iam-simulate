@@ -63,7 +63,11 @@ export function runUnsafeSimulation(
     serviceControlPolicies,
     resourceControlPolicies,
     resourcePolicy: simulation.resourcePolicy ? loadPolicy(simulation.resourcePolicy) : undefined,
-    permissionBoundaries
+    permissionBoundaries,
+    simulationParameters: {
+      simulationMode: 'Strict',
+      strictConditionKeys: new Set()
+    }
   })
 
   return analysis.result

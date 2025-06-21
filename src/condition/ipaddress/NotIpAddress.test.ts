@@ -75,6 +75,18 @@ const notIpAddressTests: BaseOperatorTest[] = [
     ]
   },
   {
+    name: 'V4: should treat a Valid V4 IP as a /32 CIDR block',
+    policyValues: ['10.10.72.13'],
+    testValue: '10.10.72.13',
+    expected: false,
+    explains: [
+      {
+        matches: false,
+        value: '10.10.72.13'
+      }
+    ]
+  },
+  {
     name: 'V6: should be false if the IP address is within the CIDR block',
     policyValues: ['2001:0db8::/32'],
     testValue: '2001:0db8:85a3::8a2e:0370:7334',
@@ -107,6 +119,18 @@ const notIpAddressTests: BaseOperatorTest[] = [
       {
         matches: false,
         value: '123456789012'
+      }
+    ]
+  },
+  {
+    name: 'V6: should treat a Valid V6 IP as a /128 CIDR block',
+    policyValues: ['2001:0db8:85a3::8a2e:0370:7334'],
+    testValue: '2001:0db8:85a3::8a2e:0370:7334',
+    expected: false,
+    explains: [
+      {
+        matches: false,
+        value: '2001:0db8:85a3::8a2e:0370:7334'
       }
     ]
   },

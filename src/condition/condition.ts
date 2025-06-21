@@ -1,4 +1,5 @@
 import { Condition } from '@cloud-copilot/iam-policy'
+import { SimulationParameters } from '../core_engine/CoreSimulatorEngine.js'
 import {
   ConditionExplain,
   ConditionValueExplain,
@@ -69,6 +70,11 @@ for (const operator of allOperators) {
   baseOperations[operator.name.toLowerCase()] = operator
 }
 
+interface ConditionAndExplain {
+  condition: Condition
+  explain: ConditionExplain
+}
+
 /**
  * Evaluate a set of conditions against a request
  *
@@ -78,17 +84,71 @@ for (const operator of allOperators) {
  */
 export function requestMatchesConditions(
   request: AwsRequest,
-  conditions: Condition[]
-): { matches: ConditionMatchResult; details: Pick<StatementExplain, 'conditions'> } {
-  const results = conditions.map((condition) => singleConditionMatchesRequest(request, condition))
-  const nonMatch = results.some((result) => !result.matches)
+  conditions: Condition[],
+  statementType: 'Allow' | 'Deny',
+  simulationParameters: SimulationParameters
+): {
+  matches: ConditionMatchResult
+  details: Pick<StatementExplain, 'conditions'>
+  ignoredConditions?: Condition[]
+} {
+  const results = conditions.map((condition) => ({
+    condition,
+    explain: singleConditionMatchesRequest(request, condition, simulationParameters)
+  }))
+
+  const isIgnored = (c: ConditionAndExplain): boolean => {
+    if (simulationParameters.simulationMode !== 'Discovery') {
+      return false
+    }
+    if (simulationParameters.strictConditionKeys.has(c.condition.conditionKey().toLowerCase())) {
+      return false
+    }
+    // In Allows we ignore conditions that do not match
+    if (statementType.toLowerCase() === 'allow') {
+      return !c.explain.matches
+    }
+    // In Denies we ignore conditions that do match
+    if (statementType.toLowerCase() === 'deny') {
+      return c.explain.matches
+    }
+    throw new Error(
+      `Unexpected condition explain result in discovery mode, statementType: ${statementType}`
+    )
+  }
+
+  const nonMatch = results.filter((r) => !isIgnored(r)).some((result) => !result.explain.matches)
+  const ignoredMatches = results
+    .filter((r) => isIgnored(r))
+    .some((result) => result.explain.matches)
 
   return {
-    matches: nonMatch ? 'NoMatch' : 'Match',
+    matches: nonMatch || ignoredMatches ? 'NoMatch' : ('Match' as ConditionMatchResult),
     details: {
-      conditions: results.length == 0 ? undefined : results
-    }
+      conditions: results.length == 0 ? undefined : results.map((r) => r.explain)
+    },
+    ignoredConditions: ignoredConditions(results, isIgnored)
   }
+}
+
+/**
+ * Get the list of conditions that were ignored during discovery mode, if any
+ *
+ * @param conditions the conditions that were evaluated with their explains
+ * @param statementType whether the statement is an allow or deny statement
+ * @param simulationParameters the general parameters for the simulation
+ * @returns an array of ignored conditions, or undefined if there are none
+ */
+function ignoredConditions(
+  conditions: ConditionAndExplain[],
+  isIgnored: (c: ConditionAndExplain) => boolean
+): Condition[] | undefined {
+  const ignoredConditions = conditions.filter(isIgnored)
+  if (ignoredConditions.length > 0) {
+    return ignoredConditions.map((r) => r.condition)
+  }
+
+  return undefined
 }
 
 /**
@@ -100,7 +160,8 @@ export function requestMatchesConditions(
  */
 export function singleConditionMatchesRequest(
   request: AwsRequest,
-  condition: Condition
+  condition: Condition,
+  simulationParameters: SimulationParameters
 ): ConditionExplain {
   const key = condition.conditionKey()
   const baseOperation = baseOperations[condition.operation().baseOperator().toLowerCase()]

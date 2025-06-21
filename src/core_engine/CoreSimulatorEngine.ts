@@ -1,9 +1,10 @@
-import { Policy, Statement } from '@cloud-copilot/iam-policy'
+import { Condition, Policy, Statement } from '@cloud-copilot/iam-policy'
 import { requestMatchesStatementActions } from '../action/action.js'
 import { ConditionMatchResult, requestMatchesConditions } from '../condition/condition.js'
 import {
   EvaluationResult,
   IdentityAnalysis,
+  IgnoredConditions,
   OuScpAnalysis,
   RcpAnalysis,
   RequestAnalysis,
@@ -25,6 +26,31 @@ import {
   StatementAnalysis,
   statementMatches
 } from '../StatementAnalysis.js'
+
+export const validSimulationModes = ['Strict', 'Discovery'] as const
+
+/**
+ * The mode of simulation for the core engine.
+ * - Strict: Simulates the request as if it were being made in a real AWS environment.
+ * - Discovery: Simulates the request but discovers under what conditions it would be allowed.
+ */
+export type SimulationMode = (typeof validSimulationModes)[number]
+
+/**
+ * Meta parameters for the simulation engine.
+ */
+export interface SimulationParameters {
+  /**
+   * The simulation mode to use for the request.
+   */
+  simulationMode: SimulationMode
+
+  /**
+   * Condition keys that should be evaluated strictly in the simulation. Used only in Discovery mode.
+   * In Strict mode, all condition keys are evaluated strictly
+   */
+  strictConditionKeys: Set<string>
+}
 
 /**
  * A set of service or resource control policies for each level of an organization tree
@@ -76,6 +102,11 @@ export interface AuthorizationRequest {
    * The permission boundaries that apply to the principal making the request.
    */
   permissionBoundaries: Policy[] | undefined
+
+  /**
+   * The simulation parameters for the request.
+   */
+  simulationParameters: SimulationParameters
 }
 
 const serviceEngines: Record<string, new () => ServiceAuthorizer> = {
@@ -95,34 +126,68 @@ const serviceEngines: Record<string, new () => ServiceAuthorizer> = {
 export function authorize(request: AuthorizationRequest): RequestAnalysis {
   const principalHasPermissionBoundary =
     !!request.permissionBoundaries && request.permissionBoundaries.length > 0
-  const identityAnalysis = analyzeIdentityPolicies(request.identityPolicies, request.request)
+  const simulationParameters = request.simulationParameters
+
+  const identityAnalysis = analyzeIdentityPolicies(
+    request.identityPolicies,
+    request.request,
+    simulationParameters
+  )
+
   const permissionBoundaryAnalysis = analyzePermissionBoundaryPolicies(
     request.permissionBoundaries,
-    request.request
+    request.request,
+    simulationParameters
   )
+
   const scpAnalysis = analyzeControlPolicies(
     request.serviceControlPolicies,
-    request.request
+    request.request,
+    simulationParameters
   ) as ScpAnalysis
+
   const rcpAnalysis = analyzeControlPolicies(
     request.resourceControlPolicies,
-    request.request
+    request.request,
+    simulationParameters
   ) as RcpAnalysis
+
   const resourceAnalysis = analyzeResourcePolicy(
     request.resourcePolicy,
     request.request,
-    principalHasPermissionBoundary
+    principalHasPermissionBoundary,
+    simulationParameters
   )
 
   const serviceAuthorizer = getServiceAuthorizer(request)
-  return serviceAuthorizer.authorize({
+  const result = serviceAuthorizer.authorize({
     request: request.request,
     identityAnalysis,
     scpAnalysis,
     rcpAnalysis,
     resourceAnalysis,
-    permissionBoundaryAnalysis
+    permissionBoundaryAnalysis,
+    simulationParameters
   })
+
+  if (simulationParameters.simulationMode === 'Discovery') {
+    result.ignoredConditions = ignoredConditionsAnalysis(
+      scpAnalysis,
+      rcpAnalysis,
+      identityAnalysis,
+      resourceAnalysis,
+      permissionBoundaryAnalysis
+    )
+    result.ignoredRoleSessionName = roleSessionNameIgnored(
+      scpAnalysis,
+      rcpAnalysis,
+      identityAnalysis,
+      resourceAnalysis,
+      permissionBoundaryAnalysis
+    )
+  }
+
+  return result
 }
 
 /**
@@ -149,7 +214,8 @@ export function getServiceAuthorizer(request: AuthorizationRequest): ServiceAuth
  */
 export function analyzeIdentityPolicies(
   identityPolicies: Policy[],
-  request: AwsRequest
+  request: AwsRequest,
+  simulationParameters: SimulationParameters
 ): IdentityAnalysis {
   const identityAnalysis: IdentityAnalysis = {
     result: 'ImplicitlyDenied',
@@ -168,10 +234,17 @@ export function analyzeIdentityPolicies(
         request,
         statement
       )
-      const { matches: conditionMatch, details: conditionDetails } = requestMatchesConditions(
+      const {
+        matches: conditionMatch,
+        details: conditionDetails,
+        ignoredConditions
+      } = requestMatchesConditions(
         request,
-        statement.conditions()
+        statement.conditions(),
+        statement.effect() as 'Allow' | 'Deny',
+        simulationParameters
       )
+
       const principalMatch: PrincipalMatchResult = 'Match'
       const overallMatch = statementMatches({
         actionMatch,
@@ -185,6 +258,7 @@ export function analyzeIdentityPolicies(
         actionMatch,
         conditionMatch,
         principalMatch,
+        ignoredConditions,
         explain: makeStatementExplain(
           statement,
           overallMatch,
@@ -224,7 +298,8 @@ export function analyzeIdentityPolicies(
  */
 export function analyzeControlPolicies(
   controlPolicies: ControlPolicies[],
-  request: AwsRequest
+  request: AwsRequest,
+  simulationParameters: SimulationParameters
 ): ScpAnalysis | RcpAnalysis {
   const analysis: OuScpAnalysis[] = []
   for (const controlPolicy of controlPolicies) {
@@ -243,10 +318,17 @@ export function analyzeControlPolicies(
           request,
           statement
         )
-        const { matches: conditionMatch, details: conditionDetails } = requestMatchesConditions(
+        const {
+          matches: conditionMatch,
+          details: conditionDetails,
+          ignoredConditions
+        } = requestMatchesConditions(
           request,
-          statement.conditions()
+          statement.conditions(),
+          statement.effect() as 'Allow' | 'Deny',
+          simulationParameters
         )
+
         const principalMatch: PrincipalMatchResult = 'Match'
         const overallMatch = statementMatches({
           actionMatch,
@@ -254,12 +336,14 @@ export function analyzeControlPolicies(
           principalMatch,
           resourceMatch
         })
+
         const statementAnalysis: StatementAnalysis = {
           statement,
           resourceMatch,
           actionMatch,
           conditionMatch,
           principalMatch,
+          ignoredConditions,
           explain: makeStatementExplain(
             statement,
             overallMatch,
@@ -314,7 +398,8 @@ export function analyzeControlPolicies(
 export function analyzeResourcePolicy(
   resourcePolicy: Policy | undefined,
   request: AwsRequest,
-  principalHasPermissionBoundary: boolean
+  principalHasPermissionBoundary: boolean,
+  simulationParameters: SimulationParameters
 ): ResourceAnalysis {
   const resourceAnalysis: ResourceAnalysis = {
     result: 'NotApplicable',
@@ -342,10 +427,11 @@ export function analyzeResourcePolicy(
       request,
       statement
     )
-    let { matches: principalMatch, details: principalDetails } = requestMatchesStatementPrincipals(
-      request,
-      statement
-    )
+    let {
+      matches: principalMatch,
+      details: principalDetails,
+      ignoredRoleSessionName
+    } = requestMatchesStatementPrincipals(request, statement, simulationParameters)
 
     const permissionBoundaryDetails: Pick<StatementExplain, 'denyBecauseNpInRpAndPb'> = {}
 
@@ -370,10 +456,17 @@ export function analyzeResourcePolicy(
       permissionBoundaryDetails.denyBecauseNpInRpAndPb = true
     }
 
-    const { matches: conditionMatch, details: conditionDetails } = requestMatchesConditions(
+    const {
+      matches: conditionMatch,
+      details: conditionDetails,
+      ignoredConditions
+    } = requestMatchesConditions(
       request,
-      statement.conditions()
+      statement.conditions(),
+      statement.effect() as 'Allow' | 'Deny',
+      simulationParameters
     )
+
     const overallMatch = statementMatches({
       actionMatch,
       conditionMatch,
@@ -386,6 +479,8 @@ export function analyzeResourcePolicy(
       actionMatch,
       conditionMatch,
       principalMatch,
+      ignoredConditions,
+      ignoredRoleSessionName,
       explain: makeStatementExplain(
         statement,
         overallMatch,
@@ -430,13 +525,14 @@ export function analyzeResourcePolicy(
 
 export function analyzePermissionBoundaryPolicies(
   permissionBoundaries: Policy[] | undefined,
-  request: AwsRequest
+  request: AwsRequest,
+  simulationParameters: SimulationParameters
 ): IdentityAnalysis | undefined {
   if (!permissionBoundaries || permissionBoundaries.length === 0) {
     return undefined
   }
 
-  return analyzeIdentityPolicies(permissionBoundaries, request)
+  return analyzeIdentityPolicies(permissionBoundaries, request, simulationParameters)
 }
 
 function makeStatementExplain(
@@ -458,4 +554,93 @@ function makeStatementExplain(
     conditionMatch: conditionMatch === 'Match',
     ...details
   }
+}
+
+/**
+ * Create an analysis of the ignored conditions in all statements.
+ *
+ * @param scpAnalysis the SCP analysis
+ * @param rcpAnalysis the RCP analysis
+ * @param identityAnalysis the identity analysis
+ * @param resourceAnalysis the resource analysis
+ * @param permissionBoundaryAnalysis the permission boundary analysis (optional)
+ * @returns an object containing the ignored conditions for each analysis
+ */
+function ignoredConditionsAnalysis(
+  scpAnalysis: ScpAnalysis,
+  rcpAnalysis: RcpAnalysis,
+  identityAnalysis: IdentityAnalysis,
+  resourceAnalysis: ResourceAnalysis,
+  permissionBoundaryAnalysis?: IdentityAnalysis
+): IgnoredConditions {
+  return {
+    scp: mapIgnoredConditions(scpAnalysis.ouAnalysis),
+    rcp: mapIgnoredConditions(rcpAnalysis.ouAnalysis),
+    identity: mapIgnoredConditions([identityAnalysis]),
+    resource: mapIgnoredConditions([resourceAnalysis]),
+    permissionBoundary: mapIgnoredConditions(
+      permissionBoundaryAnalysis ? [permissionBoundaryAnalysis] : []
+    )
+  }
+}
+
+/**
+ * Get all of the ignored conditions from a set of analyses.
+ *
+ * @param analyses the analyses to map ignored conditions from
+ * @returns the ignored conditions for allow and deny statements
+ */
+function mapIgnoredConditions(
+  analyses: {
+    denyStatements: StatementAnalysis[]
+    allowStatements: StatementAnalysis[]
+    unmatchedStatements: StatementAnalysis[]
+  }[]
+): { allow: Condition[]; deny: Condition[] } {
+  const allow: Condition[] = []
+  const deny: Condition[] = []
+  const allStatements = analyses.flatMap((analysis) => [
+    ...analysis.allowStatements,
+    ...analysis.denyStatements,
+    ...analysis.unmatchedStatements
+  ])
+
+  for (const statement of allStatements) {
+    if (statement.ignoredConditions && statement.ignoredConditions.length > 0) {
+      if (statement.statement.isAllow()) {
+        allow.push(...statement.ignoredConditions)
+      } else {
+        deny.push(...statement.ignoredConditions)
+      }
+    }
+  }
+
+  return { allow, deny }
+}
+
+/**
+ * Checks all analyses to see if any of them have statements that ignore the role session name.
+ *
+ * @param scpAnalysis the SCP analysis
+ * @param rcpAnalysis the RCP analysis
+ * @param identityAnalysis the identity analysis
+ * @param resourceAnalysis the resource analysis
+ * @param permissionBoundaryAnalysis the permission boundary analysis (optional)
+ * @returns true if any analysis has statements that ignore the role session name, false otherwise
+ */
+function roleSessionNameIgnored(
+  scpAnalysis: ScpAnalysis,
+  rcpAnalysis: RcpAnalysis,
+  identityAnalysis: IdentityAnalysis,
+  resourceAnalysis: ResourceAnalysis,
+  permissionBoundaryAnalysis?: IdentityAnalysis
+): boolean {
+  return (
+    scpAnalysis.ouAnalysis.some((ou) => ou.allowStatements.some((s) => s.ignoredRoleSessionName)) ||
+    rcpAnalysis.ouAnalysis.some((ou) => ou.allowStatements.some((s) => s.ignoredRoleSessionName)) ||
+    identityAnalysis.allowStatements.some((s) => s.ignoredRoleSessionName) ||
+    resourceAnalysis.allowStatements.some((s) => s.ignoredRoleSessionName) ||
+    permissionBoundaryAnalysis?.allowStatements.some((s) => s.ignoredRoleSessionName) ||
+    false
+  )
 }

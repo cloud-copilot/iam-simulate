@@ -1,10 +1,10 @@
-import { loadPolicy } from '@cloud-copilot/iam-policy'
+import { Condition, loadPolicy } from '@cloud-copilot/iam-policy'
 import { readdirSync, readFileSync, statSync } from 'fs'
 import { join, resolve } from 'path'
 import { describe, expect, it } from 'vitest'
 import { AwsRequestImpl } from '../request/request.js'
 import { RequestContextImpl } from '../requestContext.js'
-import { AuthorizationRequest, authorize } from './CoreSimulatorEngine.js'
+import { AuthorizationRequest, authorize, SimulationParameters } from './CoreSimulatorEngine.js'
 
 function getAllFiles(dir: string, allFiles: string[] = []): string[] {
   const files = readdirSync(dir)
@@ -84,9 +84,17 @@ describe('coreSimulatorEngine', () => {
           const resourcePolicy = testCase.resourcePolicy
             ? loadPolicy(testCase.resourcePolicy)
             : undefined
+
           const permissionBoundaries = testCase.permissionBoundaries
             ? testCase.permissionBoundaries.map((p: any) => loadPolicy(p))
             : undefined
+
+          const simulationParameters: SimulationParameters = {
+            simulationMode: testCase.simulation?.mode || 'Strict',
+            strictConditionKeys: new Set(
+              testCase.simulation?.strictConditionKeys?.map((k: string) => k.toLowerCase())
+            )
+          }
 
           //In an authorization request
           const authorizationRequest: AuthorizationRequest = {
@@ -95,15 +103,67 @@ describe('coreSimulatorEngine', () => {
             serviceControlPolicies,
             resourceControlPolicies,
             resourcePolicy,
-            permissionBoundaries
+            permissionBoundaries,
+            simulationParameters
           }
 
           // When the request is authorized
           const analysis = authorize(authorizationRequest)
 
           // Then the result should match the expected result
-          const expected = testCase.expected.response
-          expect(analysis.result).toEqual(expected)
+          const expected = testCase.expected
+          expect(analysis.result).toEqual(expected.response)
+
+          if (expected.ignoredRoleSessionName) {
+            expect(analysis.ignoredRoleSessionName).toEqual(expected.ignoredRoleSessionName)
+          } else {
+            expect(analysis.ignoredRoleSessionName).toBeFalsy()
+          }
+
+          if (expected.ignoredConditions) {
+            for (const key of ['scp', 'rcp', 'identity', 'resource', 'permissionBoundary']) {
+              const actualAllow = (analysis.ignoredConditions as any)?.[key]?.allow
+              const actualDeny = (analysis.ignoredConditions as any)?.[key]?.deny
+              if (expected.ignoredConditions[key]?.allow) {
+                expect(actualAllow).toBeDefined()
+                const actualAllows = actualAllow.map((a: Condition) => ({
+                  key: a.conditionKey(),
+                  op: a.operation().value(),
+                  values: a.conditionValues()
+                }))
+                expect(actualAllows).toEqual(expected.ignoredConditions[key]?.allow)
+              } else {
+                expect(actualAllow).toEqual([])
+              }
+
+              if (expected.ignoredConditions[key]?.deny) {
+                expect(actualDeny).toBeDefined()
+                const actualDenies = actualDeny.map((a: Condition) => ({
+                  key: a.conditionKey(),
+                  op: a.operation().value(),
+                  values: a.conditionValues()
+                }))
+                expect(actualDenies).toEqual(expected.ignoredConditions[key]?.deny)
+              } else {
+                expect(actualDeny).toEqual([])
+              }
+            }
+          } else {
+            let ignoredConditionsUndefinedOrEmpty = true
+            if (analysis.ignoredConditions) {
+              for (const key of ['scp', 'rcp', 'identity', 'resource', 'permissionBoundary']) {
+                const actualAllow = (analysis.ignoredConditions as any)?.[key]?.allow
+                const actualDeny = (analysis.ignoredConditions as any)?.[key]?.deny
+                if (actualAllow && actualAllow.length > 0) {
+                  ignoredConditionsUndefinedOrEmpty = false
+                }
+                if (actualDeny && actualDeny.length > 0) {
+                  ignoredConditionsUndefinedOrEmpty = false
+                }
+              }
+            }
+            expect(ignoredConditionsUndefinedOrEmpty).toBe(true)
+          }
         })
       }
     })
