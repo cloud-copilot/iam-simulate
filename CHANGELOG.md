@@ -1,3 +1,15 @@
+## [0.1.50](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.49...v0.1.50) (2025-06-21)
+
+
+### Bug Fixes
+
+* Fix handling of IPs without IP Mask for IpAddress and NotIpAddress ([80c3ac1](https://github.com/cloud-copilot/iam-simulate/commit/80c3ac102445da62194ee345a5fdd9c0f04b9a14))
+
+
+### Features
+
+* Add new discovery mode to simulator ([9c1f67f](https://github.com/cloud-copilot/iam-simulate/commit/9c1f67f90096d304b93156cf10e7a4f9c8de6c4c))
+
 ## [0.1.49](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.48...v0.1.49) (2025-06-21)
 
 ## [0.1.48](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.47...v0.1.48) (2025-06-20)
