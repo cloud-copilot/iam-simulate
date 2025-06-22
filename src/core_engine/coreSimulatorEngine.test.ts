@@ -1,4 +1,4 @@
-import { Condition, loadPolicy } from '@cloud-copilot/iam-policy'
+import { loadPolicy } from '@cloud-copilot/iam-policy'
 import { readdirSync, readFileSync, statSync } from 'fs'
 import { join, resolve } from 'path'
 import { describe, expect, it } from 'vitest'
@@ -126,26 +126,18 @@ describe('coreSimulatorEngine', () => {
               const actualDeny = (analysis.ignoredConditions as any)?.[key]?.deny
               if (expected.ignoredConditions[key]?.allow) {
                 expect(actualAllow).toBeDefined()
-                const actualAllows = actualAllow.map((a: Condition) => ({
-                  key: a.conditionKey(),
-                  op: a.operation().value(),
-                  values: a.conditionValues()
-                }))
+                const actualAllows = actualAllow
                 expect(actualAllows).toEqual(expected.ignoredConditions[key]?.allow)
               } else {
-                expect(actualAllow).toEqual([])
+                expect(actualAllow).toEqual(undefined)
               }
 
               if (expected.ignoredConditions[key]?.deny) {
                 expect(actualDeny).toBeDefined()
-                const actualDenies = actualDeny.map((a: Condition) => ({
-                  key: a.conditionKey(),
-                  op: a.operation().value(),
-                  values: a.conditionValues()
-                }))
+                const actualDenies = actualDeny
                 expect(actualDenies).toEqual(expected.ignoredConditions[key]?.deny)
               } else {
-                expect(actualDeny).toEqual([])
+                expect(actualDeny).toEqual(undefined)
               }
             }
           } else {
@@ -162,7 +154,10 @@ describe('coreSimulatorEngine', () => {
                 }
               }
             }
-            expect(ignoredConditionsUndefinedOrEmpty).toBe(true)
+            expect(
+              ignoredConditionsUndefinedOrEmpty,
+              JSON.stringify(analysis.ignoredConditions)
+            ).toBe(true)
           }
         })
       }

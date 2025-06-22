@@ -1600,9 +1600,8 @@ describe('requestMatchesConditions - Discovery simulationMode (with loadPolicy)'
     // Then it should not match
     expect(result.matches).toBe('NoMatch')
 
-    // And the ignored conditions should contain the non-matching, non-strict aws:username condition
-    expect(result.ignoredConditions).toHaveLength(1)
-    expect(result.ignoredConditions![0].conditionKey()).toBe('aws:username')
+    // Since a strict condition key does not match, the ignored conditions are not returned
+    expect(result.ignoredConditions).toBeUndefined()
   })
 })
 

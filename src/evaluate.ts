@@ -1,4 +1,3 @@
-import { Condition } from '@cloud-copilot/iam-policy'
 import { StatementAnalysis } from './StatementAnalysis.js'
 
 export type EvaluationResult = 'Allowed' | 'ExplicitlyDenied' | 'ImplicitlyDenied'
@@ -8,7 +7,7 @@ export type ResourceEvaluationResult =
   | 'ExplicitlyDenied'
   | 'AllowedForAccount'
   | 'DeniedForAccount'
-  | 'ImplicityDenied'
+  | 'ImplicitlyDenied'
 
 export interface IdentityAnalysis {
   result: EvaluationResult
@@ -56,29 +55,35 @@ export interface RcpAnalysis {
   ouAnalysis: OuRcpAnalysis[]
 }
 
+export interface IgnoredCondition {
+  op: string
+  key: string
+  values: string[]
+}
+
 /**
  * Conditions that were ignored during discovery mode.
  */
 export interface IgnoredConditions {
-  scp: {
-    allow: Condition[]
-    deny: Condition[]
+  scp?: {
+    allow?: IgnoredCondition[]
+    deny?: IgnoredCondition[]
   }
-  rcp: {
-    allow: Condition[]
-    deny: Condition[]
+  rcp?: {
+    allow?: IgnoredCondition[]
+    deny?: IgnoredCondition[]
   }
-  identity: {
-    allow: Condition[]
-    deny: Condition[]
+  identity?: {
+    allow?: IgnoredCondition[]
+    deny?: IgnoredCondition[]
   }
-  resource: {
-    allow: Condition[]
-    deny: Condition[]
+  resource?: {
+    allow?: IgnoredCondition[]
+    deny?: IgnoredCondition[]
   }
-  permissionBoundary: {
-    allow: Condition[]
-    deny: Condition[]
+  permissionBoundary?: {
+    allow?: IgnoredCondition[]
+    deny?: IgnoredCondition[]
   }
 }
 
