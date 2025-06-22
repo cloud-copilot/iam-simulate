@@ -114,3 +114,21 @@ export function statementMatches(
     )
   )
 }
+
+/**
+ * Determines whether ignored conditions are decisive for a statement and should be reported.
+ *
+ * @param analysis the analysis of the statement
+ * @returns true if the ignored conditions are decisive, false otherwise
+ */
+export function reportIgnoredConditions(
+  analysis: Pick<StatementAnalysis, 'actionMatch' | 'principalMatch' | 'resourceMatch'>
+): boolean {
+  return (
+    analysis.resourceMatch &&
+    analysis.actionMatch &&
+    ['Match', 'AccountLevelMatch', 'SessionRoleMatch', 'SessionUserMatch'].includes(
+      analysis.principalMatch
+    )
+  )
+}

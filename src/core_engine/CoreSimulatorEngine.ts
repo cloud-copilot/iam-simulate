@@ -1,9 +1,10 @@
-import { Condition, Policy, Statement } from '@cloud-copilot/iam-policy'
+import { Policy, Statement } from '@cloud-copilot/iam-policy'
 import { requestMatchesStatementActions } from '../action/action.js'
 import { ConditionMatchResult, requestMatchesConditions } from '../condition/condition.js'
 import {
   EvaluationResult,
   IdentityAnalysis,
+  IgnoredCondition,
   IgnoredConditions,
   OuScpAnalysis,
   RcpAnalysis,
@@ -23,6 +24,7 @@ import { StsServiceAuthorizer } from '../services/StsServiceAuthorizer.js'
 import {
   identityStatementAllows,
   identityStatementExplicitDeny,
+  reportIgnoredConditions,
   StatementAnalysis,
   statementMatches
 } from '../StatementAnalysis.js'
@@ -252,13 +254,20 @@ export function analyzeIdentityPolicies(
         principalMatch,
         resourceMatch
       })
+
+      const shouldReportIgnoredConditions = reportIgnoredConditions({
+        actionMatch,
+        principalMatch,
+        resourceMatch
+      })
+
       const statementAnalysis: StatementAnalysis = {
         statement,
         resourceMatch,
         actionMatch,
         conditionMatch,
         principalMatch,
-        ignoredConditions,
+        ignoredConditions: shouldReportIgnoredConditions ? ignoredConditions : undefined,
         explain: makeStatementExplain(
           statement,
           overallMatch,
@@ -337,13 +346,19 @@ export function analyzeControlPolicies(
           resourceMatch
         })
 
+        const shouldReportIgnoredConditions = reportIgnoredConditions({
+          actionMatch,
+          principalMatch,
+          resourceMatch
+        })
+
         const statementAnalysis: StatementAnalysis = {
           statement,
           resourceMatch,
           actionMatch,
           conditionMatch,
           principalMatch,
-          ignoredConditions,
+          ignoredConditions: shouldReportIgnoredConditions ? ignoredConditions : [],
           explain: makeStatementExplain(
             statement,
             overallMatch,
@@ -473,13 +488,20 @@ export function analyzeResourcePolicy(
       principalMatch,
       resourceMatch
     })
+
+    const shouldReportIgnoredConditions = reportIgnoredConditions({
+      actionMatch,
+      principalMatch,
+      resourceMatch
+    })
+
     const analysis: StatementAnalysis = {
       statement,
       resourceMatch: resourceMatch,
       actionMatch,
       conditionMatch,
       principalMatch,
-      ignoredConditions,
+      ignoredConditions: shouldReportIgnoredConditions ? ignoredConditions : undefined,
       ignoredRoleSessionName,
       explain: makeStatementExplain(
         statement,
@@ -517,7 +539,7 @@ export function analyzeResourcePolicy(
   ) {
     resourceAnalysis.result = 'AllowedForAccount'
   } else {
-    resourceAnalysis.result = 'ImplicityDenied'
+    resourceAnalysis.result = 'ImplicitlyDenied'
   }
 
   return resourceAnalysis
@@ -572,33 +594,41 @@ function ignoredConditionsAnalysis(
   identityAnalysis: IdentityAnalysis,
   resourceAnalysis: ResourceAnalysis,
   permissionBoundaryAnalysis?: IdentityAnalysis
-): IgnoredConditions {
-  return {
-    scp: mapIgnoredConditions(scpAnalysis.ouAnalysis),
-    rcp: mapIgnoredConditions(rcpAnalysis.ouAnalysis),
-    identity: mapIgnoredConditions([identityAnalysis]),
-    resource: mapIgnoredConditions([resourceAnalysis]),
-    permissionBoundary: mapIgnoredConditions(
-      permissionBoundaryAnalysis ? [permissionBoundaryAnalysis] : []
-    )
+): IgnoredConditions | undefined {
+  const ignoredConditions: IgnoredConditions = {}
+  addIgnoredConditionsToAnalysis(ignoredConditions, 'scp', scpAnalysis.ouAnalysis)
+  addIgnoredConditionsToAnalysis(ignoredConditions, 'rcp', rcpAnalysis.ouAnalysis)
+  addIgnoredConditionsToAnalysis(ignoredConditions, 'identity', [identityAnalysis])
+  addIgnoredConditionsToAnalysis(ignoredConditions, 'resource', [resourceAnalysis])
+  addIgnoredConditionsToAnalysis(
+    ignoredConditions,
+    'permissionBoundary',
+    permissionBoundaryAnalysis ? [permissionBoundaryAnalysis] : []
+  )
+
+  if (Object.keys(ignoredConditions).length > 0) {
+    return ignoredConditions
   }
+  return undefined
 }
 
 /**
- * Get all of the ignored conditions from a set of analyses.
+ * Adds the specified ignored conditions to the analysis.
  *
  * @param analyses the analyses to map ignored conditions from
  * @returns the ignored conditions for allow and deny statements
  */
-function mapIgnoredConditions(
+function addIgnoredConditionsToAnalysis(
+  ignoredConditions: Partial<IgnoredConditions>,
+  key: keyof IgnoredConditions,
   analyses: {
     denyStatements: StatementAnalysis[]
     allowStatements: StatementAnalysis[]
     unmatchedStatements: StatementAnalysis[]
   }[]
-): { allow: Condition[]; deny: Condition[] } {
-  const allow: Condition[] = []
-  const deny: Condition[] = []
+): void {
+  const allow: IgnoredCondition[] = []
+  const deny: IgnoredCondition[] = []
   const allStatements = analyses.flatMap((analysis) => [
     ...analysis.allowStatements,
     ...analysis.denyStatements,
@@ -608,14 +638,36 @@ function mapIgnoredConditions(
   for (const statement of allStatements) {
     if (statement.ignoredConditions && statement.ignoredConditions.length > 0) {
       if (statement.statement.isAllow()) {
-        allow.push(...statement.ignoredConditions)
+        allow.push(
+          ...statement.ignoredConditions.map((c) => ({
+            op: c.operation().value(),
+            key: c.conditionKey(),
+            values: c.conditionValues()
+          }))
+        )
       } else {
-        deny.push(...statement.ignoredConditions)
+        deny.push(
+          ...statement.ignoredConditions.map((c) => ({
+            op: c.operation().value(),
+            key: c.conditionKey(),
+            values: c.conditionValues()
+          }))
+        )
       }
     }
   }
 
-  return { allow, deny }
+  if (allow.length === 0 && deny.length === 0) {
+    return
+  }
+  const newValue: IgnoredConditions[keyof IgnoredConditions] = {}
+  if (allow.length > 0) {
+    newValue.allow = allow
+  }
+  if (deny.length > 0) {
+    newValue.deny = deny
+  }
+  ignoredConditions[key] = newValue as IgnoredConditions[keyof IgnoredConditions]
 }
 
 /**

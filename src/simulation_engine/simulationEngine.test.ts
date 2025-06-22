@@ -946,11 +946,11 @@ describe('runSimulation', () => {
     expect(result.errors).toBeUndefined()
     expect(result.analysis?.result).toEqual('Allowed')
     expect(result.ignoredContextKeys).toEqual([])
-    expect(result.analysis?.ignoredConditions?.identity.allow.length).toEqual(1)
-    const ignoredCondition = result.analysis?.ignoredConditions?.identity.allow[0]!
-    expect(ignoredCondition.conditionKey()).toEqual('aws:SourceVpc')
-    expect(ignoredCondition.conditionValues()).toEqual(['vpc-12345678'])
-    expect(ignoredCondition.operation().value()).toEqual('StringEquals')
+    expect(result.analysis?.ignoredConditions?.identity?.allow?.length).toEqual(1)
+    const ignoredCondition = result.analysis?.ignoredConditions?.identity?.allow?.[0]!
+    expect(ignoredCondition.key).toEqual('aws:SourceVpc')
+    expect(ignoredCondition.values).toEqual(['vpc-12345678'])
+    expect(ignoredCondition.op).toEqual('StringEquals')
   })
 
   it('should pass the simulation mode with strict keys', async () => {
@@ -1000,6 +1000,6 @@ describe('runSimulation', () => {
     expect(result.errors).toBeUndefined()
     expect(result.analysis?.result).toEqual('ImplicitlyDenied')
     expect(result.ignoredContextKeys).toEqual([])
-    expect(result.analysis?.ignoredConditions?.identity.allow.length).toEqual(0)
+    expect(result.analysis?.ignoredConditions?.identity).toBeUndefined()
   })
 })

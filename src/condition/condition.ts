@@ -123,11 +123,16 @@ export function requestMatchesConditions(
     .some((result) => result.explain.matches)
 
   return {
+    //If there is a non-match this is not ignored, it's a NoMatch
+    //If there are matches that are ignored, it is also a NoMatch,
+    // for instance in a Deny statement it may match a condition that is ignored,
+    // but we still want a no match so we can show under what conditions it would be allowed
     matches: nonMatch || ignoredMatches ? 'NoMatch' : ('Match' as ConditionMatchResult),
     details: {
       conditions: results.length == 0 ? undefined : results.map((r) => r.explain)
     },
-    ignoredConditions: ignoredConditions(results, isIgnored)
+    //Ignored conditions only matter if the non ignored fields all match
+    ignoredConditions: nonMatch ? undefined : ignoredConditions(results, isIgnored)
   }
 }
 
