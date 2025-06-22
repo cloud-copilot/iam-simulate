@@ -1,3 +1,10 @@
+## [0.1.52](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.51...v0.1.52) (2025-06-22)
+
+
+### Bug Fixes
+
+* Only show ignored conditions if they are consequential to the simulation ([4c4ce06](https://github.com/cloud-copilot/iam-simulate/commit/4c4ce0644e83e9ebc17c62a5c5320be1815f56af))
+
 ## [0.1.51](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.50...v0.1.51) (2025-06-21)
 
 ## [0.1.50](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.49...v0.1.50) (2025-06-21)
