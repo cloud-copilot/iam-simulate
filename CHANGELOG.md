@@ -1,3 +1,10 @@
+## [0.1.53](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.52...v0.1.53) (2025-06-28)
+
+
+### Features
+
+* Indicate of role session name in a deny statement could be ignored ([df3537e](https://github.com/cloud-copilot/iam-simulate/commit/df3537e5607627b5abacc0a9868e79de21f7dbb9))
+
 ## [0.1.52](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.51...v0.1.52) (2025-06-22)
 
 
