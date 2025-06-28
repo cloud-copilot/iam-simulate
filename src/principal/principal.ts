@@ -44,62 +44,72 @@ export type PrincipalMatchResult =
 export function requestMatchesPrincipal(
   request: AwsRequest,
   principal: Principal[],
-  simulationParameters: SimulationParameters
+  simulationParameters: SimulationParameters,
+  allowOrDeny: 'Allow' | 'Deny'
 ): {
   matches: PrincipalMatchResult
   explains: PrincipalExplain[]
   ignoredRoleSessionName?: boolean
 } {
   const analyses = principal.map((principalStatement) =>
-    requestMatchesPrincipalStatement(request, principalStatement, simulationParameters)
+    requestMatchesPrincipalStatement(request, principalStatement, simulationParameters, allowOrDeny)
   )
 
   const explains = analyses.map((a) => a.explain)
+  const anyIgnore = analyses.some((any) => any.ignoredRoleSessionName)
+  const ignoredRoleSessionName = anyIgnore ? true : undefined
 
   // First check if any principal match without ignoring the role session name
   if (analyses.some((anys) => anys.explain.matches === 'Match' && !anys.ignoredRoleSessionName)) {
     return {
       matches: 'Match',
-      explains
+      explains,
+      ignoredRoleSessionName
     }
   }
 
   if (explains.some((exp) => exp.matches === 'SessionUserMatch')) {
     return {
       matches: 'SessionUserMatch',
-      explains
+      explains,
+      ignoredRoleSessionName
     }
   }
 
   if (explains.some((exp) => exp.matches === 'SessionRoleMatch')) {
     return {
       matches: 'SessionRoleMatch',
-      explains
+      explains,
+      ignoredRoleSessionName
     }
   }
 
-  // If there was a match, ignoring the role session name, and the simulation mode is Discovery,
+  // If there was a match, in Discovery mode, return a match and check for ignoredRoleSessionName
   if (
     simulationParameters.simulationMode === 'Discovery' &&
-    analyses.some((any) => any.explain.matches === 'Match' && any.ignoredRoleSessionName)
+    analyses.some((any) => any.explain.matches === 'Match')
   ) {
+    // The session role name could have been ignored in any statement
+
     return {
       matches: 'Match',
       explains,
-      ignoredRoleSessionName: true // This matched one role session, but it was ignored
+      ignoredRoleSessionName
     }
   }
 
   if (explains.some((exp) => exp.matches === 'AccountLevelMatch')) {
     return {
       matches: 'AccountLevelMatch',
-      explains
+      explains,
+      ignoredRoleSessionName
     }
   }
 
   return {
     matches: 'NoMatch',
-    explains
+    explains,
+    ignoredRoleSessionName
   }
 }
 
@@ -113,14 +123,16 @@ export function requestMatchesPrincipal(
 export function requestMatchesNotPrincipal(
   request: AwsRequest,
   notPrincipal: Principal[],
-  simulationParameters: SimulationParameters
+  simulationParameters: SimulationParameters,
+  allowOrDeny: 'Allow' | 'Deny'
 ): { matches: PrincipalMatchResult; explains: PrincipalExplain[] } {
   // const matches = notPrincipal.map(principalStatement => requestMatchesPrincipalStatement(request, principalStatement))
   const analyses = notPrincipal.map((principalStatement) => {
     const analysis = requestMatchesPrincipalStatement(
       request,
       principalStatement,
-      simulationParameters
+      simulationParameters,
+      allowOrDeny
     )
     /**
      * Need to do research on this. If there is an account level match on a NotPrincipal, does that
@@ -166,7 +178,8 @@ export function requestMatchesNotPrincipal(
 export function requestMatchesPrincipalStatement(
   request: AwsRequest,
   principalStatement: Principal,
-  simulationParameters: SimulationParameters
+  simulationParameters: SimulationParameters,
+  allowOrDeny: 'Allow' | 'Deny'
 ): PrincipalAnalysis {
   if (principalStatement.isServicePrincipal()) {
     if (principalStatement.service() === request.principal.value()) {
@@ -289,7 +302,7 @@ export function requestMatchesPrincipalStatement(
         - The principal in the request is a Role or assumed role ARN
         - The base role ARN of the principal in the request matches the base role ARN in the statement
       Then:
-        - Return a Match for the principal
+        - Return a Match for the principal if Allow, or NoMatch if Deny
         - Indicate that the role session name was ignored for evaluation purposes
     */
     if (
@@ -303,9 +316,10 @@ export function requestMatchesPrincipalStatement(
       }
 
       if (principalRoleArn === requestRoleArn) {
+        const discoveryMatch = allowOrDeny === 'Allow' ? 'Match' : 'NoMatch'
         return {
           explain: {
-            matches: 'Match',
+            matches: discoveryMatch,
             principal: principalStatement.value()
           },
           ignoredRoleSessionName: true // This is a role session math with the session name ignored
@@ -355,14 +369,16 @@ export function requestMatchesStatementPrincipals(
     const { matches, explains, ignoredRoleSessionName } = requestMatchesPrincipal(
       request,
       statement.principals(),
-      simulationParameters
+      simulationParameters,
+      statement.effect() as 'Allow' | 'Deny'
     )
     return { matches, details: { principals: explains }, ignoredRoleSessionName }
   } else if (statement.isNotPrincipalStatement()) {
     const { matches, explains } = requestMatchesNotPrincipal(
       request,
       statement.notPrincipals(),
-      simulationParameters
+      simulationParameters,
+      statement.effect() as 'Allow' | 'Deny'
     )
     return { matches, details: { notPrincipals: explains } }
   }

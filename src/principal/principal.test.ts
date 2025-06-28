@@ -69,7 +69,8 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(
         request,
         principalStatement,
-        defaultSimulationParameters
+        defaultSimulationParameters,
+        'Allow'
       )
 
       //Then it should return Match
@@ -96,7 +97,8 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(
         request,
         principalStatement,
-        defaultSimulationParameters
+        defaultSimulationParameters,
+        'Allow'
       )
 
       //Then it should return NoMatch
@@ -131,7 +133,8 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(
         request,
         principalStatement,
-        defaultSimulationParameters
+        defaultSimulationParameters,
+        'Allow'
       )
 
       //Then it should return Match
@@ -160,7 +163,8 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(
         request,
         principalStatement,
-        defaultSimulationParameters
+        defaultSimulationParameters,
+        'Allow'
       )
 
       //Then it should return NoMatch
@@ -189,7 +193,8 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(
         request,
         principalStatement,
-        defaultSimulationParameters
+        defaultSimulationParameters,
+        'Allow'
       )
 
       //Then it should return Match
@@ -216,7 +221,8 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(
         request,
         principalStatement,
-        defaultSimulationParameters
+        defaultSimulationParameters,
+        'Allow'
       )
 
       //Then it should return NoMatch
@@ -245,7 +251,8 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(
         request,
         principalStatement,
-        defaultSimulationParameters
+        defaultSimulationParameters,
+        'Allow'
       )
     })
   })
@@ -272,7 +279,8 @@ describe('requestMatchesPrincipalStatement', () => {
         const result = requestMatchesPrincipalStatement(
           request,
           principalStatement,
-          defaultSimulationParameters
+          defaultSimulationParameters,
+          'Allow'
         )
 
         //Then it should return AccountLevelMatch
@@ -299,7 +307,8 @@ describe('requestMatchesPrincipalStatement', () => {
         const result = requestMatchesPrincipalStatement(
           request,
           principalStatement,
-          defaultSimulationParameters
+          defaultSimulationParameters,
+          'Allow'
         )
 
         //Then it should return NoMatch
@@ -328,7 +337,8 @@ describe('requestMatchesPrincipalStatement', () => {
         const result = requestMatchesPrincipalStatement(
           request,
           principalStatement,
-          defaultSimulationParameters
+          defaultSimulationParameters,
+          'Allow'
         )
 
         //Then it should return AccountLevelMatch
@@ -355,7 +365,8 @@ describe('requestMatchesPrincipalStatement', () => {
         const result = requestMatchesPrincipalStatement(
           request,
           principalStatement,
-          defaultSimulationParameters
+          defaultSimulationParameters,
+          'Allow'
         )
 
         //Then it should return NoMatch
@@ -387,7 +398,8 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(
         request,
         principalStatement,
-        defaultSimulationParameters
+        defaultSimulationParameters,
+        'Allow'
       )
 
       //Then it should return Match
@@ -414,7 +426,8 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(
         request,
         principalStatement,
-        defaultSimulationParameters
+        defaultSimulationParameters,
+        'Allow'
       )
 
       //Then it should return Match
@@ -441,7 +454,8 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(
         request,
         principalStatement,
-        defaultSimulationParameters
+        defaultSimulationParameters,
+        'Allow'
       )
 
       //Then it should return NoMatch
@@ -470,7 +484,8 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(
         request,
         principalStatement,
-        defaultSimulationParameters
+        defaultSimulationParameters,
+        'Allow'
       )
 
       //Then it should return Match
@@ -497,7 +512,8 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(
         request,
         principalStatement,
-        defaultSimulationParameters
+        defaultSimulationParameters,
+        'Allow'
       )
 
       //Then it should return NoMatch
@@ -526,7 +542,8 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(
         request,
         principalStatement,
-        discoverySimulationParameters
+        discoverySimulationParameters,
+        'Allow'
       )
       // Then it should return Match and ignoredRoleSessionName true
       expect(result.explain.matches).toBe('Match')
@@ -552,7 +569,8 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(
         request,
         principalStatement,
-        discoverySimulationParameters
+        discoverySimulationParameters,
+        'Allow'
       )
 
       // Then it should return Match and ignoredRoleSessionName true
@@ -580,7 +598,12 @@ describe('requestMatchesPrincipalStatement', () => {
         strictConditionKeys: new Set()
       }
       // When we check if the request matches the principal statement
-      const result = requestMatchesPrincipalStatement(request, principalStatement, strictParams)
+      const result = requestMatchesPrincipalStatement(
+        request,
+        principalStatement,
+        strictParams,
+        'Allow'
+      )
       // Then it should return NoMatch and not set ignoredRoleSessionName
       expect(result.explain.matches).toBe('NoMatch')
       expect(result.ignoredRoleSessionName).toBeUndefined()
@@ -608,7 +631,8 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(
         request,
         principalStatement,
-        discoverySimulationParameters
+        discoverySimulationParameters,
+        'Allow'
       )
 
       // Then it should return Match and ignoredRoleSessionName true
@@ -636,7 +660,8 @@ describe('requestMatchesPrincipalStatement', () => {
       const result = requestMatchesPrincipalStatement(
         request,
         principalStatement,
-        discoverySimulationParameters
+        discoverySimulationParameters,
+        'Allow'
       )
       // Then it should return NoMatch and not set ignoredRoleSessionName
       expect(result.explain.matches).toBe('NoMatch')
@@ -663,7 +688,12 @@ describe('requestMatchesPrincipal', () => {
     )
 
     //When we check if the request matches the principal
-    const result = requestMatchesPrincipal(request, principals, defaultSimulationParameters)
+    const result = requestMatchesPrincipal(
+      request,
+      principals,
+      defaultSimulationParameters,
+      'Allow'
+    )
 
     //Then it should return Match
     expect(result.matches).toBe('Match')
@@ -686,7 +716,12 @@ describe('requestMatchesPrincipal', () => {
     )
 
     //When we check if the request matches the principal
-    const result = requestMatchesPrincipal(request, principals, defaultSimulationParameters)
+    const result = requestMatchesPrincipal(
+      request,
+      principals,
+      defaultSimulationParameters,
+      'Allow'
+    )
 
     //Then it should return AccountLevelMatch
     expect(result.matches).toBe('AccountLevelMatch')
@@ -709,7 +744,12 @@ describe('requestMatchesPrincipal', () => {
     )
 
     //When we check if the request matches the principal
-    const result = requestMatchesPrincipal(request, principals, defaultSimulationParameters)
+    const result = requestMatchesPrincipal(
+      request,
+      principals,
+      defaultSimulationParameters,
+      'Allow'
+    )
 
     //Then it should return Match
     expect(result.matches).toBe('Match')
@@ -732,7 +772,12 @@ describe('requestMatchesPrincipal', () => {
     )
 
     //When we check if the request matches the principal
-    const result = requestMatchesPrincipal(request, principals, defaultSimulationParameters)
+    const result = requestMatchesPrincipal(
+      request,
+      principals,
+      defaultSimulationParameters,
+      'Allow'
+    )
 
     //Then it should return NoMatch
     expect(result.matches).toBe('NoMatch')
@@ -757,7 +802,12 @@ describe('requestMatchesNotPrincipal', () => {
     )
 
     //When we check if the request matches the principal
-    const result = requestMatchesNotPrincipal(request, notPrincipals, defaultSimulationParameters)
+    const result = requestMatchesNotPrincipal(
+      request,
+      notPrincipals,
+      defaultSimulationParameters,
+      'Allow'
+    )
 
     //Then it should return NoMatch
     expect(result.matches).toBe('NoMatch')
@@ -780,7 +830,12 @@ describe('requestMatchesNotPrincipal', () => {
     )
 
     //When we check if the request matches the principal
-    const result = requestMatchesNotPrincipal(request, notPrincipals, defaultSimulationParameters)
+    const result = requestMatchesNotPrincipal(
+      request,
+      notPrincipals,
+      defaultSimulationParameters,
+      'Allow'
+    )
 
     //Then it should return NoMatch
     expect(result.matches).toBe('NoMatch')
@@ -803,7 +858,12 @@ describe('requestMatchesNotPrincipal', () => {
     )
 
     //When we check if the request matches the principal
-    const result = requestMatchesNotPrincipal(request, notPrincipals, defaultSimulationParameters)
+    const result = requestMatchesNotPrincipal(
+      request,
+      notPrincipals,
+      defaultSimulationParameters,
+      'Allow'
+    )
   })
 })
 
@@ -963,7 +1023,12 @@ describe('requestMatchesPrincipal - Discovery mode, ignoredRoleSessionName retur
       new RequestContextImpl({})
     )
     // When we check if the request matches the principal in Discovery mode
-    const result = requestMatchesPrincipal(request, principals, discoverySimulationParameters)
+    const result = requestMatchesPrincipal(
+      request,
+      principals,
+      discoverySimulationParameters,
+      'Allow'
+    )
     // Then it should return Match and ignoredRoleSessionName true
     expect(result.matches).toBe('Match')
     expect(result.ignoredRoleSessionName).toBe(true)
@@ -992,7 +1057,12 @@ describe('requestMatchesPrincipal - Discovery mode, ignoredRoleSessionName retur
       new RequestContextImpl({})
     )
     // When we check if the request matches the principal in Discovery mode
-    const result = requestMatchesPrincipal(request, principals, discoverySimulationParameters)
+    const result = requestMatchesPrincipal(
+      request,
+      principals,
+      discoverySimulationParameters,
+      'Allow'
+    )
     // Then it should return Match and not set ignoredRoleSessionName
     expect(result.matches).toBe('Match')
     expect(result.ignoredRoleSessionName).toBeUndefined()
