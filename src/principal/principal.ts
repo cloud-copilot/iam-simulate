@@ -322,7 +322,7 @@ export function requestMatchesPrincipalStatement(
             matches: discoveryMatch,
             principal: principalStatement.value()
           },
-          ignoredRoleSessionName: true // This is a role session math with the session name ignored
+          ignoredRoleSessionName: true // This is a role session match with the session name ignored
         }
       }
     }
