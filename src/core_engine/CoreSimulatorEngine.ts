@@ -689,10 +689,19 @@ function roleSessionNameIgnored(
 ): boolean {
   return (
     scpAnalysis.ouAnalysis.some((ou) => ou.allowStatements.some((s) => s.ignoredRoleSessionName)) ||
+    scpAnalysis.ouAnalysis.some((ou) =>
+      ou.unmatchedStatements.some((s) => s.ignoredRoleSessionName)
+    ) ||
     rcpAnalysis.ouAnalysis.some((ou) => ou.allowStatements.some((s) => s.ignoredRoleSessionName)) ||
+    rcpAnalysis.ouAnalysis.some((ou) =>
+      ou.unmatchedStatements.some((s) => s.ignoredRoleSessionName)
+    ) ||
     identityAnalysis.allowStatements.some((s) => s.ignoredRoleSessionName) ||
+    identityAnalysis.unmatchedStatements.some((s) => s.ignoredRoleSessionName) ||
     resourceAnalysis.allowStatements.some((s) => s.ignoredRoleSessionName) ||
+    resourceAnalysis.unmatchedStatements.some((s) => s.ignoredRoleSessionName) ||
     permissionBoundaryAnalysis?.allowStatements.some((s) => s.ignoredRoleSessionName) ||
+    permissionBoundaryAnalysis?.unmatchedStatements.some((s) => s.ignoredRoleSessionName) ||
     false
   )
 }

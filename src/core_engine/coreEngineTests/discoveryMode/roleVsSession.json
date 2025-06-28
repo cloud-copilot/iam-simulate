@@ -230,5 +230,46 @@
     "expected": {
       "response": "ImplicitlyDenied"
     }
+  },
+  {
+    "name": "Allow when Deny Has a Session and Request Role Matches in Discovery Mode",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:role/test-role",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::mybucket/testobject",
+          "Principal": {
+            "AWS": "arn:aws:iam::123456789012:role/test-role"
+          }
+        },
+        {
+          "Effect": "Deny",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::mybucket/testobject",
+          "Principal": {
+            "AWS": "arn:aws:sts::123456789012:assumed-role/test-role/session-name"
+          }
+        }
+      ]
+    },
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredRoleSessionName": true
+    }
   }
 ]
