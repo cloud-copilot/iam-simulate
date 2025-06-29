@@ -19,11 +19,11 @@ export function runUnsafeSimulation(
   simulationOptions: Partial<SimulationOptions>
 ): EvaluationResult {
   const identityPolicies = Object.values(simulation.identityPolicies).map((p) =>
-    loadPolicy(p.policy)
+    loadPolicy(p.policy, { name: p.name })
   )
   const serviceControlPolicies: ControlPolicies[] = simulation.serviceControlPolicies.map((scp) => {
     const ouId = scp.orgIdentifier
-    const policies = scp.policies.map((val) => loadPolicy(val.policy))
+    const policies = scp.policies.map((val) => loadPolicy(val.policy, { name: val.name }))
 
     return {
       orgIdentifier: ouId,
@@ -34,7 +34,7 @@ export function runUnsafeSimulation(
   const resourceControlPolicies: ControlPolicies[] = simulation.resourceControlPolicies.map(
     (rcp) => {
       const ouId = rcp.orgIdentifier
-      const policies = rcp.policies.map((val) => loadPolicy(val.policy))
+      const policies = rcp.policies.map((val) => loadPolicy(val.policy, { name: val.name }))
 
       return {
         orgIdentifier: ouId,
@@ -44,7 +44,9 @@ export function runUnsafeSimulation(
   )
 
   const permissionBoundaries =
-    simulation.permissionBoundaryPolicies?.map((val) => loadPolicy(val.policy)) ?? undefined
+    simulation.permissionBoundaryPolicies?.map((val) =>
+      loadPolicy(val.policy, { name: val.name })
+    ) ?? undefined
 
   const requestContext = new RequestContextImpl(simulation.request.contextVariables)
   const request = new AwsRequestImpl(

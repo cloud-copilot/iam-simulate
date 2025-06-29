@@ -25,16 +25,19 @@ function getAllFiles(dir: string, allFiles: string[] = []): string[] {
   return allFiles
 }
 
-const defaultRcp = loadPolicy({
-  Version: '2012-10-17',
-  Statement: [
-    {
-      Effect: 'Allow',
-      Action: '*',
-      Resource: '*'
-    }
-  ]
-})
+const defaultRcp = loadPolicy(
+  {
+    Version: '2012-10-17',
+    Statement: [
+      {
+        Effect: 'Allow',
+        Action: '*',
+        Resource: '*'
+      }
+    ]
+  },
+  { name: 'RCPFullAccess' }
+)
 
 describe('coreSimulatorEngine', () => {
   const testFolderPath = resolve(join(__dirname, 'coreEngineTests'))
@@ -63,30 +66,39 @@ describe('coreSimulatorEngine', () => {
             new RequestContextImpl(context)
           )
           // And Policies
-          const identityPolicies = testCase.identityPolicies.map((p: any) => loadPolicy(p))
+          const identityPolicies = testCase.identityPolicies.map((p: any, idx: number) =>
+            loadPolicy(p, { name: idx.toString() })
+          )
           const serviceControlPolicies = (testCase.serviceControlPolicies || []).map((scp: any) => {
             return {
               orgIdentifier: scp.orgIdentifier,
-              policies: scp.policies.map((p: any) => loadPolicy(p))
+              policies: scp.policies.map((p: any, idx: number) =>
+                loadPolicy(p, { name: idx.toString() })
+              )
             }
           })
 
           const resourceControlPolicies = (testCase.resourceControlPolicies || []).map(
-            (rcp: any) => {
+            (rcp: any, idx: number) => {
               return {
                 orgIdentifier: rcp.orgIdentifier,
                 //We add a default allow all rcp to every level of the org, just like AWS does.
-                policies: [defaultRcp, ...rcp.policies.map((p: any) => loadPolicy(p))]
+                policies: [
+                  defaultRcp,
+                  ...rcp.policies.map((p: any) => loadPolicy(p, { name: idx.toString() }))
+                ]
               }
             }
           )
 
           const resourcePolicy = testCase.resourcePolicy
-            ? loadPolicy(testCase.resourcePolicy)
+            ? loadPolicy(testCase.resourcePolicy, { name: 'ResourcePolicy' })
             : undefined
 
           const permissionBoundaries = testCase.permissionBoundaries
-            ? testCase.permissionBoundaries.map((p: any) => loadPolicy(p))
+            ? testCase.permissionBoundaries.map((p: any, idx: number) =>
+                loadPolicy(p, { name: idx.toString() })
+              )
             : undefined
 
           const simulationParameters: SimulationParameters = {
@@ -109,6 +121,7 @@ describe('coreSimulatorEngine', () => {
 
           // When the request is authorized
           const analysis = authorize(authorizationRequest)
+          console.log(JSON.stringify(analysis, null, 2))
 
           // Then the result should match the expected result
           const expected = testCase.expected

@@ -1,7 +1,6 @@
 import { iamActionExists, iamServiceExists } from '@cloud-copilot/iam-data'
 import {
   loadPolicy,
-  Policy,
   validateIdentityPolicy,
   validateResourceControlPolicy,
   validateResourcePolicy,
@@ -13,6 +12,7 @@ import { normalizeContextKeyCase, typeForContextKey } from '../context_keys/cont
 import {
   authorize,
   ControlPolicies,
+  PolicyWithName,
   SimulationMode,
   validSimulationModes
 } from '../core_engine/CoreSimulatorEngine.js'
@@ -83,12 +83,12 @@ export async function runSimulation(
   simulationOptions: Partial<SimulationOptions>
 ): Promise<SimulationResult> {
   const identityPolicyErrors: Record<string, ValidationError[]> = {}
-  const identityPolicies: Policy[] = []
+  const identityPolicies: PolicyWithName[] = []
   simulation.identityPolicies.forEach((value) => {
     const { name, policy } = value
     const validationErrors = validateIdentityPolicy(policy)
     if (validationErrors.length == 0) {
-      identityPolicies.push(loadPolicy(policy))
+      identityPolicies.push(loadPolicy(policy, { name }))
     } else {
       identityPolicyErrors[name] = validationErrors
     }
@@ -97,7 +97,7 @@ export async function runSimulation(
   const serviceControlPolicyErrors: Record<string, ValidationError[]> = {}
   const serviceControlPolicies: ControlPolicies[] = simulation.serviceControlPolicies.map((scp) => {
     const ouId = scp.orgIdentifier
-    const validPolicies: Policy[] = []
+    const validPolicies: PolicyWithName[] = []
 
     scp.policies.forEach((value) => {
       const { name, policy } = value
@@ -105,7 +105,8 @@ export async function runSimulation(
       if (validationErrors.length > 0) {
         serviceControlPolicyErrors[name] = validationErrors
       } else {
-        validPolicies.push(loadPolicy(policy))
+        loadPolicy(policy, { name })
+        validPolicies.push(loadPolicy(policy, { name }))
       }
     })
 
@@ -119,8 +120,8 @@ export async function runSimulation(
   const resourceControlPolicies: ControlPolicies[] = simulation.resourceControlPolicies.map(
     (rcp) => {
       const ouId = rcp.orgIdentifier
-      const validPolicies: Policy[] = []
-      validPolicies.push(loadPolicy(DEFAULT_RCP.policy))
+      const validPolicies: PolicyWithName[] = []
+      validPolicies.push(loadPolicy(DEFAULT_RCP.policy, { name: DEFAULT_RCP.name }))
 
       rcp.policies.forEach((value) => {
         const { name, policy } = value
@@ -128,7 +129,7 @@ export async function runSimulation(
         if (validationErrors.length > 0) {
           resourceControlPolicyErrors[name] = validationErrors
         } else {
-          validPolicies.push(loadPolicy(policy))
+          validPolicies.push(loadPolicy(policy, { name }))
         }
       })
 
@@ -143,7 +144,7 @@ export async function runSimulation(
     ? validateResourcePolicy(simulation.resourcePolicy)
     : []
 
-  const permissionBoundaries: Policy[] | undefined = simulation.permissionBoundaryPolicies
+  const permissionBoundaries: PolicyWithName[] | undefined = simulation.permissionBoundaryPolicies
     ? []
     : undefined
   const permissionBoundaryErrors: Record<string, ValidationError[]> = {}
@@ -151,7 +152,7 @@ export async function runSimulation(
     const { name, policy } = pb
     const validationErrors = validateIdentityPolicy(policy)
     if (validationErrors.length == 0) {
-      permissionBoundaries!.push(loadPolicy(policy))
+      permissionBoundaries!.push(loadPolicy(policy, { name }))
     } else {
       permissionBoundaryErrors[name] = validationErrors
     }
@@ -177,7 +178,7 @@ export async function runSimulation(
   }
 
   const resourcePolicy = simulation.resourcePolicy
-    ? loadPolicy(simulation.resourcePolicy)
+    ? loadPolicy(simulation.resourcePolicy, { name: simulation.resourcePolicy.name })
     : undefined
 
   if (simulation.request.action.split(':').length != 2) {
