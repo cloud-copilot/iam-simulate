@@ -1,3 +1,10 @@
+## [0.1.54](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.53...v0.1.54) (2025-06-29)
+
+
+### Features
+
+* Add policy id to analyses ([68dc2d4](https://github.com/cloud-copilot/iam-simulate/commit/68dc2d4f63543a1e0301ffc62db4c82fecf42cc2))
+
 ## [0.1.53](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.52...v0.1.53) (2025-06-28)
 
 
