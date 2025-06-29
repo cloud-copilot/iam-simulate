@@ -105,7 +105,6 @@ export async function runSimulation(
       if (validationErrors.length > 0) {
         serviceControlPolicyErrors[name] = validationErrors
       } else {
-        loadPolicy(policy, { name })
         validPolicies.push(loadPolicy(policy, { name }))
       }
     })

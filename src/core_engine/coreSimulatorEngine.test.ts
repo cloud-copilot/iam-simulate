@@ -121,7 +121,6 @@ describe('coreSimulatorEngine', () => {
 
           // When the request is authorized
           const analysis = authorize(authorizationRequest)
-          console.log(JSON.stringify(analysis, null, 2))
 
           // Then the result should match the expected result
           const expected = testCase.expected
