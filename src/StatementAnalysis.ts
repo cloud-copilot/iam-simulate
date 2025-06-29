@@ -9,6 +9,11 @@ import { PrincipalMatchResult } from './principal/principal.js'
  */
 export interface StatementAnalysis {
   /**
+   * The identifier of the policy that contains the statement.
+   */
+  policyId: string
+
+  /**
    * The statement being analyzed.
    */
   statement: Statement

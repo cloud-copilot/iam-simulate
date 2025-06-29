@@ -31,6 +31,8 @@ import {
 
 export const validSimulationModes = ['Strict', 'Discovery'] as const
 
+export type PolicyWithName = Policy<{ name: string }>
+
 /**
  * The mode of simulation for the core engine.
  * - Strict: Simulates the request as if it were being made in a real AWS environment.
@@ -66,7 +68,7 @@ export interface ControlPolicies {
   /**
    * The policies that apply to this organizational unit.
    */
-  policies: Policy[]
+  policies: PolicyWithName[]
 }
 
 /**
@@ -81,7 +83,7 @@ export interface AuthorizationRequest {
   /**
    * The identity policies that are applicable to the principal making the request.
    */
-  identityPolicies: Policy[]
+  identityPolicies: PolicyWithName[]
 
   /**
    * The service control policies that apply to the principal making the request. In
@@ -98,12 +100,12 @@ export interface AuthorizationRequest {
   /**
    * The resource policy that applies to the resource being accessed.
    */
-  resourcePolicy: Policy | undefined
+  resourcePolicy: PolicyWithName | undefined
 
   /**
    * The permission boundaries that apply to the principal making the request.
    */
-  permissionBoundaries: Policy[] | undefined
+  permissionBoundaries: PolicyWithName[] | undefined
 
   /**
    * The simulation parameters for the request.
@@ -215,7 +217,7 @@ export function getServiceAuthorizer(request: AuthorizationRequest): ServiceAuth
  * @returns an array of statement analysis results
  */
 export function analyzeIdentityPolicies(
-  identityPolicies: Policy[],
+  identityPolicies: PolicyWithName[],
   request: AwsRequest,
   simulationParameters: SimulationParameters
 ): IdentityAnalysis {
@@ -262,6 +264,7 @@ export function analyzeIdentityPolicies(
       })
 
       const statementAnalysis: StatementAnalysis = {
+        policyId: policy.metadata().name,
         statement,
         resourceMatch,
         actionMatch,
@@ -353,6 +356,7 @@ export function analyzeControlPolicies(
         })
 
         const statementAnalysis: StatementAnalysis = {
+          policyId: policy.metadata().name,
           statement,
           resourceMatch,
           actionMatch,
@@ -411,7 +415,7 @@ export function analyzeControlPolicies(
  * @returns an array of statement analysis results
  */
 export function analyzeResourcePolicy(
-  resourcePolicy: Policy | undefined,
+  resourcePolicy: PolicyWithName | undefined,
   request: AwsRequest,
   principalHasPermissionBoundary: boolean,
   simulationParameters: SimulationParameters
@@ -496,6 +500,7 @@ export function analyzeResourcePolicy(
     })
 
     const analysis: StatementAnalysis = {
+      policyId: resourcePolicy.metadata().name,
       statement,
       resourceMatch: resourceMatch,
       actionMatch,
@@ -546,7 +551,7 @@ export function analyzeResourcePolicy(
 }
 
 export function analyzePermissionBoundaryPolicies(
-  permissionBoundaries: Policy[] | undefined,
+  permissionBoundaries: PolicyWithName[] | undefined,
   request: AwsRequest,
   simulationParameters: SimulationParameters
 ): IdentityAnalysis | undefined {
