@@ -93,7 +93,8 @@ vi.mocked(iamActionDetails).mockImplementation(async (service, actionKey) => {
           ]
         }
       ],
-      dependentActions: []
+      dependentActions: [],
+      isWildcardOnly: false
     }
   } else if (actionKey === 'ListBucket') {
     return {
@@ -124,7 +125,8 @@ vi.mocked(iamActionDetails).mockImplementation(async (service, actionKey) => {
         's3:TlsVersion',
         's3:x-amz-content-sha256'
       ],
-      dependentActions: []
+      dependentActions: [],
+      isWildcardOnly: false
     }
   } else if (actionKey === 'GetObjects') {
     //This is a fake action used in the multiple matching resources test
@@ -157,6 +159,7 @@ vi.mocked(iamActionDetails).mockImplementation(async (service, actionKey) => {
           ]
         }
       ],
+      isWildcardOnly: false,
       dependentActions: []
     }
   }
@@ -529,6 +532,45 @@ describe('runSimulation', () => {
     expect(result.ignoredContextKeys).toBeUndefined()
   })
 
+  it('should return VPC Endpoint policy errors', async () => {
+    //Given a simulation with an error in a VPC Endpoint policy
+    const simulation: Simulation = {
+      identityPolicies: [],
+      serviceControlPolicies: [],
+      resourceControlPolicies: [],
+      resourcePolicy: undefined,
+      vpcEndpointPolicies: [
+        {
+          name: 'badPolicy',
+          policy: {
+            Statement: {
+              Effect: 'Allow',
+              Action: 's3:GetObject',
+              Resource: 'arn:aws:s3:::examplebucket/1234'
+            }
+          }
+        }
+      ],
+      request: {
+        action: 's3:GetObject',
+        resource: {
+          resource: 'arn:aws:s3:::examplebucket/1234',
+          accountId: '123456789012'
+        },
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        contextVariables: {}
+      }
+    }
+
+    //When the simulation is run
+    const result = await runSimulation(simulation, {})
+
+    //Then the result should contain an error
+    expect(result.errors!.message).toEqual('policy.errors')
+    expect(result.errors!.vpcEndpointErrors!['badPolicy'].length).toEqual(1)
+    expect(result.ignoredContextKeys).toBeUndefined()
+  })
+
   it('should return an error for a mal formatted action', async () => {
     //Given a simulation with a mal formatted action
     const simulation: Simulation = {
@@ -631,7 +673,8 @@ describe('runSimulation', () => {
       description: 'Grants permission to list all S3 buckets',
       name: 'ListAllMyBuckets',
       resourceTypes: [],
-      dependentActions: []
+      dependentActions: [],
+      isWildcardOnly: true
     })
 
     //When the simulation is run

@@ -101,6 +101,12 @@ describe('coreSimulatorEngine', () => {
               )
             : undefined
 
+          const vpcEndPointPolicies = testCase.endpointPolicies
+            ? testCase.endpointPolicies.map((p: any, idx: number) =>
+                loadPolicy(p, { name: idx.toString() })
+              )
+            : undefined
+
           const simulationParameters: SimulationParameters = {
             simulationMode: testCase.simulation?.mode || 'Strict',
             strictConditionKeys: new Set(
@@ -116,6 +122,7 @@ describe('coreSimulatorEngine', () => {
             resourceControlPolicies,
             resourcePolicy,
             permissionBoundaries,
+            vpcEndpointPolicies: vpcEndPointPolicies,
             simulationParameters
           }
 
@@ -133,7 +140,14 @@ describe('coreSimulatorEngine', () => {
           }
 
           if (expected.ignoredConditions) {
-            for (const key of ['scp', 'rcp', 'identity', 'resource', 'permissionBoundary']) {
+            for (const key of [
+              'scp',
+              'rcp',
+              'identity',
+              'resource',
+              'permissionBoundary',
+              'endpointPolicy'
+            ]) {
               const actualAllow = (analysis.ignoredConditions as any)?.[key]?.allow
               const actualDeny = (analysis.ignoredConditions as any)?.[key]?.deny
               if (expected.ignoredConditions[key]?.allow) {
@@ -155,7 +169,14 @@ describe('coreSimulatorEngine', () => {
           } else {
             let ignoredConditionsUndefinedOrEmpty = true
             if (analysis.ignoredConditions) {
-              for (const key of ['scp', 'rcp', 'identity', 'resource', 'permissionBoundary']) {
+              for (const key of [
+                'scp',
+                'rcp',
+                'identity',
+                'resource',
+                'permissionBoundary',
+                'endpointPolicy'
+              ]) {
                 const actualAllow = (analysis.ignoredConditions as any)?.[key]?.allow
                 const actualDeny = (analysis.ignoredConditions as any)?.[key]?.deny
                 if (actualAllow && actualAllow.length > 0) {

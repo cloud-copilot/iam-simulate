@@ -25,6 +25,7 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     const identityStatementResult = request.identityAnalysis.result
     const resourcePolicyResult = request.resourceAnalysis?.result
     const permissionBoundaryResult = request.permissionBoundaryAnalysis?.result
+    const endpointPolicyResult = request.endpointPolicyAnalysis?.result
 
     const principalAccount = request.request.principal.accountId()
     const resourceAccount = request.request.resource?.accountId()
@@ -38,13 +39,15 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
       | 'resourceAnalysis'
       | 'identityAnalysis'
       | 'permissionBoundaryAnalysis'
+      | 'endpointPolicyAnalysis'
     > = {
       sameAccount,
       identityAnalysis: request.identityAnalysis,
       scpAnalysis: request.scpAnalysis,
       rcpAnalysis: request.rcpAnalysis,
       resourceAnalysis: request.resourceAnalysis,
-      permissionBoundaryAnalysis: request.permissionBoundaryAnalysis
+      permissionBoundaryAnalysis: request.permissionBoundaryAnalysis,
+      endpointPolicyAnalysis: request.endpointPolicyAnalysis
     }
 
     if (scpResult !== 'Allowed') {
@@ -57,6 +60,16 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     if (rcpResult !== 'Allowed') {
       return {
         result: rcpResult,
+        ...baseResult
+      }
+    }
+
+    if (
+      endpointPolicyResult === 'ExplicitlyDenied' ||
+      endpointPolicyResult === 'ImplicitlyDenied'
+    ) {
+      return {
+        result: endpointPolicyResult,
         ...baseResult
       }
     }

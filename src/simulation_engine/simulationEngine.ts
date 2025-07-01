@@ -1,6 +1,7 @@
 import { iamActionExists, iamServiceExists } from '@cloud-copilot/iam-data'
 import {
   loadPolicy,
+  validateEndpointPolicy,
   validateIdentityPolicy,
   validateResourceControlPolicy,
   validateResourcePolicy,
@@ -45,6 +46,7 @@ export interface SimulationErrors {
   resourceControlPolicyErrors?: Record<string, ValidationError[]>
   permissionBoundaryErrors?: Record<string, ValidationError[]>
   resourcePolicyErrors?: ValidationError[]
+  vpcEndpointErrors?: Record<string, ValidationError[]>
   message: string
 }
 
@@ -157,11 +159,26 @@ export async function runSimulation(
     }
   })
 
+  const vpcEndpointPolicies: PolicyWithName[] | undefined = simulation.vpcEndpointPolicies
+    ? []
+    : undefined
+  const vpcEndpointErrors: Record<string, ValidationError[]> = {}
+  simulation.vpcEndpointPolicies?.map((endpointPolicy) => {
+    const { name, policy } = endpointPolicy
+    const validationErrors = validateEndpointPolicy(policy)
+    if (validationErrors.length == 0) {
+      vpcEndpointPolicies!.push(loadPolicy(policy, { name }))
+    } else {
+      vpcEndpointErrors[name] = validationErrors
+    }
+  })
+
   if (
     Object.keys(identityPolicyErrors).length > 0 ||
     Object.keys(serviceControlPolicyErrors).length > 0 ||
     Object.keys(resourceControlPolicyErrors).length > 0 ||
     Object.keys(permissionBoundaryErrors).length > 0 ||
+    Object.keys(vpcEndpointErrors).length > 0 ||
     resourcePolicyErrors.length > 0
   ) {
     return {
@@ -171,6 +188,7 @@ export async function runSimulation(
         resourceControlPolicyErrors,
         resourcePolicyErrors,
         permissionBoundaryErrors,
+        vpcEndpointErrors,
         message: 'policy.errors'
       }
     }
@@ -264,6 +282,7 @@ export async function runSimulation(
     resourceControlPolicies,
     resourcePolicy,
     permissionBoundaries,
+    vpcEndpointPolicies,
     simulationParameters: {
       simulationMode: simulationMode,
       strictConditionKeys: strictConditionKeys

@@ -41,6 +41,18 @@ export interface Simulation {
    */
   resourceControlPolicies: SimulationOrgPolicies[]
 
+  /**
+   * The resource policy, if any
+   */
   resourcePolicy?: any
+
+  /**
+   * The permission boundary policies, if any.
+   */
   permissionBoundaryPolicies?: { name: string; policy: any }[]
+
+  /**
+   * The VPC endpoint policies, if any.
+   */
+  vpcEndpointPolicies?: { name: string; policy: any }[]
 }

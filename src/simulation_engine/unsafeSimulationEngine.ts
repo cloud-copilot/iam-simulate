@@ -66,6 +66,7 @@ export function runUnsafeSimulation(
     resourceControlPolicies,
     resourcePolicy: simulation.resourcePolicy ? loadPolicy(simulation.resourcePolicy) : undefined,
     permissionBoundaries,
+    vpcEndpointPolicies: undefined,
     simulationParameters: {
       simulationMode: 'Strict',
       strictConditionKeys: new Set()
