@@ -168,7 +168,7 @@ export function authorize(request: AuthorizationRequest): RequestAnalysis {
     simulationParameters
   )
 
-  const endpointPolicyAnalysis = analyzeVpcEndpointPolicies(
+  const endpointAnalysis = analyzeVpcEndpointPolicies(
     request.vpcEndpointPolicies,
     request.request,
     simulationParameters
@@ -182,7 +182,7 @@ export function authorize(request: AuthorizationRequest): RequestAnalysis {
     rcpAnalysis,
     resourceAnalysis,
     permissionBoundaryAnalysis,
-    endpointPolicyAnalysis,
+    endpointAnalysis,
     simulationParameters
   })
 
@@ -193,7 +193,7 @@ export function authorize(request: AuthorizationRequest): RequestAnalysis {
       identityAnalysis,
       resourceAnalysis,
       permissionBoundaryAnalysis,
-      endpointPolicyAnalysis
+      endpointAnalysis
     )
     result.ignoredRoleSessionName = roleSessionNameIgnored(
       scpAnalysis,
