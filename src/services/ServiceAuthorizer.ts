@@ -15,7 +15,7 @@ export interface ServiceAuthorizationRequest {
   resourceAnalysis: ResourceAnalysis
   rcpAnalysis: RcpAnalysis
   permissionBoundaryAnalysis: IdentityAnalysis | undefined
-  endpointPolicyAnalysis: IdentityAnalysis | undefined
+  endpointAnalysis: IdentityAnalysis | undefined
   simulationParameters: SimulationParameters
 }
 

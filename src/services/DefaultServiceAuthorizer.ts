@@ -25,7 +25,7 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     const identityStatementResult = request.identityAnalysis.result
     const resourcePolicyResult = request.resourceAnalysis?.result
     const permissionBoundaryResult = request.permissionBoundaryAnalysis?.result
-    const endpointPolicyResult = request.endpointPolicyAnalysis?.result
+    const endpointPolicyResult = request.endpointAnalysis?.result
 
     const principalAccount = request.request.principal.accountId()
     const resourceAccount = request.request.resource?.accountId()
@@ -47,7 +47,7 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
       rcpAnalysis: request.rcpAnalysis,
       resourceAnalysis: request.resourceAnalysis,
       permissionBoundaryAnalysis: request.permissionBoundaryAnalysis,
-      endpointPolicyAnalysis: request.endpointPolicyAnalysis
+      endpointPolicyAnalysis: request.endpointAnalysis
     }
 
     if (scpResult !== 'Allowed') {
