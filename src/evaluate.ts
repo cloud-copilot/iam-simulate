@@ -133,7 +133,7 @@ export interface RequestAnalysis {
   /**
    * The result of the evaluation of the VPC endpoint policies, if any.
    */
-  endpointPolicyAnalysis?: IdentityAnalysis | undefined
+  endpointAnalysis?: IdentityAnalysis | undefined
 
   /**
    * Any conditions that were ignored during discovery mode.

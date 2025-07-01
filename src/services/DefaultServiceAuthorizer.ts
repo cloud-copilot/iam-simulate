@@ -39,7 +39,7 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
       | 'resourceAnalysis'
       | 'identityAnalysis'
       | 'permissionBoundaryAnalysis'
-      | 'endpointPolicyAnalysis'
+      | 'endpointAnalysis'
     > = {
       sameAccount,
       identityAnalysis: request.identityAnalysis,
@@ -47,7 +47,7 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
       rcpAnalysis: request.rcpAnalysis,
       resourceAnalysis: request.resourceAnalysis,
       permissionBoundaryAnalysis: request.permissionBoundaryAnalysis,
-      endpointPolicyAnalysis: request.endpointAnalysis
+      endpointAnalysis: request.endpointAnalysis
     }
 
     if (scpResult !== 'Allowed') {
