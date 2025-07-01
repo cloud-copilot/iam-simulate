@@ -623,7 +623,7 @@ function ignoredConditionsAnalysis(
   identityAnalysis: IdentityAnalysis,
   resourceAnalysis: ResourceAnalysis,
   permissionBoundaryAnalysis?: IdentityAnalysis,
-  endpointPolicyAnalysis?: IdentityAnalysis
+  endpointAnalysis?: IdentityAnalysis
 ): IgnoredConditions | undefined {
   const ignoredConditions: IgnoredConditions = {}
   addIgnoredConditionsToAnalysis(ignoredConditions, 'scp', scpAnalysis.ouAnalysis)
@@ -638,7 +638,7 @@ function ignoredConditionsAnalysis(
   addIgnoredConditionsToAnalysis(
     ignoredConditions,
     'endpointPolicy',
-    endpointPolicyAnalysis ? [endpointPolicyAnalysis] : []
+    endpointAnalysis ? [endpointAnalysis] : []
   )
 
   if (Object.keys(ignoredConditions).length > 0) {
