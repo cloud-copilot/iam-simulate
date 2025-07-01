@@ -1,3 +1,10 @@
+## [0.1.55](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.54...v0.1.55) (2025-07-01)
+
+
+### Features
+
+* Support evaluating VPC endpoint policies ([98cc9cd](https://github.com/cloud-copilot/iam-simulate/commit/98cc9cdc20c81b95d55a405a33fff168c89ed0cd))
+
 ## [0.1.54](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.53...v0.1.54) (2025-06-29)
 
 
