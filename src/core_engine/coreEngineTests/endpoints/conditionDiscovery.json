@@ -1,0 +1,53 @@
+[
+  {
+    "name": "Allows under Conditions in the VPC Endpoint Policy",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user"
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::my-bucket"
+          }
+        ]
+      }
+    ],
+    "endpointPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpce": "vpce-12345678"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "endpointPolicy": {
+          "allow": [{ "op": "StringEquals", "key": "aws:SourceVpce", "values": ["vpce-12345678"] }]
+        }
+      }
+    }
+  }
+]

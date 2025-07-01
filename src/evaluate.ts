@@ -85,6 +85,10 @@ export interface IgnoredConditions {
     allow?: IgnoredCondition[]
     deny?: IgnoredCondition[]
   }
+  endpointPolicy?: {
+    allow?: IgnoredCondition[]
+    deny?: IgnoredCondition[]
+  }
 }
 
 /**
@@ -125,6 +129,11 @@ export interface RequestAnalysis {
    * The result of the evaluation of the permission boundary.
    */
   permissionBoundaryAnalysis?: IdentityAnalysis | undefined
+
+  /**
+   * The result of the evaluation of the VPC endpoint policies, if any.
+   */
+  endpointPolicyAnalysis?: IdentityAnalysis | undefined
 
   /**
    * Any conditions that were ignored during discovery mode.

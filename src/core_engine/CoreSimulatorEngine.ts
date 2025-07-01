@@ -108,6 +108,11 @@ export interface AuthorizationRequest {
   permissionBoundaries: PolicyWithName[] | undefined
 
   /**
+   * The VPC endpoint policies that apply to the request, if any.
+   */
+  vpcEndpointPolicies: PolicyWithName[] | undefined
+
+  /**
    * The simulation parameters for the request.
    */
   simulationParameters: SimulationParameters
@@ -163,6 +168,12 @@ export function authorize(request: AuthorizationRequest): RequestAnalysis {
     simulationParameters
   )
 
+  const endpointPolicyAnalysis = analyzeVpcEndpointPolicies(
+    request.vpcEndpointPolicies,
+    request.request,
+    simulationParameters
+  )
+
   const serviceAuthorizer = getServiceAuthorizer(request)
   const result = serviceAuthorizer.authorize({
     request: request.request,
@@ -171,6 +182,7 @@ export function authorize(request: AuthorizationRequest): RequestAnalysis {
     rcpAnalysis,
     resourceAnalysis,
     permissionBoundaryAnalysis,
+    endpointPolicyAnalysis,
     simulationParameters
   })
 
@@ -180,7 +192,8 @@ export function authorize(request: AuthorizationRequest): RequestAnalysis {
       rcpAnalysis,
       identityAnalysis,
       resourceAnalysis,
-      permissionBoundaryAnalysis
+      permissionBoundaryAnalysis,
+      endpointPolicyAnalysis
     )
     result.ignoredRoleSessionName = roleSessionNameIgnored(
       scpAnalysis,
@@ -562,6 +575,17 @@ export function analyzePermissionBoundaryPolicies(
   return analyzeIdentityPolicies(permissionBoundaries, request, simulationParameters)
 }
 
+export function analyzeVpcEndpointPolicies(
+  vpcEndPointPolicies: PolicyWithName[] | undefined,
+  request: AwsRequest,
+  simulationParameters: SimulationParameters
+): IdentityAnalysis | undefined {
+  if (!vpcEndPointPolicies || vpcEndPointPolicies.length === 0) {
+    return undefined
+  }
+  return analyzeIdentityPolicies(vpcEndPointPolicies, request, simulationParameters)
+}
+
 function makeStatementExplain(
   statement: Statement,
   overallMatch: boolean,
@@ -598,7 +622,8 @@ function ignoredConditionsAnalysis(
   rcpAnalysis: RcpAnalysis,
   identityAnalysis: IdentityAnalysis,
   resourceAnalysis: ResourceAnalysis,
-  permissionBoundaryAnalysis?: IdentityAnalysis
+  permissionBoundaryAnalysis?: IdentityAnalysis,
+  endpointPolicyAnalysis?: IdentityAnalysis
 ): IgnoredConditions | undefined {
   const ignoredConditions: IgnoredConditions = {}
   addIgnoredConditionsToAnalysis(ignoredConditions, 'scp', scpAnalysis.ouAnalysis)
@@ -609,6 +634,11 @@ function ignoredConditionsAnalysis(
     ignoredConditions,
     'permissionBoundary',
     permissionBoundaryAnalysis ? [permissionBoundaryAnalysis] : []
+  )
+  addIgnoredConditionsToAnalysis(
+    ignoredConditions,
+    'endpointPolicy',
+    endpointPolicyAnalysis ? [endpointPolicyAnalysis] : []
   )
 
   if (Object.keys(ignoredConditions).length > 0) {
