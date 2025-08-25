@@ -1,3 +1,10 @@
+## [0.1.67](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.66...v0.1.67) (2025-08-25)
+
+
+### Features
+
+* Upgrade iam-data ([1a84ca6](https://github.com/cloud-copilot/iam-simulate/commit/1a84ca63b0b777b34fb50456aa3996fac1bc0ba8))
+
 ## [0.1.66](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.65...v0.1.66) (2025-08-25)
 
 
