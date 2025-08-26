@@ -132,6 +132,17 @@ describe('isActualContextKey', () => {
       expect(result, key).toEqual(true)
     }
   })
+
+  it('should find a saml key', async () => {
+    //Given a saml context key
+    const key = 'saml:aud'
+
+    //When the key is checked
+    const result = await isActualContextKey(key)
+
+    //Then the result should be true
+    expect(result).toBeTruthy()
+  })
 })
 
 describe('typeForContextKey', () => {

@@ -49,7 +49,7 @@
     "vitest": "^3.0.7"
   },
   "dependencies": {
-    "@cloud-copilot/iam-data": ">=0.11.0 <1.0.0",
+    "@cloud-copilot/iam-data": ">=0.12.0 <1.0.0",
     "@cloud-copilot/iam-policy": "^0.1.35",
     "@cloud-copilot/iam-utils": "^0.1.7"
   },
