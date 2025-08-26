@@ -1,3 +1,10 @@
+## [0.1.68](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.67...v0.1.68) (2025-08-26)
+
+
+### Bug Fixes
+
+* Fix using condition keys without a service or 'aws' prefix. ([aecef85](https://github.com/cloud-copilot/iam-simulate/commit/aecef8518191bf5077d8d9a12937f80262b8b844))
+
 ## [0.1.67](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.66...v0.1.67) (2025-08-25)
 
 
