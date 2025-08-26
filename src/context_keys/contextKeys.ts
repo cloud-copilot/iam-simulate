@@ -1,15 +1,12 @@
 import {
   ConditionKey,
+  findConditionKey,
   iamConditionKeyDetails,
   iamConditionKeyExists,
   iamConditionKeysForService,
   iamServiceExists
 } from '@cloud-copilot/iam-data'
-import {
-  getGlobalConditionKeyWithOrWithoutPrefix,
-  getVariableGlobalConditionKeyByPrefix,
-  globalConditionKeyExists
-} from '../global_conditions/globalConditionKeys.js'
+import { getGlobalConditionKeyWithOrWithoutPrefix } from '../global_conditions/globalConditionKeys.js'
 import { ConditionKeyType } from './contextKeyTypes.js'
 
 const oidcKeys = new Set(['aud', 'sub', 'email', 'oaud', 'sub'])
@@ -22,49 +19,12 @@ const oidcProviderPattern = /^[0-9a-zA-Z\._\-]+$/
  * @returns true if the context key is valid, false otherwise
  */
 export async function isActualContextKey(key: string): Promise<boolean> {
-  if (key.includes('/')) {
-    return isActualContextKeyWithVariable(key)
-  }
-  if (globalConditionKeyExists(key)) {
-    return true
-  }
   if (isOidcConditionKey(key)) {
     return true
   }
 
-  const parts = key.split(':')
-  if (parts.length !== 2) {
-    return false
-  }
-  const [service, action] = parts
-  const serviceExists = await iamServiceExists(service)
-  if (!serviceExists) {
-    return false
-  }
-
-  const actionExists = await iamConditionKeyExists(service, key)
-  return actionExists
-}
-
-/**
- * Checks if a context key with a variable in it is a valid context key
- */
-async function isActualContextKeyWithVariable(key: string): Promise<boolean> {
-  const slashLocation = key.indexOf('/')
-  const prefix = key.slice(0, slashLocation)
-  const rest = key.slice(slashLocation + 1)
-
-  if (rest.length === 0) {
-    return false
-  }
-
-  const globalKey = getVariableGlobalConditionKeyByPrefix(prefix)
-  if (globalKey) {
-    return true
-  }
-
-  const serviceKey = await serviceContextKeyDetails(key)
-  return !!serviceKey
+  const dataKey = await findConditionKey(key)
+  return !!dataKey
 }
 
 /**
