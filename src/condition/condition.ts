@@ -218,7 +218,7 @@ function testNull(condition: Condition, keyExists: boolean): ConditionExplain {
   }
 }
 
-export function singleValueMatch(
+function singleValueMatch(
   request: AwsRequest,
   condition: Condition,
   baseOperation: BaseConditionOperator,
@@ -301,7 +301,7 @@ export function singleValueMatch(
  * @param baseOperation the base operation to test the key against
  * @returns the result of evaluating the ForAllValues set operator
  */
-export function forAllValuesMatch(
+function forAllValuesMatch(
   request: AwsRequest,
   condition: Condition,
   keyValue: ContextKey | undefined,
@@ -407,7 +407,7 @@ export function forAllValuesMatch(
  * @param baseOperation the base operation to test the key against
  * @returns the result of evaluating the ForAnyValue set operator
  */
-export function forAnyValueMatch(
+function forAnyValueMatch(
   request: AwsRequest,
   condition: Condition,
   keyValue: ContextKey | undefined,
