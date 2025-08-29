@@ -1,3 +1,10 @@
+## [0.1.70](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.69...v0.1.70) (2025-08-29)
+
+
+### Bug Fixes
+
+* Remove code for hard coded partitions ([7d774a5](https://github.com/cloud-copilot/iam-simulate/commit/7d774a5380093feb6b59b11a5a481d35a5818aea))
+
 ## [0.1.69](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.68...v0.1.69) (2025-08-29)
 
 ## [0.1.68](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.67...v0.1.68) (2025-08-26)
