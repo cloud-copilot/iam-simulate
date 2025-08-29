@@ -346,7 +346,7 @@ export function userArnFromFederatedUserArn(federatedUserArn: string): string {
   const stsParts = federatedUserArn.split(':')
   const resource = stsParts.at(-1)!
   const username = resource.slice(resource.indexOf('/') + 1)
-  return `arn:aws:iam::${stsParts[4]}:user/${username}`
+  return `arn:${stsParts[1]}:iam::${stsParts[4]}:user/${username}`
 }
 
 /**
