@@ -1,3 +1,10 @@
+## [0.1.72](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.71...v0.1.72) (2025-08-30)
+
+
+### Bug Fixes
+
+* Refactor global keys to pull from iam-data ([03ab4ea](https://github.com/cloud-copilot/iam-simulate/commit/03ab4ea54909a68a5f87e4c1f7d72596a9565075))
+
 ## [0.1.71](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.70...v0.1.71) (2025-08-29)
 
 
