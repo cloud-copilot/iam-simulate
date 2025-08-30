@@ -1,5 +1,4 @@
-import { iamActionDetails } from '@cloud-copilot/iam-data'
-import { allGlobalConditionKeys } from '../global_conditions/globalConditionKeys.js'
+import { getAllGlobalConditionKeys, iamActionDetails } from '@cloud-copilot/iam-data'
 import { getResourceTypesForAction, isWildcardOnlyAction, lowerCaseAll } from '../util.js'
 
 /**
@@ -21,7 +20,7 @@ export async function allowedContextKeysForRequest(
 
   const isWildCardOnly = await isWildcardOnlyAction(service, action)
   if (isWildCardOnly) {
-    return [...actionConditionKeys, ...allGlobalConditionKeys()]
+    return [...actionConditionKeys, ...lowerCaseGlobalConditionKeys()]
   }
 
   const resourceTypes = await getResourceTypesForAction(service, action, resource)
@@ -37,6 +36,14 @@ export async function allowedContextKeysForRequest(
   return [
     ...lowerCaseAll(resourceTypeConditions),
     ...actionConditionKeys,
-    ...allGlobalConditionKeys()
+    ...lowerCaseGlobalConditionKeys()
   ]
+}
+
+let lowerCaseConditionKeys: string[] | undefined
+function lowerCaseGlobalConditionKeys(): string[] {
+  if (!lowerCaseConditionKeys) {
+    lowerCaseConditionKeys = getAllGlobalConditionKeys().map((k) => k.toLowerCase())
+  }
+  return lowerCaseConditionKeys
 }

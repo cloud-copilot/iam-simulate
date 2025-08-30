@@ -122,7 +122,7 @@ function replaceVariableInContextKey(specKey: string, actualKey: string): string
 export async function typeForContextKey(contextKey: string): Promise<ConditionKeyType> {
   const globalConditionKey = getGlobalConditionKeyWithOrWithoutPrefix(contextKey)
   if (globalConditionKey) {
-    return globalConditionKey.dataType as ConditionKeyType
+    return globalConditionKey.type as ConditionKeyType
   }
 
   const keyDetails = await serviceContextKeyDetails(contextKey)

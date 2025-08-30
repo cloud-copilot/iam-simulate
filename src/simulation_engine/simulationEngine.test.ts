@@ -1,5 +1,8 @@
 import {
   ConditionKey,
+  getAllGlobalConditionKeys,
+  getGlobalConditionKeyByName,
+  getGlobalConditionKeyByPrefix,
   iamActionDetails,
   iamActionExists,
   iamConditionKeyDetails,
@@ -71,6 +74,34 @@ vi.mocked(iamActionExists).mockImplementation(async (service, action) => {
     service === 's3' &&
     ['GetObjects', 'GetObject', 'ListAllMyBuckets', 'ListBucket'].includes(action)
   )
+})
+
+vi.mocked(getAllGlobalConditionKeys).mockImplementation(() => {
+  return ['aws:userid', 'aws:username', 'aws:PrincipalOrgPaths', 'aws:RequestTag/tag-key']
+})
+
+vi.mocked(getGlobalConditionKeyByPrefix).mockImplementation((key) => {
+  if (key.toLowerCase().startsWith('aws:requesttag')) {
+    return {
+      key: 'aws:RequestTag/tag-key',
+      description: '',
+      type: 'String',
+      category: 'request'
+    }
+  }
+  return undefined
+})
+
+vi.mocked(getGlobalConditionKeyByName).mockImplementation((key) => {
+  if (key.toLowerCase() === 'aws:principalorgpaths') {
+    return {
+      key: 'aws:PrincipalOrgPaths',
+      description: '',
+      type: 'ArrayOfString',
+      category: 'principal'
+    }
+  }
+  return undefined
 })
 
 vi.mocked(iamActionDetails).mockImplementation(async (service, actionKey) => {

@@ -1,12 +1,16 @@
-import { iamActionDetails, iamResourceTypeDetails } from '@cloud-copilot/iam-data'
+import {
+  getAllGlobalConditionKeys,
+  iamActionDetails,
+  iamResourceTypeDetails
+} from '@cloud-copilot/iam-data'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { allGlobalConditionKeys } from '../global_conditions/globalConditionKeys.js'
 import { allowedContextKeysForRequest } from './contextKeys.js'
 
 vi.mock('@cloud-copilot/iam-data')
 
 beforeEach(() => {
   vi.resetAllMocks()
+  vi.mocked(getAllGlobalConditionKeys).mockReturnValue(['aws:PrincipalTag', 'aws:SourceVpc'])
 })
 
 describe('allowedContextKeysForRequest', () => {
@@ -18,6 +22,7 @@ describe('allowedContextKeysForRequest', () => {
     //And there are condition keys for the action
     vi.mocked(iamActionDetails).mockResolvedValue({
       conditionKeys: ['aws:RequestTag', 'aws:ResourceTag'],
+      isWildcardOnly: false,
       accessLevel: 'Read',
       dependentActions: [],
       resourceTypes: [],
@@ -34,7 +39,11 @@ describe('allowedContextKeysForRequest', () => {
 
     //Then it should return the expected context keys
     expect(result).toEqual(
-      expect.arrayContaining(['aws:requesttag', 'aws:resourcetag', ...allGlobalConditionKeys()])
+      expect.arrayContaining([
+        'aws:requesttag',
+        'aws:resourcetag',
+        ...getAllGlobalConditionKeys().map((k) => k.toLowerCase())
+      ])
     )
   })
 
@@ -46,6 +55,7 @@ describe('allowedContextKeysForRequest', () => {
     //And there are condition keys for the action
     vi.mocked(iamActionDetails).mockResolvedValue({
       conditionKeys: ['aws:RequestTag', 'aws:ResourceTag'],
+      isWildcardOnly: false,
       accessLevel: 'Read',
       dependentActions: [],
       resourceTypes: [
@@ -80,7 +90,7 @@ describe('allowedContextKeysForRequest', () => {
         'aws:objectbar',
         'aws:requesttag',
         'aws:resourcetag',
-        ...allGlobalConditionKeys()
+        ...getAllGlobalConditionKeys().map((k) => k.toLowerCase())
       ])
     )
   })

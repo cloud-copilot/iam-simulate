@@ -1,0 +1,36 @@
+[
+  {
+    "name": "Principal Tag",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:PrincipalTag/Foo": "bar"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*",
+            "Condition": {
+              "StringEquals": {
+                "aws:PrincipalTag/Foo": ["bar", "baz"]
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  }
+]
