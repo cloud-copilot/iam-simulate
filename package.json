@@ -50,7 +50,7 @@
   },
   "dependencies": {
     "@cloud-copilot/iam-data": ">=0.15.0 <1.0.0",
-    "@cloud-copilot/iam-policy": "^0.1.35",
+    "@cloud-copilot/iam-policy": "^0.1.47",
     "@cloud-copilot/iam-utils": "^0.1.7"
   },
   "prettier": "@cloud-copilot/prettier-config",
