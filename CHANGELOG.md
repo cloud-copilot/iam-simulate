@@ -1,3 +1,10 @@
+## [0.1.80](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.79...v0.1.80) (2025-10-17)
+
+
+### Bug Fixes
+
+* Add missing property to example docs ([a965682](https://github.com/cloud-copilot/iam-simulate/commit/a965682082b01b98050b8f0ba838f1d48661c327))
+
 ## [0.1.79](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.78...v0.1.79) (2025-10-11)
 
 ## [0.1.78](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.77...v0.1.78) (2025-10-11)
