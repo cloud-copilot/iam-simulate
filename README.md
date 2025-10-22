@@ -91,30 +91,24 @@ const simulation: Simulation = {
   /*
     The default RCP `RCPFullAWSAccess` is always applied implicitly and you do not need to include it here. https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_rcps_examples.html#example-rcp-full-aws-access
   */
-  resourceControlPolicies: [{
+  resourceControlPolicies: [
     {
       orgIdentifier: 'o-123456789012',
       policies: [
         {
           name: 'EnforceSecureTransport',
           policy: {
-            "Version":"2012-10-17",
-            "Statement": [
+            Version: '2012-10-17',
+            Statement: [
               {
-                "Sid": "EnforceSecureTransport",
-                "Effect": "Deny",
-                "Principal": "*",
-                "Action": [
-                  "sts:*",
-                  "s3:*",
-                  "sqs:*",
-                  "secretsmanager:*",
-                  "kms:*"
-               ],
-                "Resource": "*",
-                "Condition": {
-                  "BoolIfExists": {
-                    "aws:SecureTransport": "false"
+                Sid: 'EnforceSecureTransport',
+                Effect: 'Deny',
+                Principal: '*',
+                Action: ['sts:*', 's3:*', 'sqs:*', 'secretsmanager:*', 'kms:*'],
+                Resource: '*',
+                Condition: {
+                  BoolIfExists: {
+                    'aws:SecureTransport': 'false'
                   }
                 }
               }
@@ -123,7 +117,7 @@ const simulation: Simulation = {
         }
       ]
     }
-  }],
+  ],
   resourcePolicy: {
     Version: '2012-10-17',
     Statement: [
