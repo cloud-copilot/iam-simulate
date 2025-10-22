@@ -1,3 +1,10 @@
+## [0.1.82](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.81...v0.1.82) (2025-10-22)
+
+
+### Bug Fixes
+
+* Fix syntax error in README example ([030d6bb](https://github.com/cloud-copilot/iam-simulate/commit/030d6bbb945d41be2b615d5431cdb3719fb36f91))
+
 ## [0.1.81](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.80...v0.1.81) (2025-10-18)
 
 ## [0.1.80](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.79...v0.1.80) (2025-10-17)
