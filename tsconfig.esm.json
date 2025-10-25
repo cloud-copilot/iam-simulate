@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
 
   "include": ["src/**/*"],
-  "exclude": ["**/*.test.ts"],
+  "exclude": ["**/*.test.ts", "src/condition/baseConditionperatorTests.ts"],
 
   "compilerOptions": {
     "target": "ES2020",
