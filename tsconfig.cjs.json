@@ -2,10 +2,10 @@
   "extends": "./tsconfig.json",
 
   "include": ["src/**/*"],
-  "exclude": ["**/*.test.ts"],
+  "exclude": ["**/*.test.ts", "src/condition/baseConditionperatorTests.ts"],
 
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "dist/cjs",
+    "outDir": "dist/cjs"
   }
 }
