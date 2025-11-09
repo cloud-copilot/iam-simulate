@@ -1,3 +1,10 @@
+## [0.1.86](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.85...v0.1.86) (2025-11-09)
+
+
+### Bug Fixes
+
+* Remove GuardDog package scan ([9375892](https://github.com/cloud-copilot/iam-simulate/commit/9375892ffeca18bacaa97cd418d5389beb25999f))
+
 ## [0.1.85](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.84...v0.1.85) (2025-11-08)
 
 ## [0.1.84](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.83...v0.1.84) (2025-11-01)
