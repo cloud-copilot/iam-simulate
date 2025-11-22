@@ -358,7 +358,8 @@ describe('getResourceTypesForAction', () => {
     expect(result).toEqual([
       {
         arn: 'arn:${Partition}:s3:::${BucketName}/${ObjectName}',
-        key: 'object'
+        key: 'object',
+        conditionKeys: ['aws:ResourceTag/${TagKey}', 's3:BucketTag/${TagKey}']
       }
     ])
   })
