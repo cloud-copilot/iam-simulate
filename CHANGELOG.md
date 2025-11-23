@@ -1,3 +1,10 @@
+## [0.1.90](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.89...v0.1.90) (2025-11-23)
+
+
+### Features
+
+* Support new S3 Bucket ABAC bucket keys ([107fbc6](https://github.com/cloud-copilot/iam-simulate/commit/107fbc6a1099fbc71d750d2028c1ab3ed36a3a25))
+
 ## [0.1.89](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.88...v0.1.89) (2025-11-22)
 
 ## [0.1.88](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.87...v0.1.88) (2025-11-22)
