@@ -303,7 +303,12 @@ export async function normalizeSimulationParameters(simulation: Simulation): Pro
   const [service, action] = simulation.request.action.split(':')
   const resourceArn = simulation.request.resource.resource
   const contextVariablesForAction = new Set(
-    await allowedContextKeysForRequest(service, action, resourceArn)
+    await allowedContextKeysForRequest(
+      service,
+      action,
+      resourceArn,
+      !!simulation.additionalSettings?.s3?.bucketAbacEnabled
+    )
   )
 
   //Get the types of the context variables and set a string or array of strings based on that.

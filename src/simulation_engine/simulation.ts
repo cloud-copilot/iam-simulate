@@ -55,4 +55,16 @@ export interface Simulation {
    * The VPC endpoint policies, if any.
    */
   vpcEndpointPolicies?: { name: string; policy: any }[]
+
+  /**
+   * Additional settings that may affect the simulation
+   */
+  additionalSettings?: {
+    s3?: {
+      /**
+       * If an S3 bucket request, whether ABAC is enabled on the bucket
+       */
+      bucketAbacEnabled?: boolean
+    }
+  }
 }

@@ -7,6 +7,7 @@ import {
   iamActionExists,
   iamConditionKeyDetails,
   iamConditionKeyExists,
+  iamConditionKeysForService,
   iamResourceTypeDetails,
   iamServiceExists
 } from '@cloud-copilot/iam-data'
@@ -37,6 +38,11 @@ const mockKeyDetails: Record<string, ConditionKey> = {
     description: '',
     key: 's3:AccessPointNetworkOrigin',
     type: 'String'
+  },
+  's3:buckettag/${tagkey}': {
+    description: '',
+    key: 's3:BucketTag/${TagKey}',
+    type: 'String'
   }
 }
 
@@ -59,6 +65,19 @@ vi.mocked(iamResourceTypeDetails).mockImplementation(async (service, resource) =
 
 vi.mocked(iamServiceExists).mockImplementation(async (service) => {
   return ['s3'].includes(service)
+})
+vi.mocked(iamConditionKeysForService).mockImplementation(async (service) => {
+  if (service === 's3') {
+    return [
+      's3:RequestObjectTagKeys',
+      's3:ResourceAccount',
+      's3:AccessGrantsInstanceArn',
+      's3:DataAccessPointAccount',
+      's3:AccessPointNetworkOrigin',
+      's3:BucketTag/${TagKey}'
+    ]
+  }
+  return []
 })
 
 vi.mocked(iamConditionKeyDetails).mockImplementation(async (service, key) => {
@@ -89,6 +108,14 @@ vi.mocked(getGlobalConditionKeyByPrefix).mockImplementation((key) => {
       category: 'request'
     }
   }
+  if (key.toLowerCase().startsWith('aws:resourcetag')) {
+    return {
+      key: 'aws:ResourceTag/tag-key',
+      category: 'resource',
+      type: 'String',
+      description: ''
+    }
+  }
   return undefined
 })
 
@@ -117,6 +144,7 @@ vi.mocked(iamActionDetails).mockImplementation(async (service, actionKey) => {
           required: true,
           dependentActions: [],
           conditionKeys: [
+            's3:BucketTag/${TagKey}',
             's3:AccessGrantsInstanceArn',
             's3:DataAccessPointAccount',
             's3:AccessPointNetworkOrigin',
@@ -154,7 +182,9 @@ vi.mocked(iamActionDetails).mockImplementation(async (service, actionKey) => {
         's3:signatureAge',
         's3:signatureversion',
         's3:TlsVersion',
-        's3:x-amz-content-sha256'
+        's3:x-amz-content-sha256',
+        's3:BucketTag/${TagKey}',
+        'aws:ResourceTag/${TagKey}'
       ],
       dependentActions: [],
       isWildcardOnly: false
@@ -1075,5 +1105,100 @@ describe('runSimulation', () => {
     expect(result.analysis?.result).toEqual('ImplicitlyDenied')
     expect(result.ignoredContextKeys).toEqual([])
     expect(result.analysis?.ignoredConditions?.identity).toBeUndefined()
+  })
+
+  it('should ignore s3 ABAC keys if ABAC is not enabled on the bucket', async () => {
+    //Given a simulation with S3 ABAC context keys and ABAC disabled
+    const simulation: Simulation = {
+      identityPolicies: [
+        {
+          name: 'readbuckets',
+          policy: {
+            Statement: {
+              Effect: 'Allow',
+              Action: 's3:GetObject',
+              Resource: 'arn:aws:s3:::examplebucket/test.txt'
+            }
+          }
+        }
+      ],
+      serviceControlPolicies: [],
+      resourceControlPolicies: [],
+      resourcePolicy: undefined,
+      request: {
+        action: 's3:GetObject',
+        resource: {
+          resource: 'arn:aws:s3:::examplebucket/1234',
+          accountId: '123456789012'
+        },
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        contextVariables: {
+          's3:RequestObjectTagKeys': ['tag1', 'tag2'],
+          's3:ResourceAccount': '123456789012',
+          'aws:ResourceTag/Environment': 'production',
+          's3:BucketTag/Owner': 'team-a'
+        }
+      }
+    }
+
+    //When the simulation is run
+    const result = await runSimulation(simulation, {})
+
+    //Then there should be no errors
+    expect(result.errors).toBeUndefined()
+    //And the S3 ABAC keys should be in the ignored context keys
+    expect(result.ignoredContextKeys).toContain('aws:ResourceTag/Environment')
+    expect(result.ignoredContextKeys).toContain('s3:BucketTag/Owner')
+    //And the non-ABAC keys should not be ignored
+    expect(result.ignoredContextKeys).not.toContain('s3:RequestObjectTagKeys')
+    expect(result.ignoredContextKeys).not.toContain('s3:ResourceAccount')
+  })
+
+  it('should not ignore s3 ABAC keys if ABAC is enabled on the bucket', async () => {
+    //Given a simulation with S3 ABAC context keys and ABAC enabled
+    const simulation: Simulation = {
+      identityPolicies: [
+        {
+          name: 'readbuckets',
+          policy: {
+            Statement: {
+              Effect: 'Allow',
+              Action: 's3:GetObject',
+              Resource: 'arn:aws:s3:::examplebucket/test.txt'
+            }
+          }
+        }
+      ],
+      serviceControlPolicies: [],
+      resourceControlPolicies: [],
+      resourcePolicy: undefined,
+      request: {
+        action: 's3:GetObject',
+        resource: {
+          resource: 'arn:aws:s3:::examplebucket/1234',
+          accountId: '123456789012'
+        },
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        contextVariables: {
+          's3:RequestObjectTagKeys': ['tag1', 'tag2'],
+          's3:ResourceAccount': '123456789012',
+          'aws:ResourceTag/Environment': 'production',
+          's3:BucketTag/Owner': 'team-a'
+        }
+      },
+      additionalSettings: {
+        s3: {
+          bucketAbacEnabled: true
+        }
+      }
+    }
+
+    //When the simulation is run
+    const result = await runSimulation(simulation, {})
+
+    //Then there should be no errors
+    expect(result.errors).toBeUndefined()
+    //And the ignored context keys should be empty
+    expect(result.ignoredContextKeys).toEqual([])
   })
 })
