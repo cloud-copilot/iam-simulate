@@ -1,0 +1,506 @@
+[
+  {
+    "name": "Allow with matching aws:ResourceTag on bucket",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:ResourceTag/Environment": "production"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::my-bucket",
+            "Condition": {
+              "StringEquals": {
+                "aws:ResourceTag/Environment": "production"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Deny with non-matching aws:ResourceTag on bucket",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:ResourceTag/Environment": "development"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::my-bucket",
+            "Condition": {
+              "StringEquals": {
+                "aws:ResourceTag/Environment": "production"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Allow with matching s3:BucketTag on bucket",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "s3:BucketTag/Owner": "team-a"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::my-bucket",
+            "Condition": {
+              "StringEquals": {
+                "s3:BucketTag/Owner": "team-a"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Deny with non-matching s3:BucketTag on bucket",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "s3:BucketTag/Owner": "team-b"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::my-bucket",
+            "Condition": {
+              "StringEquals": {
+                "s3:BucketTag/Owner": "team-a"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Allow with matching aws:ResourceTag on object",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket/my-object",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:ResourceTag/Classification": "public"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::my-bucket/*",
+            "Condition": {
+              "StringEquals": {
+                "aws:ResourceTag/Classification": "public"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Deny with non-matching aws:ResourceTag on object",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket/my-object",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:ResourceTag/Classification": "confidential"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::my-bucket/*",
+            "Condition": {
+              "StringEquals": {
+                "aws:ResourceTag/Classification": "public"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Allow with matching s3:BucketTag on object action",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket/my-object",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "s3:BucketTag/CostCenter": "engineering"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::my-bucket/*",
+            "Condition": {
+              "StringEquals": {
+                "s3:BucketTag/CostCenter": "engineering"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Deny with non-matching s3:BucketTag on object action",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket/my-object",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "s3:BucketTag/CostCenter": "marketing"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::my-bucket/*",
+            "Condition": {
+              "StringEquals": {
+                "s3:BucketTag/CostCenter": "engineering"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Explicit deny with matching aws:ResourceTag deny condition",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket/sensitive-data",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:ResourceTag/Sensitivity": "high"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:*",
+            "Resource": "*"
+          },
+          {
+            "Effect": "Deny",
+            "Action": "s3:GetObject",
+            "Resource": "*",
+            "Condition": {
+              "StringEquals": {
+                "aws:ResourceTag/Sensitivity": "high"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied"
+    }
+  },
+  {
+    "name": "Allow when deny condition with aws:ResourceTag does not match",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket/public-data",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:ResourceTag/Sensitivity": "low"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:*",
+            "Resource": "*"
+          },
+          {
+            "Effect": "Deny",
+            "Action": "s3:GetObject",
+            "Resource": "*",
+            "Condition": {
+              "StringEquals": {
+                "aws:ResourceTag/Sensitivity": "high"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Explicit deny with matching s3:BucketTag deny condition",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::restricted-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "s3:BucketTag/Access": "restricted"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:*",
+            "Resource": "*"
+          },
+          {
+            "Effect": "Deny",
+            "Action": "s3:ListBucket",
+            "Resource": "*",
+            "Condition": {
+              "StringEquals": {
+                "s3:BucketTag/Access": "restricted"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied"
+    }
+  },
+  {
+    "name": "Allow when deny condition with s3:BucketTag does not match",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::public-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "s3:BucketTag/Access": "public"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:*",
+            "Resource": "*"
+          },
+          {
+            "Effect": "Deny",
+            "Action": "s3:ListBucket",
+            "Resource": "*",
+            "Condition": {
+              "StringEquals": {
+                "s3:BucketTag/Access": "restricted"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Allow with multiple ABAC tags matching",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket/my-object",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:ResourceTag/Environment": "production",
+        "s3:BucketTag/Owner": "team-a",
+        "s3:BucketTag/CostCenter": "engineering"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::my-bucket/*",
+            "Condition": {
+              "StringEquals": {
+                "aws:ResourceTag/Environment": "production",
+                "s3:BucketTag/Owner": "team-a",
+                "s3:BucketTag/CostCenter": "engineering"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Deny when one of multiple ABAC tags does not match",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket/my-object",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:ResourceTag/Environment": "production",
+        "s3:BucketTag/Owner": "team-b",
+        "s3:BucketTag/CostCenter": "engineering"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::my-bucket/*",
+            "Condition": {
+              "StringEquals": {
+                "aws:ResourceTag/Environment": "production",
+                "s3:BucketTag/Owner": "team-a",
+                "s3:BucketTag/CostCenter": "engineering"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  }
+]

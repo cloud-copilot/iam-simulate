@@ -34,7 +34,8 @@ describe('allowedContextKeysForRequest', () => {
     const result = await allowedContextKeysForRequest(
       service,
       action,
-      'arn:aws:s3:us-east-1:12345:access-grants/default'
+      'arn:aws:s3:us-east-1:12345:access-grants/default',
+      false
     )
 
     //Then it should return the expected context keys
@@ -80,7 +81,8 @@ describe('allowedContextKeysForRequest', () => {
     const result = await allowedContextKeysForRequest(
       service,
       action,
-      'arn:aws:s3:::muh-bucket/object-123'
+      'arn:aws:s3:::muh-bucket/object-123',
+      false
     )
 
     //Then it should have the global keys, the keys for the action, and the keys for the resource type
@@ -96,4 +98,92 @@ describe('allowedContextKeysForRequest', () => {
   })
 
   it.todo('should search for the specific resource type for an action')
+
+  it('should remove s3 ABAC keys if the bucket does not have ABAC enabled', async () => {
+    //Given a request for an S3 action
+    const service = 's3'
+    const action = 'GetObject'
+
+    //And there are condition keys for the action including ABAC keys
+    vi.mocked(iamActionDetails).mockResolvedValue({
+      conditionKeys: ['aws:RequestTag', 'aws:ResourceTag/${TagKey}'],
+      isWildcardOnly: false,
+      accessLevel: 'Read',
+      dependentActions: [],
+      resourceTypes: [
+        {
+          name: 'object',
+          dependentActions: [],
+          required: true,
+          conditionKeys: ['aws:ResourceTag/${TagKey}', 's3:BucketTag/${TagKey}']
+        }
+      ],
+      description: 'Get an object',
+      name: 'GetObject'
+    })
+
+    vi.mocked(iamResourceTypeDetails).mockResolvedValue({
+      key: 'object',
+      arn: 'arn:${Partition}:s3:::${BucketName}/${ObjectName}',
+      conditionKeys: ['aws:ResourceTag/${TagKey}', 's3:BucketTag/${TagKey}']
+    })
+
+    //When calling allowedContextKeysForRequest with bucketAbacEnabled set to false
+    const result = await allowedContextKeysForRequest(
+      service,
+      action,
+      'arn:aws:s3:::muh-bucket/object-123',
+      false
+    )
+
+    //Then it should not include the S3 ABAC keys
+    expect(result).not.toContain('aws:resourcetag/${tagkey}')
+    expect(result).not.toContain('s3:buckettag/${tagkey}')
+    //And it should include other keys
+    expect(result).toContain('aws:requesttag')
+  })
+
+  it('should allow s3 ABAC keys if the bucket has ABAC enabled', async () => {
+    //Given a request for an S3 action
+    const service = 's3'
+    const action = 'GetObject'
+
+    //And there are condition keys for the action including ABAC keys
+    vi.mocked(iamActionDetails).mockResolvedValue({
+      conditionKeys: ['aws:RequestTag', 'aws:ResourceTag/${TagKey}'],
+      isWildcardOnly: false,
+      accessLevel: 'Read',
+      dependentActions: [],
+      resourceTypes: [
+        {
+          name: 'object',
+          dependentActions: [],
+          required: true,
+          conditionKeys: ['aws:ResourceTag/${TagKey}', 's3:BucketTag/${TagKey}']
+        }
+      ],
+      description: 'Get an object',
+      name: 'GetObject'
+    })
+
+    vi.mocked(iamResourceTypeDetails).mockResolvedValue({
+      key: 'object',
+      arn: 'arn:${Partition}:s3:::${BucketName}/${ObjectName}',
+      conditionKeys: ['aws:ResourceTag/${TagKey}', 's3:BucketTag/${TagKey}']
+    })
+
+    //When calling allowedContextKeysForRequest with bucketAbacEnabled set to true
+    const result = await allowedContextKeysForRequest(
+      service,
+      action,
+      'arn:aws:s3:::muh-bucket/object-123',
+      true
+    )
+
+    //Then it should include the S3 ABAC keys
+    expect(result).toContain('aws:resourcetag/${tagkey}')
+    expect(result).toContain('s3:buckettag/${tagkey}')
+    //And it should include other keys
+    expect(result).toContain('aws:requesttag')
+  })
 })

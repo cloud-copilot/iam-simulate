@@ -1,5 +1,10 @@
 import { getAllGlobalConditionKeys, iamActionDetails } from '@cloud-copilot/iam-data'
-import { getResourceTypesForAction, isWildcardOnlyAction, lowerCaseAll } from '../util.js'
+import {
+  getResourceTypesForAction,
+  isS3BucketOrObjectArn,
+  isWildcardOnlyAction,
+  lowerCaseAll
+} from '../util.js'
 
 /**
  * Get the allowed context keys for a request.
@@ -7,13 +12,15 @@ import { getResourceTypesForAction, isWildcardOnlyAction, lowerCaseAll } from '.
  * @param service The service the action belongs to
  * @param action The action to get the allowed context keys for
  * @param resource The resource the action is being performed on
+ * @param bucketAbacEnabled Whether ABAC is enabled on the S3 bucket (only applies to S3)
  * @returns The allowed context keys for the request as lower case strings
  * @throws error if the service or action does not exist
  */
 export async function allowedContextKeysForRequest(
   service: string,
   action: string,
-  resource: string
+  resource: string,
+  bucketAbacEnabled?: boolean
 ): Promise<string[]> {
   const actionDetails = await iamActionDetails(service, action)
   const actionConditionKeys = lowerCaseAll(actionDetails.conditionKeys)
@@ -33,11 +40,20 @@ export async function allowedContextKeysForRequest(
     (rt) => rt.name === resourceTypes[0].key
   )!.conditionKeys
 
-  return [
+  const allKeys = [
     ...lowerCaseAll(resourceTypeConditions),
     ...actionConditionKeys,
     ...lowerCaseGlobalConditionKeys()
   ]
+
+  if (!isS3BucketOrObjectArn(resource) || bucketAbacEnabled) {
+    return allKeys
+  }
+
+  // Filter out S3 ABAC keys if bucket ABAC is not enabled
+  return allKeys.filter(
+    (key) => !key.startsWith('aws:resourcetag/') && !key.startsWith('s3:buckettag/')
+  )
 }
 
 let lowerCaseConditionKeys: string[] | undefined
