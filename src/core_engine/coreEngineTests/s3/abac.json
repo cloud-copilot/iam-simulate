@@ -504,7 +504,7 @@
     }
   },
   {
-    "name": "Deny when ABAC keys are not present but are ignored",
+    "name": "Deny when ABAC keys are not present but are strict",
     "request": {
       "action": "s3:GetObject",
       "resource": {

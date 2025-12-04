@@ -17,7 +17,7 @@ export class StrictContextKeys {
   constructor(private includedKeys: string[]) {}
 
   /**
-   * Lazy initialization of ignored keys into literals and patterns.
+   * Lazy initialization of strict keys into literals and patterns.
    */
   private initialize(): void {
     if (this.initialized) {
@@ -36,7 +36,7 @@ export class StrictContextKeys {
   }
 
   /**
-   * Is a given key is included in the strict context keys literals and patterns
+   * Checks if a given key is included in the strict context keys literals and patterns
    *
    * @param key the context key to check
    * @returns true if the key is included, false otherwise

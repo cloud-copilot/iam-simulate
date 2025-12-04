@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { StrictContextKeys } from './strictContextKeys.js'
 
-const ignoredContextKeysTests: {
+const strictContextKeysTests: {
   name: string
   only?: true
-  ignoredKeys: string[]
+  strictKeys: string[]
   tests: {
     key: string
     expected: boolean
@@ -12,7 +12,7 @@ const ignoredContextKeysTests: {
 }[] = [
   {
     name: 'should match exact literal keys case-insensitively',
-    ignoredKeys: ['aws:SourceVpc', 's3:DataAccessPointArn'],
+    strictKeys: ['aws:SourceVpc', 's3:DataAccessPointArn'],
     tests: [
       { key: 'aws:SourceVpc', expected: true },
       { key: 'aws:sourcevpc', expected: true },
@@ -25,7 +25,7 @@ const ignoredContextKeysTests: {
   },
   {
     name: 'should match regex patterns',
-    ignoredKeys: ['/^aws:RequestTag\\/.*/', '/^s3:.*Tag.*/'],
+    strictKeys: ['/^aws:RequestTag\\/.*/', '/^s3:.*Tag.*/'],
     tests: [
       { key: 'aws:RequestTag/Environment', expected: true },
       { key: 'aws:RequestTag/Owner', expected: true },
@@ -37,8 +37,8 @@ const ignoredContextKeysTests: {
     ]
   },
   {
-    name: 'should ignore aws:ResourceTag/ keys with regex pattern',
-    ignoredKeys: ['/^aws:ResourceTag\\/.*/'],
+    name: 'should match aws:ResourceTag/ keys with regex pattern',
+    strictKeys: ['/^aws:ResourceTag\\/.*/'],
     tests: [
       { key: 'aws:ResourceTag/Environment', expected: true },
       { key: 'aws:ResourceTag/Owner', expected: true },
@@ -50,8 +50,8 @@ const ignoredContextKeysTests: {
     ]
   },
   {
-    name: 'should ignore s3:BucketTag/ keys with regex pattern',
-    ignoredKeys: ['/^s3:BucketTag\\/.*/'],
+    name: 'should match s3:BucketTag/ keys with regex pattern',
+    strictKeys: ['/^s3:BucketTag\\/.*/'],
     tests: [
       { key: 's3:BucketTag/Owner', expected: true },
       { key: 's3:BucketTag/CostCenter', expected: true },
@@ -63,7 +63,7 @@ const ignoredContextKeysTests: {
   },
   {
     name: 'should handle mixed literal and regex patterns',
-    ignoredKeys: ['aws:SourceVpc', '/^aws:ResourceTag\\/.*/', 's3:prefix'],
+    strictKeys: ['aws:SourceVpc', '/^aws:ResourceTag\\/.*/', 's3:prefix'],
     tests: [
       { key: 'aws:SourceVpc', expected: true },
       { key: 'aws:ResourceTag/Environment', expected: true },
@@ -74,8 +74,8 @@ const ignoredContextKeysTests: {
     ]
   },
   {
-    name: 'should handle empty ignored keys list',
-    ignoredKeys: [],
+    name: 'should handle empty strict keys list',
+    strictKeys: [],
     tests: [
       { key: 'aws:SourceVpc', expected: false },
       { key: 'aws:ResourceTag/Environment', expected: false },
@@ -84,7 +84,7 @@ const ignoredContextKeysTests: {
   },
   {
     name: 'should handle complex regex patterns for multiple ABAC keys',
-    ignoredKeys: ['/^(aws:ResourceTag|s3:BucketTag)\\/.*/'],
+    strictKeys: ['/^(aws:ResourceTag|s3:BucketTag)\\/.*/'],
     tests: [
       { key: 'aws:ResourceTag/Environment', expected: true },
       { key: 'aws:resourcetag/Owner', expected: true },
@@ -97,7 +97,7 @@ const ignoredContextKeysTests: {
   },
   {
     name: 'should not match partial literal keys',
-    ignoredKeys: ['aws:Source'],
+    strictKeys: ['aws:Source'],
     tests: [
       { key: 'aws:Source', expected: true },
       { key: 'aws:SourceVpc', expected: false },
@@ -107,7 +107,7 @@ const ignoredContextKeysTests: {
   },
   {
     name: 'should handle special characters in literal keys',
-    ignoredKeys: ['aws:RequestTag/Cost-Center', 's3:x-amz-server-side-encryption'],
+    strictKeys: ['aws:RequestTag/Cost-Center', 's3:x-amz-server-side-encryption'],
     tests: [
       { key: 'aws:RequestTag/Cost-Center', expected: true },
       { key: 'aws:requesttag/cost-center', expected: true },
@@ -118,17 +118,16 @@ const ignoredContextKeysTests: {
   }
 ]
 
-describe('IgnoredContextKeys', () => {
-  for (const ignoredContextKeysTest of ignoredContextKeysTests) {
-    const testFn = ignoredContextKeysTest.only ? it.only : it
-    testFn(ignoredContextKeysTest.name, () => {
-      //Given an IgnoredContextKeys instance
-      const ignoredContextKeys = new StrictContextKeys(ignoredContextKeysTest.ignoredKeys)
+describe('StrictContextKeys', () => {
+  for (const strictContextKeysTest of strictContextKeysTests) {
+    const testFn = strictContextKeysTest.only ? it.only : it
+    testFn(strictContextKeysTest.name, () => {
+      //Given an StrictContextKeys instance
+      const strictContextKeys = new StrictContextKeys(strictContextKeysTest.strictKeys)
 
-      for (const test of ignoredContextKeysTest.tests) {
-        //When checking if the key is ignored
-        const result = ignoredContextKeys.has(test.key)
-
+      for (const test of strictContextKeysTest.tests) {
+        //When checking if the key is included
+        const result = strictContextKeys.has(test.key)
         //Then it should match the expected value
         expect(result, `Key: ${test.key} did not match expected value`).toBe(test.expected)
       }
