@@ -1,3 +1,10 @@
+## [0.1.92](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.91...v0.1.92) (2025-12-04)
+
+
+### Features
+
+* Allow patterns for strict context keys ([9849f49](https://github.com/cloud-copilot/iam-simulate/commit/9849f494063cfecae28b1ecf3b8a05538206bb91))
+
 ## [0.1.91](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.90...v0.1.91) (2025-11-30)
 
 ## [0.1.90](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.89...v0.1.90) (2025-11-23)
