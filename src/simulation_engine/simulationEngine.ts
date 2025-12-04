@@ -10,6 +10,7 @@ import {
 } from '@cloud-copilot/iam-policy'
 import { isConditionKeyArray } from '../context_keys/contextKeyTypes.js'
 import { normalizeContextKeyCase, typeForContextKey } from '../context_keys/contextKeys.js'
+import { StrictContextKeys } from '../context_keys/strictContextKeys.js'
 import {
   authorize,
   ControlPolicies,
@@ -264,8 +265,8 @@ export async function runSimulation(
 
   const strictConditionKeys =
     simulationMode === 'Discovery'
-      ? new Set(simulationOptions.strictConditionKeys?.map((k) => k.toLowerCase()) || [])
-      : new Set<string>()
+      ? new StrictContextKeys(simulationOptions.strictConditionKeys || [])
+      : new StrictContextKeys([])
 
   const simulationResult = authorize({
     request: new AwsRequestImpl(

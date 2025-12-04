@@ -1,4 +1,5 @@
 import { loadPolicy } from '@cloud-copilot/iam-policy'
+import { StrictContextKeys } from '../context_keys/strictContextKeys.js'
 import { authorize, ControlPolicies } from '../core_engine/CoreSimulatorEngine.js'
 import { type EvaluationResult } from '../evaluate.js'
 import { AwsRequestImpl } from '../request/request.js'
@@ -69,7 +70,7 @@ export function runUnsafeSimulation(
     vpcEndpointPolicies: undefined,
     simulationParameters: {
       simulationMode: 'Strict',
-      strictConditionKeys: new Set()
+      strictConditionKeys: new StrictContextKeys([])
     }
   })
 

@@ -2,6 +2,7 @@ import { loadPolicy } from '@cloud-copilot/iam-policy'
 import { readdirSync, readFileSync, statSync } from 'fs'
 import { join, resolve } from 'path'
 import { describe, expect, it } from 'vitest'
+import { StrictContextKeys } from '../context_keys/strictContextKeys.js'
 import { AwsRequestImpl } from '../request/request.js'
 import { RequestContextImpl } from '../requestContext.js'
 import { AuthorizationRequest, authorize, SimulationParameters } from './CoreSimulatorEngine.js'
@@ -109,8 +110,8 @@ describe('coreSimulatorEngine', () => {
 
           const simulationParameters: SimulationParameters = {
             simulationMode: testCase.simulation?.mode || 'Strict',
-            strictConditionKeys: new Set(
-              testCase.simulation?.strictConditionKeys?.map((k: string) => k.toLowerCase())
+            strictConditionKeys: new StrictContextKeys(
+              testCase.simulation?.strictConditionKeys || []
             )
           }
 

@@ -457,6 +457,47 @@
     }
   },
   {
+    "name": "Permission boundary implicit deny resource policy allows *",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:sts::123456789012:assumed-role/test-role/session-name",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "ec2:*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::mybucket/testobject",
+          "Principal": {
+            "AWS": "*"
+          }
+        }
+      ]
+    },
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
     "name": "Permission boundary implicit deny resource policy allows user",
     "request": {
       "action": "s3:GetObject",

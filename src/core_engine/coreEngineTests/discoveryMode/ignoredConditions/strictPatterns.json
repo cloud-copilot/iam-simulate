@@ -1,0 +1,85 @@
+[
+  {
+    "name": "All Principal Tags are Strict",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:Username": "test-user"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "*",
+            "Condition": {
+              "StringEquals": {
+                "aws:PrincipalTag/Team": "Accounting"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery",
+      "strictConditionKeys": ["/aws:PrincipalTag\/.*/"]
+    },
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Different Principal Tag Keys is Strict",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:Username": "test-user"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "*",
+            "Condition": {
+              "StringEquals": {
+                "aws:PrincipalTag/Team": "Accounting"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery",
+      "strictConditionKeys": ["aws:PrincipalTag/Department"]
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "allow": [
+            { "op": "StringEquals", "key": "aws:PrincipalTag/Team", "values": ["Accounting"] }
+          ]
+        }
+      }
+    }
+  }
+]
