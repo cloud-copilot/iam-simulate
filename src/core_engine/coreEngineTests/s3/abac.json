@@ -502,5 +502,41 @@
     "expected": {
       "response": "ImplicitlyDenied"
     }
+  },
+  {
+    "name": "Deny when ABAC keys are not present but are strict",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::my-bucket/my-object",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::my-bucket/*",
+            "Condition": {
+              "StringEquals": {
+                "aws:ResourceTag/Environment": "production"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    },
+    "simulation": {
+      "mode": "Discovery",
+      "strictConditionKeys": ["/aws:ResourceTag\/.*/"]
+    }
   }
 ]

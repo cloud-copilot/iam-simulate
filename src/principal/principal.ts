@@ -23,8 +23,6 @@ SAML Session Principals:
 Check the Federated string and see if it matches
 
 IAM Identity Center principals // Ignore this for now.
-
-//Federated user sessions, need to fix this see todo below
 */
 
 export type PrincipalMatchResult =
@@ -272,7 +270,6 @@ export function requestMatchesPrincipalStatement(
         }
       }
     } else if (isFederatedUserArn(request.principal.value())) {
-      // TODO: This is wrong, have to receive the User ARN from the request
       const sessionArn = request.principal.value()
       const userArn = userArnFromFederatedUserArn(sessionArn)
       if (principalStatement.arn() === userArn) {
