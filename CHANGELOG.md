@@ -1,3 +1,10 @@
+## [0.1.96](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.95...v0.1.96) (2025-12-22)
+
+
+### Features
+
+* Support session policies in simulation engine ([224f372](https://github.com/cloud-copilot/iam-simulate/commit/224f37233ea974ebf1086dfa139c461e7ff32ffd))
+
 ## [0.1.95](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.94...v0.1.95) (2025-12-20)
 
 ## [0.1.94](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.93...v0.1.94) (2025-12-13)
