@@ -1,0 +1,332 @@
+[
+  {
+    "name": "sts:GetCallerIdentity allowed if denied by session policy",
+    "request": {
+      "action": "sts:GetCallerIdentity",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:sts::123456789012:assumed-role/test-role/session-name",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "sessionPolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Deny",
+          "Action": "*",
+          "Resource": "*"
+        }
+      ]
+    },
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Allow all in session policy allows if allowed by identity policy",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:sts::123456789012:assumed-role/test-role/session-name",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::mybucket/testobject"
+          }
+        ]
+      }
+    ],
+    "sessionPolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "*",
+          "Resource": "*"
+        }
+      ]
+    },
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Allow all in session does not allow if not allowed by identity policy",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:sts::123456789012:assumed-role/test-role/session-name",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "sessionPolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "*",
+          "Resource": "*"
+        }
+      ]
+    },
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Implicit deny in session policy denies even if allowed by identity policy",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:sts::123456789012:assumed-role/test-role/session-name",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::mybucket/testobject"
+          }
+        ]
+      }
+    ],
+    "sessionPolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "ec2:*",
+          "Resource": "*"
+        }
+      ]
+    },
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Explicit deny in session policy denies even if allowed by identity policy",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:sts::123456789012:assumed-role/test-role/session-name",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::mybucket/testobject"
+          }
+        ]
+      }
+    ],
+    "sessionPolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Deny",
+          "Action": "s3:GetObject",
+          "Resource": "*"
+        }
+      ]
+    },
+    "expected": {
+      "response": "ExplicitlyDenied"
+    }
+  },
+  {
+    "name": "Implicit deny in session policy denies even if allowed by resource policy",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:sts::123456789012:assumed-role/test-role/session-name",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "sessionPolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "ec2:*",
+          "Resource": "*"
+        }
+      ]
+    },
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::mybucket/testobject",
+          "Principal": {
+            "AWS": "arn:aws:iam::123456789012:role/test-role"
+          }
+        }
+      ]
+    },
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Explicit deny in session policy denies even if allowed by resource policy",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:sts::123456789012:assumed-role/test-role/session-name",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "sessionPolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Deny",
+          "Action": "s3:GetObject",
+          "Resource": "*"
+        }
+      ]
+    },
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::mybucket/testobject",
+          "Principal": {
+            "AWS": "arn:aws:iam::123456789012:role/test-role"
+          }
+        }
+      ]
+    },
+    "expected": {
+      "response": "ExplicitlyDenied"
+    }
+  },
+  {
+    "name": "Implicit deny in session policy denies even if session ARN in resource policy",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:sts::123456789012:assumed-role/test-role/session-name",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "sessionPolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "ec2:*",
+          "Resource": "*"
+        }
+      ]
+    },
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::mybucket/testobject",
+          "Principal": {
+            "AWS": "arn:aws:sts::123456789012:assumed-role/test-role/session-name"
+          }
+        }
+      ]
+    },
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Ignored conditions in session policy are reported",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:sts::123456789012:assumed-role/test-role/session-name",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::mybucket/testobject"
+          }
+        ]
+      }
+    ],
+    "sessionPolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:*",
+          "Resource": "*",
+          "Condition": {
+            "StringEquals": {
+              "aws:SourceVpc": "vpc-123456"
+            }
+          }
+        }
+      ]
+    },
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "session": {
+          "allow": [{ "key": "aws:SourceVpc", "op": "StringEquals", "values": ["vpc-123456"] }]
+        }
+      }
+    }
+  }
+]

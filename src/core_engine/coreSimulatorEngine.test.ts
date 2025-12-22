@@ -70,6 +70,11 @@ describe('coreSimulatorEngine', () => {
           const identityPolicies = testCase.identityPolicies.map((p: any, idx: number) =>
             loadPolicy(p, { name: idx.toString() })
           )
+
+          const sessionPolicy = testCase.sessionPolicy
+            ? loadPolicy(testCase.sessionPolicy, { name: 'SessionPolicy' })
+            : undefined
+
           const serviceControlPolicies = (testCase.serviceControlPolicies || []).map((scp: any) => {
             return {
               orgIdentifier: scp.orgIdentifier,
@@ -118,6 +123,7 @@ describe('coreSimulatorEngine', () => {
           //In an authorization request
           const authorizationRequest: AuthorizationRequest = {
             request,
+            sessionPolicy,
             identityPolicies,
             serviceControlPolicies,
             resourceControlPolicies,
@@ -144,6 +150,7 @@ describe('coreSimulatorEngine', () => {
             for (const key of [
               'scp',
               'rcp',
+              'session',
               'identity',
               'resource',
               'permissionBoundary',

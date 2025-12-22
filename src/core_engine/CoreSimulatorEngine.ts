@@ -82,6 +82,11 @@ export interface AuthorizationRequest {
   request: AwsRequest
 
   /**
+   * A session policy, if any, for the current Role or Federated User session.
+   */
+  sessionPolicy: PolicyWithName | undefined
+
+  /**
    * The identity policies that are applicable to the principal making the request.
    */
   identityPolicies: PolicyWithName[]
@@ -138,6 +143,10 @@ export function authorize(request: AuthorizationRequest): RequestAnalysis {
     !!request.permissionBoundaries && request.permissionBoundaries.length > 0
   const simulationParameters = request.simulationParameters
 
+  const sessionAnalysis = request.sessionPolicy
+    ? analyzeIdentityPolicies([request.sessionPolicy], request.request, simulationParameters)
+    : undefined
+
   const identityAnalysis = analyzeIdentityPolicies(
     request.identityPolicies,
     request.request,
@@ -178,6 +187,7 @@ export function authorize(request: AuthorizationRequest): RequestAnalysis {
   const serviceAuthorizer = getServiceAuthorizer(request)
   const result = serviceAuthorizer.authorize({
     request: request.request,
+    sessionAnalysis,
     identityAnalysis,
     scpAnalysis,
     rcpAnalysis,
@@ -189,6 +199,7 @@ export function authorize(request: AuthorizationRequest): RequestAnalysis {
 
   if (simulationParameters.simulationMode === 'Discovery') {
     result.ignoredConditions = ignoredConditionsAnalysis(
+      sessionAnalysis,
       scpAnalysis,
       rcpAnalysis,
       identityAnalysis,
@@ -197,6 +208,7 @@ export function authorize(request: AuthorizationRequest): RequestAnalysis {
       endpointAnalysis
     )
     result.ignoredRoleSessionName = roleSessionNameIgnored(
+      sessionAnalysis,
       scpAnalysis,
       rcpAnalysis,
       identityAnalysis,
@@ -619,6 +631,7 @@ function makeStatementExplain(
  * @returns an object containing the ignored conditions for each analysis
  */
 function ignoredConditionsAnalysis(
+  sessionAnalysis: IdentityAnalysis | undefined,
   scpAnalysis: ScpAnalysis,
   rcpAnalysis: RcpAnalysis,
   identityAnalysis: IdentityAnalysis,
@@ -627,6 +640,9 @@ function ignoredConditionsAnalysis(
   endpointAnalysis?: IdentityAnalysis
 ): IgnoredConditions | undefined {
   const ignoredConditions: IgnoredConditions = {}
+  if (sessionAnalysis) {
+    addIgnoredConditionsToAnalysis(ignoredConditions, 'session', [sessionAnalysis])
+  }
   addIgnoredConditionsToAnalysis(ignoredConditions, 'scp', scpAnalysis.ouAnalysis)
   addIgnoredConditionsToAnalysis(ignoredConditions, 'rcp', rcpAnalysis.ouAnalysis)
   addIgnoredConditionsToAnalysis(ignoredConditions, 'identity', [identityAnalysis])
@@ -717,6 +733,7 @@ function addIgnoredConditionsToAnalysis(
  * @returns true if any analysis has statements that ignore the role session name, false otherwise
  */
 function roleSessionNameIgnored(
+  sessionAnalysis: IdentityAnalysis | undefined,
   scpAnalysis: ScpAnalysis,
   rcpAnalysis: RcpAnalysis,
   identityAnalysis: IdentityAnalysis,
@@ -724,6 +741,8 @@ function roleSessionNameIgnored(
   permissionBoundaryAnalysis?: IdentityAnalysis
 ): boolean {
   return (
+    sessionAnalysis?.allowStatements.some((s) => s.ignoredRoleSessionName) ||
+    sessionAnalysis?.unmatchedStatements.some((s) => s.ignoredRoleSessionName) ||
     scpAnalysis.ouAnalysis.some((ou) => ou.allowStatements.some((s) => s.ignoredRoleSessionName)) ||
     scpAnalysis.ouAnalysis.some((ou) =>
       ou.unmatchedStatements.some((s) => s.ignoredRoleSessionName)

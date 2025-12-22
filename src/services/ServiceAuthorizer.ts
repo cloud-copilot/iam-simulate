@@ -10,6 +10,7 @@ import { AwsRequest } from '../request/request.js'
 
 export interface ServiceAuthorizationRequest {
   request: AwsRequest
+  sessionAnalysis: IdentityAnalysis | undefined
   identityAnalysis: IdentityAnalysis
   scpAnalysis: ScpAnalysis
   resourceAnalysis: ResourceAnalysis
