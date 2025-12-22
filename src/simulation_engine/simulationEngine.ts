@@ -42,6 +42,7 @@ const DEFAULT_RCP = {
 }
 
 export interface SimulationErrors {
+  sessionPolicyErrors?: ValidationError[]
   identityPolicyErrors?: Record<string, ValidationError[]>
   serviceControlPolicyErrors?: Record<string, ValidationError[]>
   resourceControlPolicyErrors?: Record<string, ValidationError[]>
@@ -85,6 +86,13 @@ export async function runSimulation(
   simulation: Simulation,
   simulationOptions: Partial<SimulationOptions>
 ): Promise<SimulationResult> {
+  const sessionPolicyErrors = simulation.sessionPolicy
+    ? validateIdentityPolicy(simulation.sessionPolicy)
+    : []
+  const sessionPolicy = simulation.sessionPolicy
+    ? loadPolicy(simulation.sessionPolicy, { name: 'SessionPolicy' })
+    : undefined
+
   const identityPolicyErrors: Record<string, ValidationError[]> = {}
   const identityPolicies: PolicyWithName[] = []
   simulation.identityPolicies.forEach((value) => {
@@ -180,10 +188,12 @@ export async function runSimulation(
     Object.keys(resourceControlPolicyErrors).length > 0 ||
     Object.keys(permissionBoundaryErrors).length > 0 ||
     Object.keys(vpcEndpointErrors).length > 0 ||
-    resourcePolicyErrors.length > 0
+    resourcePolicyErrors.length > 0 ||
+    sessionPolicyErrors.length > 0
   ) {
     return {
       errors: {
+        sessionPolicyErrors,
         identityPolicyErrors,
         serviceControlPolicyErrors: serviceControlPolicyErrors,
         resourceControlPolicyErrors,
@@ -278,6 +288,7 @@ export async function runSimulation(
       simulation.request.action,
       new RequestContextImpl(validContextValues)
     ),
+    sessionPolicy,
     identityPolicies,
     serviceControlPolicies,
     resourceControlPolicies,

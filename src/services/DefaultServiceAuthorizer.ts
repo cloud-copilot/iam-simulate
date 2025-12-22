@@ -22,6 +22,7 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
   public authorize(request: ServiceAuthorizationRequest): RequestAnalysis {
     const scpResult = request.scpAnalysis.result
     const rcpResult = request.rcpAnalysis.result
+    const sessionResult = request.sessionAnalysis?.result
     const identityStatementResult = request.identityAnalysis.result
     const resourcePolicyResult = request.resourceAnalysis?.result
     const permissionBoundaryResult = request.permissionBoundaryAnalysis?.result
@@ -37,11 +38,13 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
       | 'scpAnalysis'
       | 'rcpAnalysis'
       | 'resourceAnalysis'
+      | 'sessionAnalysis'
       | 'identityAnalysis'
       | 'permissionBoundaryAnalysis'
       | 'endpointAnalysis'
     > = {
       sameAccount,
+      sessionAnalysis: request.sessionAnalysis,
       identityAnalysis: request.identityAnalysis,
       scpAnalysis: request.scpAnalysis,
       rcpAnalysis: request.rcpAnalysis,
@@ -60,6 +63,13 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     if (rcpResult !== 'Allowed') {
       return {
         result: rcpResult,
+        ...baseResult
+      }
+    }
+
+    if (sessionResult && sessionResult !== 'Allowed') {
+      return {
+        result: sessionResult,
         ...baseResult
       }
     }

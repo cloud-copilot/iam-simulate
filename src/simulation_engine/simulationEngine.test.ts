@@ -477,6 +477,40 @@ describe('runSimulation', () => {
     expect(result.ignoredContextKeys).toBeUndefined()
   })
 
+  it('should return session policy errors', async () => {
+    //Given a simulation with an error in a session policy
+    const simulation: Simulation = {
+      identityPolicies: [],
+      serviceControlPolicies: [],
+      resourceControlPolicies: [],
+      resourcePolicy: undefined,
+      sessionPolicy: {
+        Statement: {
+          Effect: 'Domination',
+          Action: 'oneRing:PutOn',
+          Resource: 'arn:aws:s3:::ring/theone'
+        }
+      },
+      request: {
+        action: 's3:GetObject',
+        resource: {
+          resource: 'arn:aws:s3:::examplebucket/1234',
+          accountId: '123456789012'
+        },
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        contextVariables: {}
+      }
+    }
+
+    //When the simulation is run
+    const result = await runSimulation(simulation, {})
+
+    //Then the result should contain an error
+    expect(result.errors!.message).toEqual('policy.errors')
+    expect(result.errors!.sessionPolicyErrors!.length).toEqual(1)
+    expect(result.ignoredContextKeys).toBeUndefined()
+  })
+
   it('should return identity policy errors', async () => {
     //Given a simulation with an error in an identity policy
     const simulation: Simulation = {
@@ -893,6 +927,52 @@ describe('runSimulation', () => {
     //Then there should be no errors
     expect(result.errors).toBeUndefined()
     expect(result.analysis?.result).toEqual('Allowed')
+    expect(result.ignoredContextKeys).toEqual([])
+  })
+
+  it('should run a simulation that is implicitly denied by the session policy', async () => {
+    //Given a simulation with an identity policy that allows the request
+    //but a session policy that does not allow the action
+    const simulation: Simulation = {
+      identityPolicies: [
+        {
+          name: 'allowS3',
+          policy: {
+            Statement: {
+              Effect: 'Allow',
+              Action: 's3:GetObject',
+              Resource: 'arn:aws:s3:::examplebucket/*'
+            }
+          }
+        }
+      ],
+      serviceControlPolicies: [],
+      resourceControlPolicies: [],
+      resourcePolicy: undefined,
+      sessionPolicy: {
+        Statement: {
+          Effect: 'Allow',
+          Action: 's3:PutObject',
+          Resource: '*'
+        }
+      },
+      request: {
+        action: 's3:GetObject',
+        resource: {
+          resource: 'arn:aws:s3:::examplebucket/1234',
+          accountId: '123456789012'
+        },
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        contextVariables: {}
+      }
+    }
+
+    //When the simulation is run
+    const result = await runSimulation(simulation, {})
+
+    //Then there should be no errors and the result should be implicitly denied
+    expect(result.errors).toBeUndefined()
+    expect(result.analysis?.result).toEqual('ImplicitlyDenied')
     expect(result.ignoredContextKeys).toEqual([])
   })
 

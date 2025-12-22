@@ -40,6 +40,16 @@ const defaultRcp = loadPolicy(
   { name: 'RCPFullAccess' }
 )
 
+const conditionKeysToVerify = [
+  'scp',
+  'rcp',
+  'session',
+  'identity',
+  'resource',
+  'permissionBoundary',
+  'endpointPolicy'
+]
+
 describe('coreSimulatorEngine', () => {
   const testFolderPath = resolve(join(__dirname, 'coreEngineTests'))
   const allFiles = getAllFiles(testFolderPath)
@@ -70,6 +80,11 @@ describe('coreSimulatorEngine', () => {
           const identityPolicies = testCase.identityPolicies.map((p: any, idx: number) =>
             loadPolicy(p, { name: idx.toString() })
           )
+
+          const sessionPolicy = testCase.sessionPolicy
+            ? loadPolicy(testCase.sessionPolicy, { name: 'SessionPolicy' })
+            : undefined
+
           const serviceControlPolicies = (testCase.serviceControlPolicies || []).map((scp: any) => {
             return {
               orgIdentifier: scp.orgIdentifier,
@@ -118,6 +133,7 @@ describe('coreSimulatorEngine', () => {
           //In an authorization request
           const authorizationRequest: AuthorizationRequest = {
             request,
+            sessionPolicy,
             identityPolicies,
             serviceControlPolicies,
             resourceControlPolicies,
@@ -141,14 +157,7 @@ describe('coreSimulatorEngine', () => {
           }
 
           if (expected.ignoredConditions) {
-            for (const key of [
-              'scp',
-              'rcp',
-              'identity',
-              'resource',
-              'permissionBoundary',
-              'endpointPolicy'
-            ]) {
+            for (const key of conditionKeysToVerify) {
               const actualAllow = (analysis.ignoredConditions as any)?.[key]?.allow
               const actualDeny = (analysis.ignoredConditions as any)?.[key]?.deny
               if (expected.ignoredConditions[key]?.allow) {
@@ -170,14 +179,7 @@ describe('coreSimulatorEngine', () => {
           } else {
             let ignoredConditionsUndefinedOrEmpty = true
             if (analysis.ignoredConditions) {
-              for (const key of [
-                'scp',
-                'rcp',
-                'identity',
-                'resource',
-                'permissionBoundary',
-                'endpointPolicy'
-              ]) {
+              for (const key of conditionKeysToVerify) {
                 const actualAllow = (analysis.ignoredConditions as any)?.[key]?.allow
                 const actualDeny = (analysis.ignoredConditions as any)?.[key]?.deny
                 if (actualAllow && actualAllow.length > 0) {

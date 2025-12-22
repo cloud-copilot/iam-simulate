@@ -65,6 +65,10 @@ export interface IgnoredCondition {
  * Conditions that were ignored during discovery mode.
  */
 export interface IgnoredConditions {
+  session?: {
+    allow?: IgnoredCondition[]
+    deny?: IgnoredCondition[]
+  }
   scp?: {
     allow?: IgnoredCondition[]
     deny?: IgnoredCondition[]
@@ -104,6 +108,11 @@ export interface RequestAnalysis {
    * Whether the principal and the resource are in the same account.
    */
   sameAccount: boolean
+
+  /**
+   * The result of the evaluation of the session policy, if any.
+   */
+  sessionAnalysis?: IdentityAnalysis | undefined
 
   /**
    * The result of the evaluation of the resource policy.

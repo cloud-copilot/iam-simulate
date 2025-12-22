@@ -62,6 +62,7 @@ export function runUnsafeSimulation(
 
   const analysis = authorize({
     request,
+    sessionPolicy: undefined,
     identityPolicies,
     serviceControlPolicies,
     resourceControlPolicies,

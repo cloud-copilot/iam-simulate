@@ -25,6 +25,14 @@ export interface Simulation {
     contextVariables: Record<string, string | string[]>
   }
 
+  /**
+   * A session policy, if any, for the current Role or Federated User session.
+   */
+  sessionPolicy?: any | undefined
+
+  /**
+   * The identity policies that are attached to the principal making the request
+   */
   identityPolicies: SimulationIdentityPolicy[]
 
   /**
