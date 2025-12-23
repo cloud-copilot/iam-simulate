@@ -8,6 +8,7 @@ import {
   validateServiceControlPolicy,
   ValidationError
 } from '@cloud-copilot/iam-policy'
+import { isAssumedRoleArn, isFederatedUserArn, isIamRoleArn } from '@cloud-copilot/iam-utils'
 import { isConditionKeyArray } from '../context_keys/contextKeyTypes.js'
 import { normalizeContextKeyCase, typeForContextKey } from '../context_keys/contextKeys.js'
 import { StrictContextKeys } from '../context_keys/strictContextKeys.js'
@@ -86,6 +87,22 @@ export async function runSimulation(
   simulation: Simulation,
   simulationOptions: Partial<SimulationOptions>
 ): Promise<SimulationResult> {
+  const principal = simulation.request.principal
+
+  if (simulation.sessionPolicy) {
+    if (
+      !isIamRoleArn(principal) &&
+      !isAssumedRoleArn(principal) &&
+      !isFederatedUserArn(principal)
+    ) {
+      return {
+        errors: {
+          message: 'session.policy.invalid.principal'
+        }
+      }
+    }
+  }
+
   const sessionPolicyErrors = simulation.sessionPolicy
     ? validateIdentityPolicy(simulation.sessionPolicy)
     : []
@@ -280,7 +297,7 @@ export async function runSimulation(
 
   const simulationResult = authorize({
     request: new AwsRequestImpl(
-      simulation.request.principal,
+      principal,
       {
         resource: simulation.request.resource.resource,
         accountId: simulation.request.resource.accountId

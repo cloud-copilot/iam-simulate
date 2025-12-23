@@ -497,7 +497,7 @@ describe('runSimulation', () => {
           resource: 'arn:aws:s3:::examplebucket/1234',
           accountId: '123456789012'
         },
-        principal: 'arn:aws:iam::123456789012:user/Alice',
+        principal: 'arn:aws:iam::123456789012:role/Alice',
         contextVariables: {}
       }
     }
@@ -962,7 +962,7 @@ describe('runSimulation', () => {
           resource: 'arn:aws:s3:::examplebucket/1234',
           accountId: '123456789012'
         },
-        principal: 'arn:aws:iam::123456789012:user/Alice',
+        principal: 'arn:aws:iam::123456789012:role/Alice',
         contextVariables: {}
       }
     }
@@ -974,6 +974,71 @@ describe('runSimulation', () => {
     expect(result.errors).toBeUndefined()
     expect(result.analysis?.result).toEqual('ImplicitlyDenied')
     expect(result.ignoredContextKeys).toEqual([])
+  })
+
+  it('should return an error if a session policy is not allowed for the principal type', async () => {
+    //Given the principal types and whether session policies are allowed for them
+    // If the principalType value is true, then a session policy is allowed
+    // If the principalType value is false, then a session policy is not allowed
+    const principalTypes: Record<string, boolean> = {
+      'arn:aws:iam::123456789012:user/Alice': false,
+      'arn:aws:sts::123456789012:assumed-role/RoleName/SessionName': true,
+      'arn:aws:sts::123456789012:federated-user/FederatedName': true,
+      'arn:aws:iam::123456789012:role/RoleName': true
+    }
+
+    for (const [principal, sessionPolicyAllowed] of Object.entries(principalTypes)) {
+      //Given a simulation with a session policy
+      const simulation: Simulation = {
+        identityPolicies: [
+          {
+            name: 'allowS3',
+            policy: {
+              Statement: {
+                Effect: 'Allow',
+                Action: 's3:GetObject',
+                Resource: 'arn:aws:s3:::examplebucket/*'
+              }
+            }
+          }
+        ],
+        serviceControlPolicies: [],
+        resourceControlPolicies: [],
+        resourcePolicy: undefined,
+        sessionPolicy: {
+          Statement: {
+            Effect: 'Allow',
+            Action: '*',
+            Resource: '*'
+          }
+        },
+        request: {
+          action: 's3:GetObject',
+          resource: {
+            resource: 'arn:aws:s3:::examplebucket/1234',
+            accountId: '123456789012'
+          },
+          principal,
+          contextVariables: {}
+        }
+      }
+
+      //When the simulation is run
+      const result = await runSimulation(simulation, {})
+
+      //Then the result should match the expected behavior
+      if (sessionPolicyAllowed) {
+        expect(
+          result.errors?.message,
+          `Principal ${principal} should allow session policies`
+        ).not.toEqual('session.policy.invalid.principal')
+      } else {
+        expect(
+          result.errors?.message,
+          `Principal ${principal} should not allow session policies`
+        ).toEqual('session.policy.invalid.principal')
+      }
+    }
   })
 
   it('should work with ForAnyValue:StringEquals', async () => {
