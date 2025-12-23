@@ -1,3 +1,10 @@
+## [0.1.97](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.96...v0.1.97) (2025-12-23)
+
+
+### Features
+
+* Validate if session policies are allowed based on the principal type ([6d0da09](https://github.com/cloud-copilot/iam-simulate/commit/6d0da093acf251de9af134d87f48a176fe08e815))
+
 ## [0.1.96](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.95...v0.1.96) (2025-12-22)
 
 
