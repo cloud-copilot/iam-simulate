@@ -1,3 +1,8 @@
+export {
+  getDenialReasons,
+  type DenialPolicyType,
+  type RequestDenial
+} from './analysis/analyzeResults.js'
 export { typeForContextKey } from './context_keys/contextKeys.js'
 export {
   BaseConditionKeyType,
@@ -6,7 +11,12 @@ export {
 } from './context_keys/contextKeyTypes.js'
 export { findContextKeys } from './context_keys/findContextKeys.js'
 export type { SimulationMode } from './core_engine/CoreSimulatorEngine.js'
-export type { EvaluationResult, IgnoredCondition, IgnoredConditions } from './evaluate.js'
+export type {
+  EvaluationResult,
+  IgnoredCondition,
+  IgnoredConditions,
+  RequestAnalysis
+} from './evaluate.js'
 export type {
   ActionExplain,
   ConditionExplain,
