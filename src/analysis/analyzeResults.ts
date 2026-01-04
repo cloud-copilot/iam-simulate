@@ -1,4 +1,11 @@
-import { RequestAnalysis } from '../evaluate.js'
+import {
+  EvaluationResult,
+  IdentityAnalysis,
+  RcpAnalysis,
+  RequestAnalysis,
+  ResourceAnalysis,
+  ScpAnalysis
+} from '../evaluate.js'
 
 /**
  * Analyze a RequestAnalysis to see if the request was allowed by identity policies.
@@ -53,155 +60,80 @@ export type RequestDenial =
  * @returns a list of RequestDenial objects describing the reasons for denial
  */
 export function getDenialReasons(requestAnalysis: RequestAnalysis): RequestDenial[] {
-  const denyingStatements: RequestDenial[] = []
-
+  const denials: RequestDenial[] = []
   const overallResult = requestAnalysis.result
 
-  const identityAnalysis = requestAnalysis.identityAnalysis
-  if (identityAnalysis) {
-    if (identityAnalysis.result === 'ImplicitlyDenied' && overallResult === 'ImplicitlyDenied') {
-      denyingStatements.push({
-        policyType: 'identity',
-        denialType: 'Implicit'
+  addSimplePolicyDenials(requestAnalysis.identityAnalysis, 'identity', overallResult, denials)
+  addSimplePolicyDenials(requestAnalysis.resourceAnalysis, 'resource', overallResult, denials)
+  addOuPolicyDenials(requestAnalysis.scpAnalysis, 'scp', overallResult, denials)
+  addOuPolicyDenials(requestAnalysis.rcpAnalysis, 'rcp', overallResult, denials)
+  addSimplePolicyDenials(
+    requestAnalysis.permissionBoundaryAnalysis,
+    'permissionBoundary',
+    overallResult,
+    denials
+  )
+  addSimplePolicyDenials(requestAnalysis.endpointAnalysis, 'endpointPolicy', overallResult, denials)
+
+  return denials
+}
+
+/**
+ * Helper for identity-style policies (identity, resource, permissionBoundary, endpoint).
+ * Adds denial reasons from a simple policy analysis.
+ */
+function addSimplePolicyDenials(
+  analysis: IdentityAnalysis | ResourceAnalysis | undefined,
+  policyType: DenialPolicyType,
+  overallResult: EvaluationResult,
+  denials: RequestDenial[]
+): void {
+  if (!analysis) return
+
+  if (analysis.result === 'ImplicitlyDenied' && overallResult === 'ImplicitlyDenied') {
+    denials.push({ policyType, denialType: 'Implicit' })
+  } else if (analysis.result === 'ExplicitlyDenied' && overallResult === 'ExplicitlyDenied') {
+    for (const stmt of analysis.denyStatements) {
+      denials.push({
+        policyType,
+        policyIdentifier: stmt.policyId,
+        statementId: stmt.statement.sid() || stmt.statement.index().toString(),
+        denialType: 'Explicit'
       })
-    } else if (
-      identityAnalysis.result === 'ExplicitlyDenied' &&
-      overallResult === 'ExplicitlyDenied'
-    ) {
-      for (const stmt of identityAnalysis.denyStatements) {
-        denyingStatements.push({
-          policyType: 'identity',
-          policyIdentifier: stmt.policyId,
-          statementId: stmt.statement.sid() || stmt.statement.index().toString(),
-          denialType: 'Explicit'
-        })
-      }
     }
   }
+}
 
-  const resourceAnalysis = requestAnalysis.resourceAnalysis
-  if (resourceAnalysis) {
-    if (resourceAnalysis.result === 'ImplicitlyDenied' && overallResult === 'ImplicitlyDenied') {
-      denyingStatements.push({
-        policyType: 'resource',
-        denialType: 'Implicit'
-      })
-    } else if (
-      resourceAnalysis.result === 'ExplicitlyDenied' &&
-      overallResult === 'ExplicitlyDenied'
-    ) {
-      for (const stmt of resourceAnalysis.denyStatements) {
-        denyingStatements.push({
-          policyType: 'resource',
-          statementId: stmt.statement.sid() || stmt.statement.index().toString(),
-          denialType: 'Explicit'
-        })
+/**
+ * Helper for OU-based policies (scp, rcp).
+ * Adds denial reasons from an organizational policy analysis.
+ */
+function addOuPolicyDenials(
+  analysis: ScpAnalysis | RcpAnalysis | undefined,
+  policyType: DenialPolicyType,
+  overallResult: EvaluationResult,
+  denials: RequestDenial[]
+): void {
+  if (!analysis) return
+
+  if (analysis.result === 'ImplicitlyDenied' && overallResult === 'ImplicitlyDenied') {
+    for (const ou of analysis.ouAnalysis) {
+      if (ou.result === 'ImplicitlyDenied') {
+        denials.push({ policyType, identifier: ou.orgIdentifier, denialType: 'Implicit' })
       }
     }
-  }
-
-  const scpAnalysis = requestAnalysis.scpAnalysis
-  if (scpAnalysis) {
-    if (scpAnalysis.result === 'ImplicitlyDenied' && overallResult === 'ImplicitlyDenied') {
-      for (const ou of scpAnalysis.ouAnalysis) {
-        if (ou.result === 'ImplicitlyDenied') {
-          denyingStatements.push({
-            policyType: 'scp',
-            identifier: ou.orgIdentifier,
-            denialType: 'Implicit'
+  } else if (analysis.result === 'ExplicitlyDenied' && overallResult === 'ExplicitlyDenied') {
+    for (const ou of analysis.ouAnalysis) {
+      if (ou.result === 'ExplicitlyDenied') {
+        for (const stmt of ou.denyStatements) {
+          denials.push({
+            policyType,
+            policyIdentifier: stmt.policyId,
+            statementId: stmt.statement.sid() || stmt.statement.index().toString(),
+            denialType: 'Explicit'
           })
         }
       }
-    } else if (scpAnalysis.result === 'ExplicitlyDenied' && overallResult === 'ExplicitlyDenied') {
-      for (const ou of scpAnalysis.ouAnalysis) {
-        if (ou.result === 'ExplicitlyDenied') {
-          for (const stmt of ou.denyStatements) {
-            denyingStatements.push({
-              policyType: 'scp',
-              policyIdentifier: stmt.policyId,
-              statementId: stmt.statement.sid() || stmt.statement.index().toString(),
-              denialType: 'Explicit'
-            })
-          }
-        }
-      }
     }
   }
-
-  const rcpAnalysis = requestAnalysis.rcpAnalysis
-  if (rcpAnalysis) {
-    if (rcpAnalysis.result === 'ImplicitlyDenied' && overallResult === 'ImplicitlyDenied') {
-      for (const ou of rcpAnalysis.ouAnalysis) {
-        if (ou.result === 'ImplicitlyDenied') {
-          denyingStatements.push({
-            policyType: 'rcp',
-            identifier: ou.orgIdentifier,
-            denialType: 'Implicit'
-          })
-        }
-      }
-    } else if (rcpAnalysis.result === 'ExplicitlyDenied' && overallResult === 'ExplicitlyDenied') {
-      for (const ou of rcpAnalysis.ouAnalysis) {
-        if (ou.result === 'ExplicitlyDenied') {
-          for (const stmt of ou.denyStatements) {
-            denyingStatements.push({
-              policyType: 'rcp',
-              policyIdentifier: stmt.policyId,
-              statementId: stmt.statement.sid() || stmt.statement.index().toString(),
-              denialType: 'Explicit'
-            })
-          }
-        }
-      }
-    }
-  }
-
-  const permissionBoundaryAnalysis = requestAnalysis.permissionBoundaryAnalysis
-  if (permissionBoundaryAnalysis) {
-    if (
-      permissionBoundaryAnalysis.result === 'ImplicitlyDenied' &&
-      overallResult === 'ImplicitlyDenied'
-    ) {
-      denyingStatements.push({
-        policyType: 'permissionBoundary',
-        denialType: 'Implicit'
-      })
-    } else if (
-      permissionBoundaryAnalysis.result === 'ExplicitlyDenied' &&
-      overallResult === 'ExplicitlyDenied'
-    ) {
-      for (const stmt of permissionBoundaryAnalysis.denyStatements) {
-        denyingStatements.push({
-          policyType: 'permissionBoundary',
-          policyIdentifier: stmt.policyId,
-          statementId: stmt.statement.sid() || stmt.statement.index().toString(),
-          denialType: 'Explicit'
-        })
-      }
-    }
-  }
-
-  const endpointAnalysis = requestAnalysis.endpointAnalysis
-  if (endpointAnalysis) {
-    if (endpointAnalysis.result === 'ImplicitlyDenied' && overallResult === 'ImplicitlyDenied') {
-      denyingStatements.push({
-        policyType: 'endpointPolicy',
-        denialType: 'Implicit'
-      })
-    } else if (
-      endpointAnalysis.result === 'ExplicitlyDenied' &&
-      overallResult === 'ExplicitlyDenied'
-    ) {
-      for (const stmt of endpointAnalysis.denyStatements) {
-        denyingStatements.push({
-          policyType: 'endpointPolicy',
-          policyIdentifier: stmt.policyId,
-          statementId: stmt.statement.sid() || stmt.statement.index().toString(),
-          denialType: 'Explicit'
-        })
-      }
-    }
-  }
-
-  return denyingStatements
 }
