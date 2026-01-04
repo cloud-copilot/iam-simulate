@@ -1,3 +1,10 @@
+## [0.1.100](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.99...v0.1.100) (2026-01-04)
+
+
+### Features
+
+* Add analysis for why a request is denied ([a08d0bf](https://github.com/cloud-copilot/iam-simulate/commit/a08d0bf13799dec417e56a7761148fe63c62eedf))
+
 ## [0.1.99](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.98...v0.1.99) (2026-01-03)
 
 ## [0.1.98](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.97...v0.1.98) (2025-12-27)
