@@ -51,7 +51,7 @@
   "dependencies": {
     "@cloud-copilot/iam-data": ">=0.15.202511222 <1.0.0",
     "@cloud-copilot/iam-policy": "^0.1.47",
-    "@cloud-copilot/iam-utils": "^0.1.7"
+    "@cloud-copilot/iam-utils": "^0.1.43"
   },
   "prettier": "@cloud-copilot/prettier-config",
   "release": {
