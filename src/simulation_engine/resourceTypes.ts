@@ -151,7 +151,7 @@ function isResourceTypeVariable(component: string | undefined): boolean {
   if (!component) {
     return false
   }
-  return component.match(/^\$\{[0-1a-zA-Z]+\}$/) !== null
+  return component.match(/^\$\{[0-9a-zA-Z]+\}$/) !== null
 }
 
 /**
