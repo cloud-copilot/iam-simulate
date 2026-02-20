@@ -33,6 +33,18 @@ export interface RequestResource {
    * The account ID of the resource, independent of what is in the ARN
    */
   accountId(): string
+
+  /**
+   * Checks if this resource represents all resources (i.e., the wildcard "*")
+   * @returns true if the resource is "*", false otherwise
+   */
+  isAllResources(): boolean
+
+  /**
+   * Checks if this resource contains any wildcard characters
+   * @returns true if the resource contains "*", false otherwise
+   */
+  hasWildcards(): boolean
 }
 
 export class ResourceRequestImpl implements RequestResource {
@@ -67,5 +79,13 @@ export class ResourceRequestImpl implements RequestResource {
 
   accountId(): string {
     return this.accountIdString
+  }
+
+  isAllResources(): boolean {
+    return this.value() === '*'
+  }
+
+  hasWildcards(): boolean {
+    return this.value().includes('*')
   }
 }

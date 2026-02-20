@@ -1,0 +1,104 @@
+[
+  {
+    "name": "context key allows access when condition matches",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "conditional-allow",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::examplebucket/conditional/*",
+                "Condition": {
+                  "StringEquals": {
+                    "s3:ResourceAccount": "123456789012"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "s3:GetObject",
+        "resource": {
+          "resource": "arn:aws:s3:::examplebucket/*",
+          "accountId": "123456789012"
+        },
+        "principal": "arn:aws:iam::123456789012:user/Alice",
+        "contextVariables": {
+          "s3:ResourceAccount": "123456789012"
+        }
+      }
+    },
+    "simulationOptions": {},
+    "expected": {
+      "results": [
+        {
+          "resourceType": "object",
+          "resourcePattern": "arn:aws:s3:::examplebucket/conditional/*",
+          "result": "Allowed"
+        }
+      ],
+      "overallResult": "Allowed",
+      "resultType": "wildcard"
+    }
+  },
+  {
+    "name": "context key denies access when condition fails",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "conditional-allow",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::examplebucket/conditional/*",
+                "Condition": {
+                  "StringEquals": {
+                    "s3:ResourceAccount": "123456789012"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "s3:GetObject",
+        "resource": {
+          "resource": "arn:aws:s3:::examplebucket/*",
+          "accountId": "123456789012"
+        },
+        "principal": "arn:aws:iam::123456789012:user/Alice",
+        "contextVariables": {
+          "s3:ResourceAccount": "000000000000"
+        }
+      }
+    },
+    "simulationOptions": {},
+    "expected": {
+      "results": [
+        {
+          "resourceType": "object",
+          "resourcePattern": "arn:aws:s3:::examplebucket/conditional/*",
+          "result": "ImplicitlyDenied"
+        }
+      ],
+      "overallResult": "ImplicitlyDenied",
+      "resultType": "wildcard"
+    }
+  }
+]

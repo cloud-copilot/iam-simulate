@@ -1,10 +1,6 @@
-import { getAllGlobalConditionKeys, iamActionDetails } from '@cloud-copilot/iam-data'
-import {
-  getResourceTypesForAction,
-  isS3BucketOrObjectArn,
-  isWildcardOnlyAction,
-  lowerCaseAll
-} from '../util.js'
+import { getAllGlobalConditionKeys, iamActionDetails, ResourceType } from '@cloud-copilot/iam-data'
+import { isS3BucketOrObjectArn, isWildcardOnlyAction, lowerCaseAll } from '../util.js'
+import { getResourceTypesForAction } from './resourceTypes.js'
 
 /**
  * Get the allowed context keys for a request.
@@ -20,7 +16,8 @@ export async function allowedContextKeysForRequest(
   service: string,
   action: string,
   resource: string,
-  bucketAbacEnabled?: boolean
+  bucketAbacEnabled: boolean,
+  suggestedResourceType: ResourceType | undefined
 ): Promise<string[]> {
   const actionDetails = await iamActionDetails(service, action)
   const actionConditionKeys = lowerCaseAll(actionDetails.conditionKeys)
@@ -30,14 +27,19 @@ export async function allowedContextKeysForRequest(
     return [...actionConditionKeys, ...lowerCaseGlobalConditionKeys()]
   }
 
-  const resourceTypes = await getResourceTypesForAction(service, action, resource)
-  if (resourceTypes.length === 0) {
-    throw new Error(`No resource types found for action ${action} on service ${service}`)
-  } else if (resourceTypes.length > 1) {
-    throw new Error(`Multiple resource types found for action ${action} on service ${service}`)
+  let resourceType = suggestedResourceType
+  if (!resourceType) {
+    const resourceTypes = await getResourceTypesForAction(service, action, resource)
+    if (resourceTypes.length === 0) {
+      throw new Error(`No resource types found for action ${action} on service ${service}`)
+    } else if (resourceTypes.length > 1) {
+      throw new Error(`Multiple resource types found for action ${action} on service ${service}`)
+    }
+    resourceType = resourceTypes[0]
   }
+
   const resourceTypeConditions = actionDetails.resourceTypes.find(
-    (rt) => rt.name === resourceTypes[0].key
+    (rt) => rt.name === resourceType!.key
   )!.conditionKeys
 
   const allKeys = [

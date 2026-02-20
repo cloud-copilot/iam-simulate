@@ -1,0 +1,114 @@
+[
+  {
+    "name": "ec2 AssociateAddress runs once per resource type",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "ec2-associate",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "ec2:AssociateAddress",
+                "Resource": [
+                  "arn:aws:ec2:us-east-1:123456789012:elastic-ip/*",
+                  "arn:aws:ec2:us-east-1:123456789012:instance/*",
+                  "arn:aws:ec2:us-east-1:123456789012:network-interface/*"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "ec2:AssociateAddress",
+        "resource": {
+          "resource": "arn:aws:ec2:us-east-1:123456789012:*/*",
+          "accountId": "123456789012"
+        },
+        "principal": "arn:aws:iam::123456789012:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "simulationOptions": {},
+    "expected": {
+      "results": [
+        {
+          "resourceType": "elastic-ip",
+          "resourcePattern": "arn:aws:ec2:us-east-1:123456789012:elastic-ip/*",
+          "result": "Allowed"
+        },
+        {
+          "resourceType": "instance",
+          "resourcePattern": "arn:aws:ec2:us-east-1:123456789012:instance/*",
+          "result": "Allowed"
+        },
+        {
+          "resourceType": "network-interface",
+          "resourcePattern": "arn:aws:ec2:us-east-1:123456789012:network-interface/*",
+          "result": "Allowed"
+        }
+      ],
+      "overallResult": "Allowed",
+      "resultType": "wildcard"
+    }
+  },
+  {
+    "name": "ec2 AssociateAddress wildcard resource expands to all resource types",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "ec2-associate-wildcard",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "ec2:AssociateAddress",
+                "Resource": "*"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "ec2:AssociateAddress",
+        "resource": {
+          "resource": "*",
+          "accountId": "123456789012"
+        },
+        "principal": "arn:aws:iam::123456789012:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "simulationOptions": {},
+    "expected": {
+      "results": [
+        {
+          "resourceType": "elastic-ip",
+          "resourcePattern": "*",
+          "result": "Allowed"
+        },
+        {
+          "resourceType": "instance",
+          "resourcePattern": "*",
+          "result": "Allowed"
+        },
+        {
+          "resourceType": "network-interface",
+          "resourcePattern": "*",
+          "result": "Allowed"
+        }
+      ],
+      "overallResult": "Allowed",
+      "resultType": "wildcard"
+    }
+  }
+]
