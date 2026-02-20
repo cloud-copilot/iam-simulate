@@ -447,6 +447,23 @@ const resourceTests: ResourceTest[] = [
     ]
   },
   {
+    name: 'Resource & Allow falls through wildcard overlap check and returns detailed mismatch',
+    resourceStatements: ['arn:aws:ec2:us-east-1:123456789012:instance/i-12345'],
+    effect: 'Allow',
+    resource: {
+      resource: 'arn:aws:ec2:us-west-*:123456789012:instance/i-*',
+      accountId: '123456789012'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:ec2:us-east-1:123456789012:instance/i-12345',
+        matches: false,
+        errors: ['Region does not match']
+      }
+    ]
+  },
+  {
     name: 'should match when request wildcard is in a non-resource segment',
     resourceStatements: ['arn:aws:ec2:us-east-1:123456789012:instance/i-123'],
     effect: 'Allow',
@@ -510,6 +527,23 @@ const resourceTests: ResourceTest[] = [
       }
     ]
   },
+  {
+    name: 'Allow Resource Statement Does NotMatch Wildcard',
+    resourceStatements: ['arn:aws:s3:::my_corporate_bucket/file.txt'],
+    effect: 'Allow',
+    resource: {
+      resource: 'arn:aws:s3:::my_corporate_bucket/private/*',
+      accountId: '123456789012'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:s3:::my_corporate_bucket/file.txt',
+        matches: false
+      }
+    ]
+  },
+
   {
     name: 'should match when policy and request wildcards are identical for deny',
     resourceStatements: ['arn:aws:s3:::my_corporate_bucket/*'],
@@ -602,6 +636,22 @@ const resourceTests: ResourceTest[] = [
     explains: [
       {
         resource: 'arn:aws:s3:::my_corporate_bucket/*',
+        matches: true
+      }
+    ]
+  },
+  {
+    name: 'Resource & Deny falls through wildcard overlap check and still matches for policy supersets',
+    resourceStatements: ['arn:aws:ec2:us-*:123456789012:instance/i-*'],
+    effect: 'Deny',
+    resource: {
+      resource: 'arn:aws:ec2:us-east-*:123456789012:instance/i-123*',
+      accountId: '123456789012'
+    },
+    expectMatch: true,
+    explains: [
+      {
+        resource: 'arn:aws:ec2:us-*:123456789012:instance/i-*',
         matches: true
       }
     ]

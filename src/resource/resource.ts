@@ -178,6 +178,7 @@ function singleResourceMatchesRequest(
         matches: true // This gets inverted in the caller
       }
     }
+    throw new Error(`Unknown Resource Type and Effect Combination: ${resourceType} ${effect}`)
   }
 
   // Request contains wildcards but neither is a full *
