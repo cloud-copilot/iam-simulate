@@ -1,0 +1,69 @@
+[
+  {
+    "name": "permission boundary blocks one pattern",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "id-allow",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:GetObject",
+                "Resource": [
+                  "arn:aws:s3:::examplebucket/public/*",
+                  "arn:aws:s3:::examplebucket/private/*"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "permissionBoundaryPolicies": [
+        {
+          "name": "boundary",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::examplebucket/public/*"
+              }
+            ]
+          }
+        }
+      ],
+      "resourcePolicy": null,
+      "request": {
+        "action": "s3:GetObject",
+        "resource": {
+          "resource": "arn:aws:s3:::examplebucket/*",
+          "accountId": "123456789012"
+        },
+        "principal": "arn:aws:iam::123456789012:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "simulationOptions": {},
+    "expected": {
+      "results": [
+        {
+          "resourceType": "object",
+          "resourcePattern": "arn:aws:s3:::examplebucket/public/*",
+          "result": "Allowed"
+        },
+        {
+          "resourceType": "object",
+          "resourcePattern": "arn:aws:s3:::examplebucket/private/*",
+          "result": "ImplicitlyDenied"
+        }
+      ],
+      "overallResult": "Allowed",
+      "resultType": "wildcard"
+    }
+  }
+]

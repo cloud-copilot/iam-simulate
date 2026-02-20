@@ -14,8 +14,17 @@ import {
 import { describe, expect, it, vi } from 'vitest'
 import { Simulation } from './simulation.js'
 import { normalizeSimulationParameters, runSimulation } from './simulationEngine.js'
+import type { ErrorSimulationResult, RunSimulationResults } from './simulationEngine.js'
 
 vi.mock('@cloud-copilot/iam-data')
+
+function assertErrorResult(response: RunSimulationResults): ErrorSimulationResult {
+  expect(response.resultType).toEqual('error')
+  if (response.resultType !== 'error') {
+    throw new Error('Expected error result')
+  }
+  return response
+}
 
 const mockKeyDetails: Record<string, ConditionKey> = {
   's3:requestobjecttagkeys': {
@@ -435,12 +444,12 @@ describe('runSimulation', () => {
     }
 
     //When the simulation is run
-    const result = await runSimulation(simulation, {})
+    const response = await runSimulation(simulation, {})
 
     //Then the result should contain an error
-    expect(result.errors!.message).toEqual('policy.errors')
-    expect(result.errors!.serviceControlPolicyErrors!['Gandalf'].length).toEqual(1)
-    expect(result.ignoredContextKeys).toBeUndefined()
+    const errorResponse = assertErrorResult(response)
+    expect(errorResponse.errors!.message).toEqual('policy.errors')
+    expect(errorResponse.errors!.serviceControlPolicyErrors!['Gandalf'].length).toEqual(1)
   })
 
   it('should return resource policy errors', async () => {
@@ -469,12 +478,12 @@ describe('runSimulation', () => {
     }
 
     //When the simulation is run
-    const result = await runSimulation(simulation, {})
+    const response = await runSimulation(simulation, {})
 
     //Then the result should contain an error
-    expect(result.errors!.message).toEqual('policy.errors')
-    expect(result.errors!.resourcePolicyErrors!.length).toEqual(1)
-    expect(result.ignoredContextKeys).toBeUndefined()
+    const errorResponse = assertErrorResult(response)
+    expect(errorResponse.errors!.message).toEqual('policy.errors')
+    expect(errorResponse.errors!.resourcePolicyErrors!.length).toEqual(1)
   })
 
   it('should return session policy errors', async () => {
@@ -503,12 +512,12 @@ describe('runSimulation', () => {
     }
 
     //When the simulation is run
-    const result = await runSimulation(simulation, {})
+    const response = await runSimulation(simulation, {})
 
     //Then the result should contain an error
-    expect(result.errors!.message).toEqual('policy.errors')
-    expect(result.errors!.sessionPolicyErrors!.length).toEqual(1)
-    expect(result.ignoredContextKeys).toBeUndefined()
+    const errorResponse = assertErrorResult(response)
+    expect(errorResponse.errors!.message).toEqual('policy.errors')
+    expect(errorResponse.errors!.sessionPolicyErrors!.length).toEqual(1)
   })
 
   it('should return identity policy errors', async () => {
@@ -541,12 +550,12 @@ describe('runSimulation', () => {
     }
 
     //When the simulation is run
-    const result = await runSimulation(simulation, {})
+    const response = await runSimulation(simulation, {})
 
     //Then the result should contain an error
-    expect(result.errors!.message).toEqual('policy.errors')
-    expect(result.errors!.identityPolicyErrors!['sauron'].length).toEqual(1)
-    expect(result.ignoredContextKeys).toBeUndefined()
+    const errorResponse = assertErrorResult(response)
+    expect(errorResponse.errors!.message).toEqual('policy.errors')
+    expect(errorResponse.errors!.identityPolicyErrors!['sauron'].length).toEqual(1)
   })
 
   it('should return resource control policy errors', async () => {
@@ -586,12 +595,12 @@ describe('runSimulation', () => {
     }
 
     //When the simulation is run
-    const result = await runSimulation(simulation, {})
+    const response = await runSimulation(simulation, {})
 
     //Then the result should contain an error
-    expect(result.errors!.message).toEqual('policy.errors')
-    expect(result.errors!.resourceControlPolicyErrors!['Gandalf'].length).toEqual(2)
-    expect(result.ignoredContextKeys).toBeUndefined()
+    const errorResponse = assertErrorResult(response)
+    expect(errorResponse.errors!.message).toEqual('policy.errors')
+    expect(errorResponse.errors!.resourceControlPolicyErrors!['Gandalf'].length).toEqual(2)
   })
 
   it('should return permission boundary errors', async () => {
@@ -619,12 +628,12 @@ describe('runSimulation', () => {
     }
 
     //When the simulation is run
-    const result = await runSimulation(simulation, {})
+    const response = await runSimulation(simulation, {})
 
     //Then the result should contain an error
-    expect(result.errors!.message).toEqual('policy.errors')
-    expect(result.errors!.permissionBoundaryErrors!['permissionBoundary'].length).toEqual(1)
-    expect(result.ignoredContextKeys).toBeUndefined()
+    const errorResponse = assertErrorResult(response)
+    expect(errorResponse.errors!.message).toEqual('policy.errors')
+    expect(errorResponse.errors!.permissionBoundaryErrors!['permissionBoundary'].length).toEqual(1)
   })
 
   it('should return VPC Endpoint policy errors', async () => {
@@ -658,12 +667,12 @@ describe('runSimulation', () => {
     }
 
     //When the simulation is run
-    const result = await runSimulation(simulation, {})
+    const response = await runSimulation(simulation, {})
 
     //Then the result should contain an error
-    expect(result.errors!.message).toEqual('policy.errors')
-    expect(result.errors!.vpcEndpointErrors!['badPolicy'].length).toEqual(1)
-    expect(result.ignoredContextKeys).toBeUndefined()
+    const errorResponse = assertErrorResult(response)
+    expect(errorResponse.errors!.message).toEqual('policy.errors')
+    expect(errorResponse.errors!.vpcEndpointErrors!['badPolicy'].length).toEqual(1)
   })
 
   it('should return an error for a mal formatted action', async () => {
@@ -685,11 +694,11 @@ describe('runSimulation', () => {
     }
 
     //When the simulation is run
-    const result = await runSimulation(simulation, {})
+    const response = await runSimulation(simulation, {})
 
     //Then the result should contain an error
-    expect(result.errors!.message).toEqual('invalid.action')
-    expect(result.ignoredContextKeys).toBeUndefined()
+    const errorResponse = assertErrorResult(response)
+    expect(errorResponse.errors!.message).toEqual('invalid.action')
   })
 
   it('should return an error for a non existent service', async () => {
@@ -711,11 +720,11 @@ describe('runSimulation', () => {
     }
 
     //When the simulation is run
-    const result = await runSimulation(simulation, {})
+    const response = await runSimulation(simulation, {})
 
     //Then the result should contain an error
-    expect(result.errors!.message).toEqual('invalid.service')
-    expect(result.ignoredContextKeys).toBeUndefined()
+    const errorResponse = assertErrorResult(response)
+    expect(errorResponse.errors!.message).toEqual('invalid.service')
   })
 
   it('should return an error for a non existent action', async () => {
@@ -737,11 +746,11 @@ describe('runSimulation', () => {
     }
 
     //When the simulation is run
-    const result = await runSimulation(simulation, {})
+    const response = await runSimulation(simulation, {})
 
     //Then the result should contain an error
-    expect(result.errors!.message).toEqual('invalid.action')
-    expect(result.ignoredContextKeys).toBeUndefined()
+    const errorResponse = assertErrorResult(response)
+    expect(errorResponse.errors!.message).toEqual('invalid.action')
   })
 
   it('should return an error if a wildcard only action is not a wildcard', async () => {
@@ -773,11 +782,11 @@ describe('runSimulation', () => {
     })
 
     //When the simulation is run
-    const result = await runSimulation(simulation, {})
+    const response = await runSimulation(simulation, {})
 
     //Then the result should contain an error
-    expect(result.errors!.message).toEqual('must.use.wildcard')
-    expect(result.ignoredContextKeys).toBeUndefined()
+    const errorResponse = assertErrorResult(response)
+    expect(errorResponse.errors!.message).toEqual('must.use.wildcard')
   })
 
   it('should return an error if the resource does not mantch an resource type', async () => {
@@ -799,11 +808,11 @@ describe('runSimulation', () => {
     }
 
     //When the simulation is run
-    const result = await runSimulation(simulation, {})
+    const response = await runSimulation(simulation, {})
 
     //Then the result should contain an error
-    expect(result.errors!.message).toEqual('no.resource.types')
-    expect(result.ignoredContextKeys).toBeUndefined()
+    const errorResponse = assertErrorResult(response)
+    expect(errorResponse.errors!.message).toEqual('no.resource.types')
   })
 
   it('should return an error if the resource matches multiple resource types', async () => {
@@ -825,11 +834,11 @@ describe('runSimulation', () => {
     }
 
     //When the simulation is run
-    const result = await runSimulation(simulation, {})
+    const response = await runSimulation(simulation, {})
 
     //Then the result should contain an error
-    expect(result.errors!.message).toEqual('multiple.resource.types')
-    expect(result.ignoredContextKeys).toBeUndefined()
+    const errorResponse = assertErrorResult(response)
+    expect(errorResponse.errors!.message).toEqual('multiple.resource.types')
   })
 
   it('should run a valid simulation', async () => {
@@ -922,10 +931,14 @@ describe('runSimulation', () => {
     }
 
     //When the simulation is run
-    const result = await runSimulation(simulation, {})
+    const response = await runSimulation(simulation, {})
+    expect(response.resultType).toEqual('single')
+    if (response.resultType !== 'single') {
+      throw new Error('Expected single result')
+    }
+    const result = response.result
 
     //Then there should be no errors
-    expect(result.errors).toBeUndefined()
     expect(result.analysis?.result).toEqual('Allowed')
     expect(result.ignoredContextKeys).toEqual([])
   })
@@ -968,10 +981,14 @@ describe('runSimulation', () => {
     }
 
     //When the simulation is run
-    const result = await runSimulation(simulation, {})
+    const response = await runSimulation(simulation, {})
+    expect(response.resultType).toEqual('single')
+    if (response.resultType !== 'single') {
+      throw new Error('Expected single result')
+    }
+    const result = response.result
 
     //Then there should be no errors and the result should be implicitly denied
-    expect(result.errors).toBeUndefined()
     expect(result.analysis?.result).toEqual('ImplicitlyDenied')
     expect(result.ignoredContextKeys).toEqual([])
   })
@@ -1024,17 +1041,15 @@ describe('runSimulation', () => {
       }
 
       //When the simulation is run
-      const result = await runSimulation(simulation, {})
+      const response = await runSimulation(simulation, {})
 
       //Then the result should match the expected behavior
       if (sessionPolicyAllowed) {
-        expect(
-          result.errors?.message,
-          `Principal ${principal} should allow session policies`
-        ).not.toEqual('session.policy.invalid.principal')
+        expect(response.resultType).toEqual('single')
       } else {
+        const errorResponse = assertErrorResult(response)
         expect(
-          result.errors?.message,
+          errorResponse.errors?.message,
           `Principal ${principal} should not allow session policies`
         ).toEqual('session.policy.invalid.principal')
       }
@@ -1078,9 +1093,13 @@ describe('runSimulation', () => {
       }
     }
 
-    const result = await runSimulation(simulation, {})
+    const response = await runSimulation(simulation, {})
+    expect(response.resultType).toEqual('single')
+    if (response.resultType !== 'single') {
+      throw new Error('Expected single result')
+    }
+    const result = response.result
 
-    expect(result.errors).toBeUndefined()
     expect(result.analysis?.result).toEqual('Allowed')
     expect(result.ignoredContextKeys).toEqual([])
   })
@@ -1142,10 +1161,14 @@ describe('runSimulation', () => {
     }
 
     //When the simulation is run
-    const result = await runSimulation(simulation, {})
+    const response = await runSimulation(simulation, {})
+    expect(response.resultType).toEqual('single')
+    if (response.resultType !== 'single') {
+      throw new Error('Expected single result')
+    }
+    const result = response.result
 
     //Then there should be no errors
-    expect(result.errors).toBeUndefined()
     expect(result.ignoredContextKeys).toEqual(['s3:DataAccessPointArn'])
   })
 
@@ -1187,12 +1210,16 @@ describe('runSimulation', () => {
     }
 
     //When the simulation is run with strict keys
-    const result = await runSimulation(simulation, {
+    const response = await runSimulation(simulation, {
       simulationMode: 'Discovery'
     })
+    expect(response.resultType).toEqual('single')
+    if (response.resultType !== 'single') {
+      throw new Error('Expected single result')
+    }
+    const result = response.result
 
     //Then there should be no errors
-    expect(result.errors).toBeUndefined()
     expect(result.analysis?.result).toEqual('Allowed')
     expect(result.ignoredContextKeys).toEqual([])
     expect(result.analysis?.ignoredConditions?.identity?.allow?.length).toEqual(1)
@@ -1240,13 +1267,17 @@ describe('runSimulation', () => {
     }
 
     //When the simulation is run with strict keys
-    const result = await runSimulation(simulation, {
+    const response = await runSimulation(simulation, {
       simulationMode: 'Discovery',
       strictConditionKeys: ['aws:SourceVpc']
     })
+    expect(response.resultType).toEqual('single')
+    if (response.resultType !== 'single') {
+      throw new Error('Expected single result')
+    }
+    const result = response.result
 
     //Then there should be no errors
-    expect(result.errors).toBeUndefined()
     expect(result.analysis?.result).toEqual('ImplicitlyDenied')
     expect(result.ignoredContextKeys).toEqual([])
     expect(result.analysis?.ignoredConditions?.identity).toBeUndefined()
@@ -1287,10 +1318,14 @@ describe('runSimulation', () => {
     }
 
     //When the simulation is run
-    const result = await runSimulation(simulation, {})
+    const response = await runSimulation(simulation, {})
+    expect(response.resultType).toEqual('single')
+    if (response.resultType !== 'single') {
+      throw new Error('Expected single result')
+    }
+    const result = response.result
 
     //Then there should be no errors
-    expect(result.errors).toBeUndefined()
     //And the S3 ABAC keys should be in the ignored context keys
     expect(result.ignoredContextKeys).toContain('aws:ResourceTag/Environment')
     expect(result.ignoredContextKeys).toContain('s3:BucketTag/Owner')
@@ -1339,10 +1374,14 @@ describe('runSimulation', () => {
     }
 
     //When the simulation is run
-    const result = await runSimulation(simulation, {})
+    const response = await runSimulation(simulation, {})
+    expect(response.resultType).toEqual('single')
+    if (response.resultType !== 'single') {
+      throw new Error('Expected single result')
+    }
+    const result = response.result
 
     //Then there should be no errors
-    expect(result.errors).toBeUndefined()
     //And the ignored context keys should be empty
     expect(result.ignoredContextKeys).toEqual([])
   })

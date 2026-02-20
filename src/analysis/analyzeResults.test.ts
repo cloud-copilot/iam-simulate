@@ -995,7 +995,10 @@ describe('getDenialReasons', () => {
     testFn(`should correctly analyze denying policy statements: ${test.name}`, async () => {
       // Given a response to a simulation request
       const response = await runSimulation(test.simulation, {})
-      const requestAnalysis = response.analysis!
+      if (response.resultType !== 'single') {
+        throw new Error('Expected a single simulation result')
+      }
+      const requestAnalysis = response.result.analysis!
 
       // When we analyze the request analysis
       const result = getDenialReasons(requestAnalysis)

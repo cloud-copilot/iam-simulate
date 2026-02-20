@@ -1,4 +1,4 @@
-import { iamActionExists, iamServiceExists } from '@cloud-copilot/iam-data'
+import { iamActionExists, iamServiceExists, ResourceType } from '@cloud-copilot/iam-data'
 import {
   loadPolicy,
   validateEndpointPolicy,
@@ -19,11 +19,14 @@ import {
   SimulationMode,
   validSimulationModes
 } from '../core_engine/CoreSimulatorEngine.js'
-import { RequestAnalysis } from '../evaluate.js'
+import { EvaluationResult, RequestAnalysis } from '../evaluate.js'
 import { AwsRequestImpl } from '../request/request.js'
 import { RequestContextImpl } from '../requestContext.js'
-import { getResourceTypesForAction, isWildcardOnlyAction } from '../util.js'
+import { isWildcardOnlyAction } from '../util.js'
 import { allowedContextKeysForRequest } from './contextKeys.js'
+import { calculateOverallResult } from './overallResult.js'
+import { getMatchingResourceStringsForPolicies } from './policyResources.js'
+import { getResourceTypesForAction } from './resourceTypes.js'
 import { Simulation } from './simulation.js'
 import { SimulationOptions } from './simulationOptions.js'
 
@@ -53,17 +56,12 @@ export interface SimulationErrors {
   message: string
 }
 
-export interface SimulationResult {
-  errors?: SimulationErrors
-  analysis?: RequestAnalysis
+/**
+ * Result of evaluating a single resource simulation, containing the analysis and any ignored context keys.
+ */
+export interface SimulationResourceResult {
+  analysis: RequestAnalysis
 
-  /**
-   * The resource type that was used for the simulation, if applicable.
-   *
-   * Will only be present if the request passes validation to reach the policy
-   * evaluation stage and the action is not a wildcard-only action.
-   */
-  resourceType?: string
   /**
    * Any context keys provided in the request that were filtered out before
    * policy evaluation because they do not apply to the action/resource type.
@@ -77,17 +75,119 @@ export interface SimulationResult {
 }
 
 /**
+ * Extended simulation resource result that includes resource type and pattern information
+ * for wildcard resource simulations.
+ */
+export interface WildcardSimulationResourceResult extends SimulationResourceResult {
+  /**
+   * The resource type that was used for the simulation, if applicable.
+   *
+   * Will only be present if the request passes validation to reach the policy
+   * evaluation stage and the action is not a wildcard-only action.
+   */
+  resourceType: string
+
+  /**
+   * The resource pattern that was used for the simulation, if applicable. If a wildcard
+   * resource was provided and multiple simulations were run, this will indicate the
+   * specific resource string that was simulated.
+   */
+  resourcePattern: string
+}
+
+/**
+ * Simulation result indicating that errors prevented the simulation from running.
+ */
+export interface ErrorSimulationResult {
+  resultType: 'error'
+
+  /**
+   * Errors in the simulation input that prevented the simulation from being run.
+   */
+  errors: SimulationErrors
+}
+
+/**
+ * Simulation result for a single resource (non-wildcard) evaluation.
+ */
+export interface SingleResourceSimulationResult {
+  /**
+   * A single resource simulation result.
+   */
+  resultType: 'single'
+
+  /**
+   * The overall result of the one simulation that was run.
+   */
+  overallResult: EvaluationResult
+
+  /**
+   * The detailed result of the simulation that was run and the request analysis
+   */
+  result: SimulationResourceResult
+}
+
+/**
+ * Simulation results for wildcard resource evaluations, containing multiple individual results.
+ */
+export interface WildcardResourceSimulationResults {
+  /**
+   * Whether a wildcard was detected in the resource ARN of the request and the
+   * simulation was not a wildcard-only action, which can cause multiple simulations to be run.
+   */
+  resultType: 'wildcard'
+
+  /**
+   * The overall result of the simulation, calculated based on the results of individual simulations if
+   * multiple were run.
+   */
+  overallResult: EvaluationResult
+
+  /**
+   * The results of the simulation or simulations that were run.
+   * If it is a wildcard only action or the resource ARN contains no wildcards, this will contain a single result.
+   * If the resource ARN contains a wildcard and the action is not a wildcard-only action, this may contain no
+   * results, or one result for each matching pattern found in the provided identity and resource policies.
+   */
+  results: WildcardSimulationResourceResult[]
+}
+
+/**
+ * The result of running a simulation.
+ * Can be an error, a single result, or a wildcard result.
+ * Discriminated by the `resultType` field.
+ */
+export type RunSimulationResults =
+  | ErrorSimulationResult
+  | SingleResourceSimulationResult
+  | WildcardResourceSimulationResults
+
+/**
+ * Union type representing successful simulation results (excluding error cases).
+ */
+export type SuccessfulRunSimulationResults =
+  | SingleResourceSimulationResult
+  | WildcardResourceSimulationResults
+
+/**
+ * Discriminant type for the different kinds of simulation results.
+ */
+export type SimulationResultType = RunSimulationResults['resultType']
+
+/**
  * Run a simulation with validation
  *
  * @param simulation The simulation to run
  * @param simulationOptions Options for the simulation
- * @returns
+ * @returns The results of the simulation, or errors if the simulation could not be run
  */
 export async function runSimulation(
   simulation: Simulation,
   simulationOptions: Partial<SimulationOptions>
-): Promise<SimulationResult> {
+): Promise<RunSimulationResults> {
   const principal = simulation.request.principal
+  const resourceArn = simulation.request.resource.resource
+  const resourceHasWildcard = resourceArn.includes('*')
 
   if (simulation.sessionPolicy) {
     if (
@@ -96,6 +196,7 @@ export async function runSimulation(
       !isFederatedUserArn(principal)
     ) {
       return {
+        resultType: 'error',
         errors: {
           message: 'session.policy.invalid.principal'
         }
@@ -209,6 +310,7 @@ export async function runSimulation(
     sessionPolicyErrors.length > 0
   ) {
     return {
+      resultType: 'error',
       errors: {
         sessionPolicyErrors,
         identityPolicyErrors,
@@ -228,6 +330,7 @@ export async function runSimulation(
 
   if (simulation.request.action.split(':').length != 2) {
     return {
+      resultType: 'error',
       errors: {
         message: 'invalid.action'
       }
@@ -238,6 +341,7 @@ export async function runSimulation(
   const validService = await iamServiceExists(service)
   if (!validService) {
     return {
+      resultType: 'error',
       errors: {
         message: 'invalid.service'
       }
@@ -246,43 +350,45 @@ export async function runSimulation(
   const validAction = await iamActionExists(service, action)
   if (!validAction) {
     return {
+      resultType: 'error',
       errors: {
         message: 'invalid.action'
       }
     }
   }
 
-  const resourceArn = simulation.request.resource.resource
   const isWildCardOnlyAction = await isWildcardOnlyAction(service, action)
-  let resourceType: string | undefined = undefined
+  const runMultipleSimulations = resourceHasWildcard && !isWildCardOnlyAction
+  let resourceTypes: ResourceType[] | undefined = undefined
   if (isWildCardOnlyAction) {
     if (resourceArn !== '*') {
       return {
+        resultType: 'error',
         errors: {
           message: 'must.use.wildcard'
         }
       }
     }
   } else {
-    const resourceTypes = await getResourceTypesForAction(service, action, resourceArn)
-    if (resourceTypes.length === 0) {
+    const actionResourceTypes = await getResourceTypesForAction(service, action, resourceArn)
+    if (actionResourceTypes.length === 0) {
       return {
+        resultType: 'error',
         errors: {
           message: 'no.resource.types'
         }
       }
-    } else if (resourceTypes.length > 1) {
+    } else if (actionResourceTypes.length > 1 && !resourceHasWildcard) {
       return {
+        resultType: 'error',
         errors: {
           message: 'multiple.resource.types'
         }
       }
     } else {
-      resourceType = resourceTypes[0].key
+      resourceTypes = actionResourceTypes.map((item) => item)
     }
   }
-
-  const { validContextValues, ignoredContextKeys } = await normalizeSimulationParameters(simulation)
 
   const simulationMode = validSimulationModes.includes(
     simulationOptions.simulationMode as SimulationMode
@@ -290,42 +396,114 @@ export async function runSimulation(
     ? (simulationOptions.simulationMode as SimulationMode)
     : 'Strict'
 
+  // For each resource type, find the resource patterns, for each pattern, run a simulation
+
   const strictConditionKeys =
     simulationMode === 'Discovery'
       ? new StrictContextKeys(simulationOptions.strictConditionKeys || [])
       : new StrictContextKeys([])
 
-  const simulationResult = authorize({
-    request: new AwsRequestImpl(
-      principal,
-      {
-        resource: simulation.request.resource.resource,
-        accountId: simulation.request.resource.accountId
-      },
-      simulation.request.action,
-      new RequestContextImpl(validContextValues)
-    ),
-    sessionPolicy,
-    identityPolicies,
-    serviceControlPolicies,
-    resourceControlPolicies,
-    resourcePolicy,
-    permissionBoundaries,
-    vpcEndpointPolicies,
-    simulationParameters: {
-      simulationMode: simulationMode,
-      strictConditionKeys: strictConditionKeys
-    }
-  })
+  const curriedAuthorize = (
+    curriedResourceString: string,
+    curriedContextValues: Record<string, string | string[]>
+  ) =>
+    authorize({
+      request: new AwsRequestImpl(
+        principal,
+        {
+          resource: curriedResourceString,
+          accountId: simulation.request.resource.accountId
+        },
+        simulation.request.action,
+        new RequestContextImpl(curriedContextValues)
+      ),
+      sessionPolicy,
+      identityPolicies,
+      serviceControlPolicies,
+      resourceControlPolicies,
+      resourcePolicy,
+      permissionBoundaries,
+      vpcEndpointPolicies,
+      simulationParameters: {
+        simulationMode: simulationMode,
+        strictConditionKeys: strictConditionKeys
+      }
+    })
 
+  const policiesThatGrantAccess = [resourcePolicy, ...identityPolicies]
+
+  // If there is only one simulation to run, run it
+  if (!runMultipleSimulations) {
+    const { validContextValues, ignoredContextKeys } = await normalizeSimulationParameters(
+      simulation,
+      undefined
+    )
+    const singleResult = curriedAuthorize(resourceArn, validContextValues)
+    return {
+      resultType: 'single',
+      overallResult: singleResult.result,
+      result: {
+        analysis: singleResult,
+        ignoredContextKeys
+      }
+    }
+  }
+
+  // Here, we know it is a wildcard resource and not a wildcard-only action, so we need to run multiple simulations
+  const simulationResults: WildcardSimulationResourceResult[] = []
+  const resourceTypesToSimulate: Array<ResourceType> =
+    resourceTypes && resourceTypes.length > 0 ? resourceTypes : []
+  for (const resourceType of resourceTypesToSimulate) {
+    // If "run multiple" get the resource strings that match the wildcard pattern, otherwise, just run the one.
+
+    const { validContextValues, ignoredContextKeys } = await normalizeSimulationParameters(
+      simulation,
+      resourceType
+    )
+
+    //Run the pattern directly first.
+    const exactPatternResult = curriedAuthorize(resourceArn, validContextValues)
+    if (exactPatternResult.result === 'ExplicitlyDenied') {
+      simulationResults.push({
+        analysis: exactPatternResult,
+        ignoredContextKeys,
+        resourceType: resourceType.key,
+        resourcePattern: resourceArn
+      })
+    } else {
+      let resourceStrings = [simulation.request.resource.resource]
+      resourceStrings = getMatchingResourceStringsForPolicies(
+        policiesThatGrantAccess,
+        simulation.request.action,
+        resourceType,
+        simulation.request.resource.resource
+      )
+
+      for (const resourceString of resourceStrings) {
+        const simulationResult = curriedAuthorize(resourceString, validContextValues)
+
+        simulationResults.push({
+          analysis: simulationResult,
+          ignoredContextKeys,
+          resourceType: resourceType.key,
+          resourcePattern: resourceString
+        })
+      }
+    }
+  }
+
+  const overallResult = calculateOverallResult(simulationResults)
   return {
-    analysis: simulationResult,
-    ignoredContextKeys,
-    resourceType
+    resultType: 'wildcard',
+    overallResult,
+    results: simulationResults
   }
 }
 
-export async function normalizeSimulationParameters(simulation: Simulation): Promise<{
+export async function normalizeSimulationParameters(
+  simulation: Simulation,
+  suggestedResourceType: ResourceType | undefined
+): Promise<{
   validContextValues: Record<string, string | string[]>
   ignoredContextKeys: string[]
 }> {
@@ -336,7 +514,8 @@ export async function normalizeSimulationParameters(simulation: Simulation): Pro
       service,
       action,
       resourceArn,
-      !!simulation.additionalSettings?.s3?.bucketAbacEnabled
+      !!simulation.additionalSettings?.s3?.bucketAbacEnabled,
+      suggestedResourceType
     )
   )
 

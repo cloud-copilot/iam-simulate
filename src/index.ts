@@ -33,7 +33,17 @@ export type {
   SimulationOrgPolicies
 } from './simulation_engine/simulation.js'
 export { runSimulation } from './simulation_engine/simulationEngine.js'
-export type { SimulationErrors, SimulationResult } from './simulation_engine/simulationEngine.js'
+export type {
+  ErrorSimulationResult,
+  RunSimulationResults,
+  SimulationErrors,
+  SimulationResourceResult,
+  SimulationResultType,
+  SingleResourceSimulationResult,
+  SuccessfulRunSimulationResults,
+  WildcardResourceSimulationResults,
+  WildcardSimulationResourceResult
+} from './simulation_engine/simulationEngine.js'
 export type { SimulationOptions } from './simulation_engine/simulationOptions.js'
 export { runUnsafeSimulation } from './simulation_engine/unsafeSimulationEngine.js'
 export { isWildcardOnlyAction } from './util.js'

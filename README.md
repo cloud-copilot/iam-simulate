@@ -147,16 +147,24 @@ const simulation: Simulation = {
   }
 }
 
-const result = await runSimulation(simulation, {})
-//Check for validation errors:
-if (result.errors) {
-  console.log(result.errors.message)
-  console.log(JSON.stringify(result.errors, null, 2))
+`runSimulation` returns a discriminated union with `resultType`:
+
+- `resultType: 'error'` includes `errors` and no simulation results.
+- `resultType: 'single'` includes `overallResult` and a single `result`.
+- `resultType: 'wildcard'` includes `overallResult` and `results` for each matching pattern.
+
+const response = await runSimulation(simulation, {})
+//Check for validation errors (errors are returned at the response level):
+if (response.resultType === 'error') {
+  console.log(response.errors.message)
+  console.log(JSON.stringify(response.errors, null, 2))
 }
 
 //The simulation ran successfully
-if (result.analysis) {
-  console.log(result.analysis.result) // 'Allowed', 'ExplicityDenied', or 'ImplicitlyDenied'
+if (response.resultType === 'single') {
+  const result = response.result
+  console.log(response.overallResult) // 'Allowed', 'ExplicitlyDenied', or 'ImplicitlyDenied'
+  console.log(result.analysis?.result)
 
   //Output the identity statements that allowed the request
   const identityAllowExplains =
@@ -164,6 +172,13 @@ if (result.analysis) {
   //Show which statements applied and exactly how.
   for (const explain of identityAllowExplains) {
     console.log(explain)
+  }
+}
+
+if (response.resultType === 'wildcard') {
+  console.log(response.overallResult)
+  for (const result of response.results) {
+    console.log(result.resourcePattern, result.analysis?.result)
   }
 }
 ```

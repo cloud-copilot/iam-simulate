@@ -1,0 +1,100 @@
+[
+  {
+    "name": "s3 object wildcard expands to matching policy resource patterns",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "objectAccess",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::examplebucket/public/*"
+              },
+              {
+                "Effect": "Deny",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::examplebucket/private/*"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "s3:GetObject",
+        "resource": {
+          "resource": "arn:aws:s3:::examplebucket/*",
+          "accountId": "123456789012"
+        },
+        "principal": "arn:aws:iam::123456789012:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "simulationOptions": {},
+    "expected": {
+      "results": [
+        {
+          "resourceType": "object",
+          "resourcePattern": "arn:aws:s3:::examplebucket/public/*",
+          "result": "Allowed"
+        }
+      ],
+      "overallResult": "Allowed",
+      "resultType": "wildcard"
+    }
+  },
+  {
+    "name": "s3 object wildcard expands is denied for a subset pattern",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "objectAccess",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::examplebucket/*"
+              },
+              {
+                "Effect": "Deny",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::examplebucket/private/*"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "s3:GetObject",
+        "resource": {
+          "resource": "arn:aws:s3:::examplebucket/private/*",
+          "accountId": "123456789012"
+        },
+        "principal": "arn:aws:iam::123456789012:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "simulationOptions": {},
+    "expected": {
+      "results": [
+        {
+          "resourcePattern": "arn:aws:s3:::examplebucket/private/*",
+          "resourceType": "object",
+          "result": "ExplicitlyDenied"
+        }
+      ],
+      "overallResult": "ExplicitlyDenied",
+      "resultType": "wildcard"
+    }
+  }
+]
