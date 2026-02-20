@@ -98,7 +98,7 @@ export function resourceStringMatchesResourceTypePattern(
 
     const resourceComponentPattern =
       '^' + resourceComponent.replace(/\?/g, '.').replace(/\*/g, '.*?') + '$'
-    const regex = new RegExp(resourceComponentPattern, 'i')
+    const regex = new RegExp(resourceComponentPattern)
     const match = patternComponent.match(regex)
     if (match) {
       if (isLastPattern && resourceComponent.endsWith('*')) {
