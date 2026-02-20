@@ -1,4 +1,4 @@
-import { describe, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { resourceArnsOverlap } from './resourceStrings.js'
 
 const resourceArnsOverlapTests: {
@@ -93,10 +93,10 @@ const resourceArnsOverlapTests: {
     overlaps: true
   },
   {
-    name: 'mid_string_star_disjoint_no_overlap',
+    name: 'mid_string_star_disjoint',
     patternA: 'arn:aws:lambda:us-east-1:123456789012:function:*banana*',
     patternB: 'arn:aws:lambda:us-east-1:123456789012:function:*apple*',
-    overlaps: false
+    overlaps: true
   },
   {
     name: 'ec2_partition_wildcard_overlaps_aws_partition',
@@ -270,7 +270,7 @@ describe('resourceArnsOverlap', () => {
     const testFn = testCase.only ? it.only : it
     testFn(testCase.name, () => {
       const result = resourceArnsOverlap(testCase.patternA, testCase.patternB)
-      // expect(result).toBe(testCase.overlaps)
+      expect(result).toBe(testCase.overlaps)
     })
   }
 })
