@@ -1,3 +1,10 @@
+## [0.1.104](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.103...v0.1.104) (2026-02-20)
+
+
+### Features
+
+* Add the ability to simulate patterns and find possible matches. ([748f549](https://github.com/cloud-copilot/iam-simulate/commit/748f549dae926974f6342949b357e654d33dc6f1))
+
 ## [0.1.103](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.102...v0.1.103) (2026-02-14)
 
 ## [0.1.102](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.101...v0.1.102) (2026-01-19)
