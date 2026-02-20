@@ -121,7 +121,7 @@ export function statementAllowsAction(statement: Statement, action: string): boo
         return true
       }
     }
-    return true
+    return false
   } else if (statement.isNotActionStatement() && statement.isAllow()) {
     for (const stmtAction of statement.notActions()) {
       if (actionMatchesPattern(action, stmtAction.value())) {
