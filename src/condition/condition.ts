@@ -5,7 +5,7 @@ import {
   type ConditionValueExplain,
   type StatementExplain
 } from '../explain/statementExplain.js'
-import { type AwsRequest } from '../request/request'
+import { type AwsRequest } from '../request/request.js'
 import { type ContextKey, ContextKeyImpl } from '../requestContext.js'
 import { ArnEquals } from './arn/ArnEquals.js'
 import { ArnLike } from './arn/ArnLike.js'
