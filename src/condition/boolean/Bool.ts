@@ -1,6 +1,6 @@
-import { ConditionValueExplain } from '../../explain/statementExplain.js'
+import { type ConditionValueExplain } from '../../explain/statementExplain.js'
 import { convertIamString } from '../../util.js'
-import { BaseConditionOperator } from '../BaseConditionOperator.js'
+import { type BaseConditionOperator } from '../BaseConditionOperator.js'
 
 export const Bool: BaseConditionOperator = {
   name: 'Bool',

@@ -1,6 +1,6 @@
-import { Action, Statement } from '@cloud-copilot/iam-policy'
-import { ActionExplain, StatementExplain } from '../explain/statementExplain.js'
-import { AwsRequest } from '../request/request.js'
+import { type Action, type Statement } from '@cloud-copilot/iam-policy'
+import { type ActionExplain, type StatementExplain } from '../explain/statementExplain.js'
+import { type AwsRequest } from '../request/request.js'
 
 /**
  * Check if a request matches the Action or NotAction elements of a statement.

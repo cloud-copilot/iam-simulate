@@ -1,4 +1,4 @@
-import { BaseConditionOperator } from '../BaseConditionOperator.js'
+import { type BaseConditionOperator } from '../BaseConditionOperator.js'
 import { ArnLike } from './ArnLike.js'
 
 export const ArnEquals: BaseConditionOperator = {

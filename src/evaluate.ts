@@ -1,4 +1,4 @@
-import { StatementAnalysis } from './StatementAnalysis.js'
+import { type StatementAnalysis } from './StatementAnalysis.js'
 
 export type EvaluationResult = 'Allowed' | 'ExplicitlyDenied' | 'ImplicitlyDenied'
 export type ResourceEvaluationResult =

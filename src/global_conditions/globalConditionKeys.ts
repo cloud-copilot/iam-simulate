@@ -1,5 +1,5 @@
 import {
-  ConditionKey,
+  type ConditionKey,
   getGlobalConditionKeyByName,
   getGlobalConditionKeyByPrefix
 } from '@cloud-copilot/iam-data'

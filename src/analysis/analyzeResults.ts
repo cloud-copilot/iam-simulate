@@ -1,10 +1,10 @@
 import {
-  EvaluationResult,
-  IdentityAnalysis,
-  RcpAnalysis,
-  RequestAnalysis,
-  ResourceAnalysis,
-  ScpAnalysis
+  type EvaluationResult,
+  type IdentityAnalysis,
+  type RcpAnalysis,
+  type RequestAnalysis,
+  type ResourceAnalysis,
+  type ScpAnalysis
 } from '../evaluate.js'
 
 /**

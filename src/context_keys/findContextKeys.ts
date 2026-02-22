@@ -1,4 +1,4 @@
-import { Policy } from '@cloud-copilot/iam-policy'
+import { type Policy } from '@cloud-copilot/iam-policy'
 import { getVariablesFromString } from '../util.js'
 import { isActualContextKey, normalizeContextKeyCase } from './contextKeys.js'
 

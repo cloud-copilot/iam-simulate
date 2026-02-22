@@ -1,17 +1,17 @@
-import { Condition } from '@cloud-copilot/iam-policy'
-import { SimulationParameters } from '../core_engine/CoreSimulatorEngine.js'
+import { type Condition } from '@cloud-copilot/iam-policy'
+import { type SimulationParameters } from '../core_engine/CoreSimulatorEngine.js'
 import {
-  ConditionExplain,
-  ConditionValueExplain,
-  StatementExplain
+  type ConditionExplain,
+  type ConditionValueExplain,
+  type StatementExplain
 } from '../explain/statementExplain.js'
-import { AwsRequest } from '../request/request'
-import { ContextKey, ContextKeyImpl } from '../requestContext.js'
+import { type AwsRequest } from '../request/request.js'
+import { type ContextKey, ContextKeyImpl } from '../requestContext.js'
 import { ArnEquals } from './arn/ArnEquals.js'
 import { ArnLike } from './arn/ArnLike.js'
 import { ArnNotEquals } from './arn/ArnNotEquals.js'
 import { ArnNotLike } from './arn/ArnNotLike.js'
-import { BaseConditionOperator } from './BaseConditionOperator.js'
+import { type BaseConditionOperator } from './BaseConditionOperator.js'
 import { BinaryEquals } from './binary/BinaryEquals.js'
 import { Bool } from './boolean/Bool.js'
 import { DateEquals } from './date/DateEquals.js'

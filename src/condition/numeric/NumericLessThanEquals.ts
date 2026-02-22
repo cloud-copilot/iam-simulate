@@ -1,4 +1,4 @@
-import { BaseConditionOperator } from '../BaseConditionOperator.js'
+import { type BaseConditionOperator } from '../BaseConditionOperator.js'
 import { checkIfNumeric } from './numeric.js'
 
 export const NumericLessThanEquals: BaseConditionOperator = {

@@ -1,4 +1,8 @@
-import { getAllGlobalConditionKeys, iamActionDetails, ResourceType } from '@cloud-copilot/iam-data'
+import {
+  getAllGlobalConditionKeys,
+  iamActionDetails,
+  type ResourceType
+} from '@cloud-copilot/iam-data'
 import { isS3BucketOrObjectArn, isWildcardOnlyAction, lowerCaseAll } from '../util.js'
 import { getResourceTypesForAction } from './resourceTypes.js'
 

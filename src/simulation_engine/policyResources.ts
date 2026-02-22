@@ -1,7 +1,7 @@
-import { ResourceType } from '@cloud-copilot/iam-data'
-import { Statement } from '@cloud-copilot/iam-policy'
+import { type ResourceType } from '@cloud-copilot/iam-data'
+import { type Statement } from '@cloud-copilot/iam-policy'
 import { actionMatchesPattern, resourceArnWithWildcardsToRegex } from '@cloud-copilot/iam-utils'
-import { PolicyWithName } from '../core_engine/CoreSimulatorEngine.js'
+import { type PolicyWithName } from '../core_engine/CoreSimulatorEngine.js'
 import { resourceArnsOverlap } from '../util/resourceStrings.js'
 import { resourceStringMatchesResourceTypePattern } from './resourceTypes.js'
 

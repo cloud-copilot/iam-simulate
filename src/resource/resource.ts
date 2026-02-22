@@ -1,6 +1,6 @@
-import { Resource, Statement } from '@cloud-copilot/iam-policy'
-import { ResourceExplain, StatementExplain } from '../explain/statementExplain.js'
-import { AwsRequest } from '../request/request.js'
+import { type Resource, type Statement } from '@cloud-copilot/iam-policy'
+import { type ResourceExplain, type StatementExplain } from '../explain/statementExplain.js'
+import { type AwsRequest } from '../request/request.js'
 import { convertIamString, getResourceSegments } from '../util.js'
 
 /**

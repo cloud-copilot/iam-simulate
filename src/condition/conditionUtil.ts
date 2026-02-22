@@ -1,4 +1,4 @@
-import { AwsRequest } from '../request/request.js'
+import { type AwsRequest } from '../request/request.js'
 import { convertIamString } from '../util.js'
 
 /**

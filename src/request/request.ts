@@ -1,7 +1,7 @@
-import { ContextKey, RequestContext } from '../requestContext.js'
-import { RequestAction, RequestActionImpl } from './requestAction.js'
-import { RequestPrincipal, RequestPrincipalImpl } from './requestPrincipal.js'
-import { RequestResource, ResourceRequestImpl } from './requestResource.js'
+import { type ContextKey, type RequestContext } from '../requestContext.js'
+import { type RequestAction, RequestActionImpl } from './requestAction.js'
+import { type RequestPrincipal, RequestPrincipalImpl } from './requestPrincipal.js'
+import { type RequestResource, ResourceRequestImpl } from './requestResource.js'
 
 /**
  * A request to be evaluated by the policy engine

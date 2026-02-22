@@ -1,12 +1,12 @@
-import { Principal, Statement } from '@cloud-copilot/iam-policy'
+import { type Principal, type Statement } from '@cloud-copilot/iam-policy'
 import {
   convertAssumedRoleArnToRoleArn,
   isAssumedRoleArn,
   isFederatedUserArn
 } from '@cloud-copilot/iam-utils'
-import { SimulationParameters } from '../core_engine/CoreSimulatorEngine.js'
-import { PrincipalExplain, StatementExplain } from '../explain/statementExplain.js'
-import { AwsRequest } from '../request/request.js'
+import { type SimulationParameters } from '../core_engine/CoreSimulatorEngine.js'
+import { type PrincipalExplain, type StatementExplain } from '../explain/statementExplain.js'
+import { type AwsRequest } from '../request/request.js'
 
 interface PrincipalAnalysis {
   explain: PrincipalExplain

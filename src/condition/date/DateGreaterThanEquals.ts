@@ -1,4 +1,4 @@
-import { BaseConditionOperator } from '../BaseConditionOperator.js'
+import { type BaseConditionOperator } from '../BaseConditionOperator.js'
 import { checkIfDate } from './date.js'
 
 export const DateGreaterThanEquals: BaseConditionOperator = {

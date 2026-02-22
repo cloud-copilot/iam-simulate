@@ -1,4 +1,4 @@
-import { BaseConditionOperator } from '../BaseConditionOperator.js'
+import { type BaseConditionOperator } from '../BaseConditionOperator.js'
 import { checkIfIpAddress } from './ip.js'
 
 export const IpAddress: BaseConditionOperator = {
