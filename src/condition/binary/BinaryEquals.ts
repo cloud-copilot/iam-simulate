@@ -1,5 +1,5 @@
-import { ConditionValueExplain } from '../../explain/statementExplain.js'
-import { BaseConditionOperator } from '../BaseConditionOperator.js'
+import { type ConditionValueExplain } from '../../explain/statementExplain.js'
+import { type BaseConditionOperator } from '../BaseConditionOperator.js'
 import { resolvedValue } from '../conditionUtil.js'
 
 /**

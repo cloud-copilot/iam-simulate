@@ -1,5 +1,5 @@
-import { ResourceAnalysis } from '../evaluate.js'
-import { RequestResource } from '../request/requestResource.js'
+import { type ResourceAnalysis } from '../evaluate.js'
+import { type RequestResource } from '../request/requestResource.js'
 import { DefaultServiceAuthorizer } from './DefaultServiceAuthorizer.js'
 
 /**
@@ -13,7 +13,7 @@ export class KmsServiceAuthorizer extends DefaultServiceAuthorizer {
    * @param resourceAnalysis - The resource policy analysis
    * @returns true if the service trusts the principal's account IAM policies
    */
-  serviceTrustsPrincipalAccount(
+  override serviceTrustsPrincipalAccount(
     sameAccount: boolean,
     resourceAnalysis: ResourceAnalysis,
     resource: RequestResource

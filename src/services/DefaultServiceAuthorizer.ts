@@ -5,9 +5,9 @@ import {
   isIamUserArn,
   isServicePrincipal
 } from '@cloud-copilot/iam-utils'
-import { RequestAnalysis, ResourceAnalysis } from '../evaluate.js'
-import { RequestResource } from '../request/requestResource.js'
-import { ServiceAuthorizationRequest, ServiceAuthorizer } from './ServiceAuthorizer.js'
+import { type RequestAnalysis, type ResourceAnalysis } from '../evaluate.js'
+import { type RequestResource } from '../request/requestResource.js'
+import { type ServiceAuthorizationRequest, type ServiceAuthorizer } from './ServiceAuthorizer.js'
 
 /**
  * The default authorizer for services.

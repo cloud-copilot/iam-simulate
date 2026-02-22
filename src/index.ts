@@ -5,7 +5,7 @@ export {
 } from './analysis/analyzeResults.js'
 export { typeForContextKey } from './context_keys/contextKeys.js'
 export {
-  BaseConditionKeyType,
+  type BaseConditionKeyType,
   isConditionKeyArray,
   type ConditionKeyType
 } from './context_keys/contextKeyTypes.js'

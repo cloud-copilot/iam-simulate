@@ -1,4 +1,4 @@
-import { ConditionValueExplain } from '../../explain/statementExplain.js'
+import { type ConditionValueExplain } from '../../explain/statementExplain.js'
 import { isIpInCidrV4, isValidCidrV4, isValidIpV4 } from './ipv4.js'
 import { isIpInCidrV6, isValidIpCidrV6, isValidIpV6 } from './ipv6.js'
 

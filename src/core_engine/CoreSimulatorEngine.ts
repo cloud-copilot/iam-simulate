@@ -1,32 +1,35 @@
-import { Policy, Statement } from '@cloud-copilot/iam-policy'
+import { type Policy, type Statement } from '@cloud-copilot/iam-policy'
 import { requestMatchesStatementActions } from '../action/action.js'
-import { ConditionMatchResult, requestMatchesConditions } from '../condition/condition.js'
+import { type ConditionMatchResult, requestMatchesConditions } from '../condition/condition.js'
 import { StrictContextKeys } from '../context_keys/strictContextKeys.js'
 import {
-  EvaluationResult,
-  IdentityAnalysis,
-  IgnoredCondition,
-  IgnoredConditions,
-  OuScpAnalysis,
-  RcpAnalysis,
-  RequestAnalysis,
-  ResourceAnalysis,
-  ScpAnalysis
+  type EvaluationResult,
+  type IdentityAnalysis,
+  type IgnoredCondition,
+  type IgnoredConditions,
+  type OuScpAnalysis,
+  type RcpAnalysis,
+  type RequestAnalysis,
+  type ResourceAnalysis,
+  type ScpAnalysis
 } from '../evaluate.js'
-import { ExplainPrincipalMatch, StatementExplain } from '../explain/statementExplain.js'
-import { PrincipalMatchResult, requestMatchesStatementPrincipals } from '../principal/principal.js'
-import { AwsRequest } from '../request/request.js'
+import { type ExplainPrincipalMatch, type StatementExplain } from '../explain/statementExplain.js'
+import {
+  type PrincipalMatchResult,
+  requestMatchesStatementPrincipals
+} from '../principal/principal.js'
+import { type AwsRequest } from '../request/request.js'
 import { requestMatchesStatementResources } from '../resource/resource.js'
 import { DefaultServiceAuthorizer } from '../services/DefaultServiceAuthorizer.js'
 import { IamServiceAuthorizer } from '../services/IamServiceAuthorizer.js'
 import { KmsServiceAuthorizer } from '../services/KmsServiceAuthorizer.js'
-import { ServiceAuthorizer } from '../services/ServiceAuthorizer.js'
+import { type ServiceAuthorizer } from '../services/ServiceAuthorizer.js'
 import { StsServiceAuthorizer } from '../services/StsServiceAuthorizer.js'
 import {
   identityStatementAllows,
   identityStatementExplicitDeny,
   reportIgnoredConditions,
-  StatementAnalysis,
+  type StatementAnalysis,
   statementMatches
 } from '../StatementAnalysis.js'
 

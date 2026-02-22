@@ -1,11 +1,11 @@
 import { loadPolicy } from '@cloud-copilot/iam-policy'
 import { StrictContextKeys } from '../context_keys/strictContextKeys.js'
-import { authorize, ControlPolicies } from '../core_engine/CoreSimulatorEngine.js'
+import { authorize, type ControlPolicies } from '../core_engine/CoreSimulatorEngine.js'
 import { type EvaluationResult } from '../evaluate.js'
 import { AwsRequestImpl } from '../request/request.js'
 import { RequestContextImpl } from '../requestContext.js'
-import { Simulation } from './simulation.js'
-import { SimulationOptions } from './simulationOptions.js'
+import { type Simulation } from './simulation.js'
+import { type SimulationOptions } from './simulationOptions.js'
 
 /**
  * Runs a simulation without input validation or context variable verification.

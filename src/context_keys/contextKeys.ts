@@ -1,5 +1,5 @@
 import {
-  ConditionKey,
+  type ConditionKey,
   findConditionKey,
   iamConditionKeyDetails,
   iamConditionKeyExists,
@@ -7,7 +7,7 @@ import {
   iamServiceExists
 } from '@cloud-copilot/iam-data'
 import { getGlobalConditionKeyWithOrWithoutPrefix } from '../global_conditions/globalConditionKeys.js'
-import { ConditionKeyType } from './contextKeyTypes.js'
+import { type ConditionKeyType } from './contextKeyTypes.js'
 
 const oidcKeys = new Set(['aud', 'sub', 'email', 'oaud', 'sub'])
 const oidcProviderPattern = /^[0-9a-zA-Z\._\-]+$/

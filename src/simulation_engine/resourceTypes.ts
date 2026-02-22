@@ -1,4 +1,8 @@
-import { iamActionDetails, iamResourceTypeDetails, ResourceType } from '@cloud-copilot/iam-data'
+import {
+  iamActionDetails,
+  iamResourceTypeDetails,
+  type ResourceType
+} from '@cloud-copilot/iam-data'
 import { convertResourcePatternToRegex, splitArnParts } from '../util.js'
 
 /**

@@ -1,6 +1,6 @@
-import { ConditionValueExplain } from '../../explain/statementExplain.js'
+import { type ConditionValueExplain } from '../../explain/statementExplain.js'
 import { convertIamString } from '../../util.js'
-import { BaseConditionOperator } from '../BaseConditionOperator.js'
+import { type BaseConditionOperator } from '../BaseConditionOperator.js'
 import { resolvedValue } from '../conditionUtil.js'
 
 export const StringNotEquals: BaseConditionOperator = {

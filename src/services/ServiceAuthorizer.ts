@@ -1,12 +1,12 @@
-import { SimulationParameters } from '../core_engine/CoreSimulatorEngine.js'
+import { type SimulationParameters } from '../core_engine/CoreSimulatorEngine.js'
 import {
-  IdentityAnalysis,
-  RcpAnalysis,
-  RequestAnalysis,
-  ResourceAnalysis,
-  ScpAnalysis
+  type IdentityAnalysis,
+  type RcpAnalysis,
+  type RequestAnalysis,
+  type ResourceAnalysis,
+  type ScpAnalysis
 } from '../evaluate.js'
-import { AwsRequest } from '../request/request.js'
+import { type AwsRequest } from '../request/request.js'
 
 export interface ServiceAuthorizationRequest {
   request: AwsRequest

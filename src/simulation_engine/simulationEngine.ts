@@ -1,4 +1,4 @@
-import { iamActionExists, iamServiceExists, ResourceType } from '@cloud-copilot/iam-data'
+import { iamActionExists, iamServiceExists, type ResourceType } from '@cloud-copilot/iam-data'
 import {
   loadPolicy,
   validateEndpointPolicy,
@@ -6,7 +6,7 @@ import {
   validateResourceControlPolicy,
   validateResourcePolicy,
   validateServiceControlPolicy,
-  ValidationError
+  type ValidationError
 } from '@cloud-copilot/iam-policy'
 import { isAssumedRoleArn, isFederatedUserArn, isIamRoleArn } from '@cloud-copilot/iam-utils'
 import { isConditionKeyArray } from '../context_keys/contextKeyTypes.js'
@@ -14,12 +14,12 @@ import { normalizeContextKeyCase, typeForContextKey } from '../context_keys/cont
 import { StrictContextKeys } from '../context_keys/strictContextKeys.js'
 import {
   authorize,
-  ControlPolicies,
-  PolicyWithName,
-  SimulationMode,
+  type ControlPolicies,
+  type PolicyWithName,
+  type SimulationMode,
   validSimulationModes
 } from '../core_engine/CoreSimulatorEngine.js'
-import { EvaluationResult, RequestAnalysis } from '../evaluate.js'
+import { type EvaluationResult, type RequestAnalysis } from '../evaluate.js'
 import { AwsRequestImpl } from '../request/request.js'
 import { RequestContextImpl } from '../requestContext.js'
 import { isWildcardOnlyAction } from '../util.js'
@@ -27,8 +27,8 @@ import { allowedContextKeysForRequest } from './contextKeys.js'
 import { calculateOverallResult } from './overallResult.js'
 import { getMatchingResourceStringsForPolicies } from './policyResources.js'
 import { getResourceTypesForAction } from './resourceTypes.js'
-import { Simulation } from './simulation.js'
-import { SimulationOptions } from './simulationOptions.js'
+import { type Simulation } from './simulation.js'
+import { type SimulationOptions } from './simulationOptions.js'
 
 const DEFAULT_RCP = {
   name: 'RCPFullAWSAccess',

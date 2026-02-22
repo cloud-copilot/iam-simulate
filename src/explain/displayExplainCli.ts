@@ -1,4 +1,4 @@
-import { StatementExplain } from './statementExplain.js'
+import { type StatementExplain } from './statementExplain.js'
 
 const explain1: StatementExplain = {
   identifier: 'Statement1',
@@ -214,6 +214,7 @@ export function printExplain(explain: StatementExplain) {
 
   if (explain.actions && !Array.isArray(explain.actions)) {
     const actionString = `${buffer}"Action": "${explain.actions.action}", // ${explain.actions.matches ? 'Match' : 'No Match'}`
+    console.log(actionString)
   } else if (explain.actions && Array.isArray(explain.actions)) {
     console.log(`${buffer}"Action": [`)
     for (const action of explain.actions) {
@@ -271,4 +272,5 @@ export function printExplain(explain: StatementExplain) {
   console.log(`}`)
 }
 
+void explain2
 printExplain(explain1)

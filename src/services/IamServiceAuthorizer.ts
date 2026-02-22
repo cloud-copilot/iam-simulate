@@ -1,7 +1,7 @@
-import { RequestAnalysis } from '../evaluate.js'
+import { type RequestAnalysis } from '../evaluate.js'
 import { splitArnParts } from '../util.js'
 import { DefaultServiceAuthorizer } from './DefaultServiceAuthorizer.js'
-import { ServiceAuthorizationRequest } from './ServiceAuthorizer.js'
+import { type ServiceAuthorizationRequest } from './ServiceAuthorizer.js'
 
 const deniedActionsForManagedPolicies = new Set([
   'iam:createpolicy',
@@ -35,7 +35,7 @@ const deniedActionsForAwsManagedRoles = new Set([
  * Service authorizer for IAM service requests.
  */
 export class IamServiceAuthorizer extends DefaultServiceAuthorizer {
-  public authorize(request: ServiceAuthorizationRequest): RequestAnalysis {
+  public override authorize(request: ServiceAuthorizationRequest): RequestAnalysis {
     const baseResult = super.authorize(request)
 
     const resourceParts = splitArnParts(request.request.resource.value())

@@ -1,13 +1,13 @@
-import { RequestAnalysis, ResourceAnalysis } from '../evaluate.js'
-import { RequestResource } from '../request/requestResource.js'
+import { type RequestAnalysis, type ResourceAnalysis } from '../evaluate.js'
+import { type RequestResource } from '../request/requestResource.js'
 import { DefaultServiceAuthorizer } from './DefaultServiceAuthorizer.js'
-import { ServiceAuthorizationRequest } from './ServiceAuthorizer.js'
+import { type ServiceAuthorizationRequest } from './ServiceAuthorizer.js'
 
 /**
  * The default authorizer for services.
  */
 export class StsServiceAuthorizer extends DefaultServiceAuthorizer {
-  public authorize(request: ServiceAuthorizationRequest): RequestAnalysis {
+  public override authorize(request: ServiceAuthorizationRequest): RequestAnalysis {
     if (request.request.action.value().toLowerCase() === 'sts:getcalleridentity') {
       return {
         result: 'Allowed',
@@ -24,7 +24,7 @@ export class StsServiceAuthorizer extends DefaultServiceAuthorizer {
    * @param resourceAnalysis - The resource policy analysis
    * @returns true if the service trusts the principal's account IAM policies
    */
-  serviceTrustsPrincipalAccount(
+  override serviceTrustsPrincipalAccount(
     sameAccount: boolean,
     resourceAnalysis: ResourceAnalysis,
     resource: RequestResource

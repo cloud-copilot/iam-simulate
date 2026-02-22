@@ -1,4 +1,4 @@
-import { SimulationMode } from '../core_engine/CoreSimulatorEngine.js'
+import { type SimulationMode } from '../core_engine/CoreSimulatorEngine.js'
 
 export interface SimulationOptions {
   simulationMode?: SimulationMode

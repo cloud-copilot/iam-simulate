@@ -1,7 +1,7 @@
-import { Condition, Statement } from '@cloud-copilot/iam-policy'
-import { ConditionMatchResult } from './condition/condition.js'
-import { StatementExplain } from './explain/statementExplain.js'
-import { PrincipalMatchResult } from './principal/principal.js'
+import { type Condition, type Statement } from '@cloud-copilot/iam-policy'
+import { type ConditionMatchResult } from './condition/condition.js'
+import { type StatementExplain } from './explain/statementExplain.js'
+import { type PrincipalMatchResult } from './principal/principal.js'
 
 /**
  * The result of analyzing a statement against a request.

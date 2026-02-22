@@ -1,4 +1,4 @@
-import { ConditionValueExplain } from '../../explain/statementExplain.js'
+import { type ConditionValueExplain } from '../../explain/statementExplain.js'
 import { isNotDefined } from '../../util.js'
 
 /**
