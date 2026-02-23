@@ -1,0 +1,464 @@
+[
+  {
+    "name": "Blocked by SCP and RCP together - explicit denies",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-root",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Deny",
+                "Action": "s3:GetObject",
+                "Resource": "*"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "resourceControlPolicies": [
+      {
+        "orgIdentifier": "ou-root",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Deny",
+                "Action": "s3:GetObject",
+                "Resource": "*",
+                "Principal": "*"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["scp", "rcp"]
+    }
+  },
+  {
+    "name": "Blocked by SCP, RCP, and permission boundary - all explicit denies",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:role/test-role",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-root",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              },
+              {
+                "Effect": "Deny",
+                "Action": "s3:GetObject",
+                "Resource": "*"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "resourceControlPolicies": [
+      {
+        "orgIdentifier": "ou-root",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Deny",
+                "Action": "s3:GetObject",
+                "Resource": "*",
+                "Principal": "*"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Deny",
+            "Action": "s3:GetObject",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["scp", "rcp", "pb"]
+    }
+  },
+  {
+    "name": "Blocked by SCP and permission boundary - SCP implicit, PB explicit deny",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:role/test-role",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-root",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "ec2:*",
+                "Resource": "*"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Deny",
+            "Action": "s3:GetObject",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["scp", "pb"]
+    }
+  },
+  {
+    "name": "Blocked by RCP and VPC endpoint policy",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "resourceControlPolicies": [
+      {
+        "orgIdentifier": "ou-root",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Deny",
+                "Action": "s3:GetObject",
+                "Resource": "*",
+                "Principal": "*"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "endpointPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Deny",
+            "Action": "s3:GetObject",
+            "Resource": "*",
+            "Principal": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["rcp", "vpce"]
+    }
+  },
+  {
+    "name": "Blocked by all guardrails - SCP, RCP, permission boundary, and VPC endpoint",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:role/test-role",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-root",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              },
+              {
+                "Effect": "Deny",
+                "Action": "s3:GetObject",
+                "Resource": "*"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "resourceControlPolicies": [
+      {
+        "orgIdentifier": "ou-root",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Deny",
+                "Action": "s3:GetObject",
+                "Resource": "*",
+                "Principal": "*"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Deny",
+            "Action": "s3:GetObject",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "endpointPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Deny",
+            "Action": "s3:GetObject",
+            "Resource": "*",
+            "Principal": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["scp", "rcp", "vpce", "pb"]
+    }
+  },
+  {
+    "name": "Blocked by SCP implicit deny and RCP explicit deny",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-root",
+        "policies": []
+      }
+    ],
+    "resourceControlPolicies": [
+      {
+        "orgIdentifier": "ou-root",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Deny",
+                "Action": "s3:GetObject",
+                "Resource": "*",
+                "Principal": "*"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["scp", "rcp"]
+    }
+  },
+  {
+    "name": "Blocked by identity explicit deny and SCP - resource policy allows",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Deny",
+            "Action": "s3:GetObject",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-root",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Deny",
+                "Action": "s3:GetObject",
+                "Resource": "*"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::mybucket/testobject",
+          "Principal": {
+            "AWS": "arn:aws:iam::123456789012:user/test-user"
+          }
+        }
+      ]
+    },
+    "expected": {
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["scp", "identity"]
+    }
+  }
+]

@@ -96,7 +96,8 @@
       }
     ],
     "expected": {
-      "response": "ExplicitlyDenied"
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["rcp"]
     }
   },
   {
@@ -145,7 +146,8 @@
       }
     ],
     "expected": {
-      "response": "ExplicitlyDenied"
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["rcp"]
     }
   },
   {
@@ -285,7 +287,8 @@
       }
     ],
     "expected": {
-      "response": "ExplicitlyDenied"
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["scp"]
     }
   }
 ]

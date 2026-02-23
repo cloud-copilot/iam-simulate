@@ -74,7 +74,8 @@
       }
     ],
     "expected": {
-      "response": "ImplicitlyDenied"
+      "response": "ImplicitlyDenied",
+      "blockedBy": ["pb"]
     }
   },
   {
@@ -258,7 +259,8 @@
       ]
     },
     "expected": {
-      "response": "ExplicitlyDenied"
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["pb"]
     }
   },
   {
@@ -297,11 +299,12 @@
       ]
     },
     "expected": {
-      "response": "ExplicitlyDenied"
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["pb"]
     }
   },
   {
-    "name": "Permission boundary deny resource policy allows session, from session",
+    "name": "Permission boundary explicit deny, resource policy allows session, from session",
     "request": {
       "action": "s3:GetObject",
       "resource": {
@@ -336,7 +339,8 @@
       ]
     },
     "expected": {
-      "response": "ExplicitlyDenied"
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["pb"]
     }
   },
   {
@@ -375,11 +379,12 @@
       ]
     },
     "expected": {
-      "response": "ImplicitlyDenied"
+      "response": "ImplicitlyDenied",
+      "blockedBy": ["pb"]
     }
   },
   {
-    "name": "Permission boundary implicit deny resource policy allows role, from session",
+    "name": "Permission boundary implicit deny, resource policy allows role, from session",
     "request": {
       "action": "s3:GetObject",
       "resource": {
@@ -414,7 +419,8 @@
       ]
     },
     "expected": {
-      "response": "ImplicitlyDenied"
+      "response": "ImplicitlyDenied",
+      "blockedBy": ["pb"]
     }
   },
   {

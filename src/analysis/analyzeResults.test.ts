@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { IdentityAnalysis, RequestAnalysis } from '../evaluate.js'
-import { Simulation } from '../simulation_engine/simulation.js'
+import type { IdentityAnalysis, RequestAnalysis } from '../evaluate.js'
+import type { Simulation } from '../simulation_engine/simulation.js'
 import { runSimulation } from '../simulation_engine/simulationEngine.js'
-import { getDenialReasons, isAllowedByIdentityPolicies, RequestDenial } from './analyzeResults.js'
+import {
+  getDenialReasons,
+  isAllowedByIdentityPolicies,
+  type RequestDenial
+} from './analyzeResults.js'
 
 describe('isAllowedByIdentityPolicies', () => {
   it('should return false if there is no identity analysis', () => {
@@ -235,6 +239,8 @@ const analyzeResultsTests: {
     expected: [
       {
         policyType: 'resource',
+        blocking: true,
+        policyIdentifier: undefined,
         statementId: 'DenyAlice',
         denialType: 'Explicit'
       }
@@ -293,6 +299,7 @@ const analyzeResultsTests: {
     expected: [
       {
         policyType: 'scp',
+        blocking: true,
         identifier: 'ou-root',
         denialType: 'Implicit'
       }
@@ -356,6 +363,7 @@ const analyzeResultsTests: {
     expected: [
       {
         policyType: 'scp',
+        blocking: true,
         policyIdentifier: 'DenySCP',
         statementId: 'DenyS3',
         denialType: 'Explicit'
@@ -417,6 +425,7 @@ const analyzeResultsTests: {
     expected: [
       {
         policyType: 'rcp',
+        blocking: true,
         policyIdentifier: 'DenyRCP',
         statementId: 'DenyS3Access',
         denialType: 'Explicit'
@@ -471,7 +480,8 @@ const analyzeResultsTests: {
     },
     expected: [
       {
-        policyType: 'permissionBoundary',
+        policyType: 'pb',
+        blocking: true,
         denialType: 'Implicit'
       }
     ]
@@ -529,7 +539,8 @@ const analyzeResultsTests: {
     },
     expected: [
       {
-        policyType: 'permissionBoundary',
+        policyType: 'pb',
+        blocking: true,
         policyIdentifier: 'BoundaryPolicy',
         statementId: 'DenyS3InBoundary',
         denialType: 'Explicit'
@@ -585,7 +596,8 @@ const analyzeResultsTests: {
     },
     expected: [
       {
-        policyType: 'endpointPolicy',
+        policyType: 'vpce',
+        blocking: true,
         denialType: 'Implicit'
       }
     ]
@@ -645,7 +657,8 @@ const analyzeResultsTests: {
     },
     expected: [
       {
-        policyType: 'endpointPolicy',
+        policyType: 'vpce',
+        blocking: true,
         policyIdentifier: 'EndpointPolicy',
         statementId: 'DenyS3Endpoint',
         denialType: 'Explicit'
@@ -807,6 +820,7 @@ const analyzeResultsTests: {
     expected: [
       {
         policyType: 'scp',
+        blocking: true,
         identifier: 'ou-child',
         denialType: 'Implicit'
       }
@@ -970,16 +984,188 @@ const analyzeResultsTests: {
         denialType: 'Explicit'
       },
       {
-        policyType: 'permissionBoundary',
+        policyType: 'pb',
         policyIdentifier: 'BoundaryDenyPolicy',
         statementId: 'BoundaryDeny',
         denialType: 'Explicit'
       },
       {
-        policyType: 'endpointPolicy',
+        policyType: 'vpce',
         policyIdentifier: 'EndpointDenyPolicy',
         statementId: 'EndpointDeny',
         denialType: 'Explicit'
+      }
+    ]
+  },
+  {
+    name: 'mixed blockers: implicit scp omitted when overall result is explicit',
+    simulation: {
+      request: {
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        action: 's3:GetObject',
+        resource: {
+          resource: 'arn:aws:s3:::example_bucket/object.txt',
+          accountId: '123456789012'
+        },
+        contextVariables: {}
+      },
+      identityPolicies: [
+        {
+          name: 'AllowIdentityPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Effect: 'Allow',
+                Action: 's3:GetObject',
+                Resource: '*'
+              }
+            ]
+          }
+        }
+      ],
+      serviceControlPolicies: [
+        {
+          orgIdentifier: 'ou-root',
+          policies: [
+            {
+              name: 'ImplicitDenySCP',
+              policy: {
+                Version: '2012-10-17',
+                Statement: [
+                  {
+                    Effect: 'Allow',
+                    Action: 'ec2:*',
+                    Resource: '*'
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      permissionBoundaryPolicies: [
+        {
+          name: 'BoundaryPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Effect: 'Allow',
+                Action: '*',
+                Resource: '*'
+              },
+              {
+                Sid: 'BoundaryDenyS3',
+                Effect: 'Deny',
+                Action: 's3:GetObject',
+                Resource: '*'
+              }
+            ]
+          }
+        }
+      ],
+      resourceControlPolicies: []
+    },
+    expected: [
+      {
+        policyType: 'pb',
+        blocking: true,
+        policyIdentifier: 'BoundaryPolicy',
+        statementId: 'BoundaryDenyS3',
+        denialType: 'Explicit'
+      },
+      {
+        policyType: 'scp',
+        blocking: true,
+        identifier: 'ou-root',
+        denialType: 'Implicit'
+      }
+    ]
+  },
+  {
+    name: 'mixed blockers: implicit endpoint omitted when overall result is explicit',
+    simulation: {
+      request: {
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        action: 's3:ListBucket',
+        resource: {
+          resource: 'arn:aws:s3:::example_bucket',
+          accountId: '123456789012'
+        },
+        contextVariables: {}
+      },
+      identityPolicies: [
+        {
+          name: 'AllowIdentityPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Effect: 'Allow',
+                Action: 's3:ListBucket',
+                Resource: '*'
+              }
+            ]
+          }
+        }
+      ],
+      serviceControlPolicies: [
+        {
+          orgIdentifier: 'ou-root',
+          policies: [
+            {
+              name: 'DenySCP',
+              policy: {
+                Version: '2012-10-17',
+                Statement: [
+                  {
+                    Effect: 'Allow',
+                    Action: '*',
+                    Resource: '*'
+                  },
+                  {
+                    Sid: 'SCPDenyS3',
+                    Effect: 'Deny',
+                    Action: 's3:ListBucket',
+                    Resource: '*'
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      vpcEndpointPolicies: [
+        {
+          name: 'EndpointPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Effect: 'Allow',
+                Principal: '*',
+                Action: 'ec2:*',
+                Resource: '*'
+              }
+            ]
+          }
+        }
+      ],
+      resourceControlPolicies: []
+    },
+    expected: [
+      {
+        policyType: 'scp',
+        blocking: true,
+        policyIdentifier: 'DenySCP',
+        statementId: 'SCPDenyS3',
+        denialType: 'Explicit'
+      },
+      {
+        policyType: 'vpce',
+        blocking: true,
+        denialType: 'Implicit'
       }
     ]
   }

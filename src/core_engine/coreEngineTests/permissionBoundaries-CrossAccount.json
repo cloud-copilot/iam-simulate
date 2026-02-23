@@ -503,7 +503,8 @@
       ]
     },
     "expected": {
-      "response": "ImplicitlyDenied"
+      "response": "ImplicitlyDenied",
+      "blockedBy": ["pb"]
     }
   },
   {

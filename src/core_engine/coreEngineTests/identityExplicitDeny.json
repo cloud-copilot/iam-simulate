@@ -1,16 +1,27 @@
 [
   {
-    "name": "Allowed role when resource policy allows for role",
+    "name": "Resource policy allows but identity explicitly denies - same account",
     "request": {
       "action": "s3:GetObject",
       "resource": {
         "resource": "arn:aws:s3:::mybucket/testobject",
         "accountId": "123456789012"
       },
-      "principal": "arn:aws:iam::123456789012:role/test-role",
+      "principal": "arn:aws:iam::123456789012:user/test-user",
       "context": {}
     },
-    "identityPolicies": [],
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Deny",
+            "Action": "s3:GetObject",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
     "resourcePolicy": {
       "Version": "2012-10-17",
       "Statement": [
@@ -19,46 +30,18 @@
           "Action": "s3:GetObject",
           "Resource": "arn:aws:s3:::mybucket/testobject",
           "Principal": {
-            "AWS": "arn:aws:iam::123456789012:role/test-role"
+            "AWS": "arn:aws:iam::123456789012:user/test-user"
           }
         }
       ]
     },
     "expected": {
-      "response": "Allowed"
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["identity"]
     }
   },
   {
-    "name": "Allowed session when resource policy allows for role",
-    "request": {
-      "action": "s3:GetObject",
-      "resource": {
-        "resource": "arn:aws:s3:::mybucket/testobject",
-        "accountId": "123456789012"
-      },
-      "principal": "arn:aws:sts::123456789012:assumed-role/test-role/session-name",
-      "context": {}
-    },
-    "identityPolicies": [],
-    "resourcePolicy": {
-      "Version": "2012-10-17",
-      "Statement": [
-        {
-          "Effect": "Allow",
-          "Action": "s3:GetObject",
-          "Resource": "arn:aws:s3:::mybucket/testobject",
-          "Principal": {
-            "AWS": "arn:aws:iam::123456789012:role/test-role"
-          }
-        }
-      ]
-    },
-    "expected": {
-      "response": "Allowed"
-    }
-  },
-  {
-    "name": "Deny role when resource policy denies for role",
+    "name": "Resource policy allows role but identity explicitly denies - same account",
     "request": {
       "action": "s3:GetObject",
       "resource": {
@@ -73,12 +56,9 @@
         "Version": "2012-10-17",
         "Statement": [
           {
-            "Effect": "Allow",
+            "Effect": "Deny",
             "Action": "s3:GetObject",
-            "Resource": "arn:aws:s3:::mybucket/testobject",
-            "Principal": {
-              "AWS": "arn:aws:iam::123456789012:role/test-role"
-            }
+            "Resource": "arn:aws:s3:::mybucket/*"
           }
         ]
       }
@@ -87,7 +67,7 @@
       "Version": "2012-10-17",
       "Statement": [
         {
-          "Effect": "Deny",
+          "Effect": "Allow",
           "Action": "s3:GetObject",
           "Resource": "arn:aws:s3:::mybucket/testobject",
           "Principal": {
@@ -98,11 +78,11 @@
     },
     "expected": {
       "response": "ExplicitlyDenied",
-      "blockedBy": ["resource"]
+      "blockedBy": ["identity"]
     }
   },
   {
-    "name": "Deny session when resource policy denies for role",
+    "name": "Resource policy allows assumed role session but identity explicitly denies - same account",
     "request": {
       "action": "s3:GetObject",
       "resource": {
@@ -117,12 +97,9 @@
         "Version": "2012-10-17",
         "Statement": [
           {
-            "Effect": "Allow",
-            "Action": "s3:GetObject",
-            "Resource": "arn:aws:s3:::mybucket/testobject",
-            "Principal": {
-              "AWS": "arn:aws:iam::123456789012:role/test-role"
-            }
+            "Effect": "Deny",
+            "Action": "s3:*",
+            "Resource": "*"
           }
         ]
       }
@@ -131,18 +108,64 @@
       "Version": "2012-10-17",
       "Statement": [
         {
-          "Effect": "Deny",
+          "Effect": "Allow",
           "Action": "s3:GetObject",
           "Resource": "arn:aws:s3:::mybucket/testobject",
           "Principal": {
-            "AWS": "arn:aws:iam::123456789012:role/test-role"
+            "AWS": "arn:aws:sts::123456789012:assumed-role/test-role/session-name"
           }
         }
       ]
     },
     "expected": {
       "response": "ExplicitlyDenied",
-      "blockedBy": ["resource"]
+      "blockedBy": ["identity"]
+    }
+  },
+  {
+    "name": "Identity allows and denies different actions, resource policy allows denied action - same account",
+    "request": {
+      "action": "s3:DeleteObject",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket/testobject",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "*"
+          },
+          {
+            "Effect": "Deny",
+            "Action": "s3:DeleteObject",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:DeleteObject",
+          "Resource": "arn:aws:s3:::mybucket/testobject",
+          "Principal": {
+            "AWS": "arn:aws:iam::123456789012:user/test-user"
+          }
+        }
+      ]
+    },
+    "expected": {
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["identity"]
     }
   }
 ]
