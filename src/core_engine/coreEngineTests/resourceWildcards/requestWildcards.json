@@ -215,7 +215,8 @@
       ]
     },
     "expected": {
-      "response": "ExplicitlyDenied"
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["resource"]
     }
   },
   {

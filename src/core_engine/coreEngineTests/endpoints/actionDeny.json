@@ -34,7 +34,8 @@
       }
     ],
     "expected": {
-      "response": "ImplicitlyDenied"
+      "response": "ImplicitlyDenied",
+      "blockedBy": ["vpce"]
     }
   },
   {
@@ -77,7 +78,8 @@
       }
     ],
     "expected": {
-      "response": "ExplicitlyDenied"
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["vpce"]
     }
   }
 ]

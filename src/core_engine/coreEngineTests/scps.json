@@ -51,7 +51,8 @@
       }
     ],
     "expected": {
-      "response": "ImplicitlyDenied"
+      "response": "ImplicitlyDenied",
+      "blockedBy": ["scp"]
     }
   },
   {
@@ -119,7 +120,8 @@
       }
     ],
     "expected": {
-      "response": "ImplicitlyDenied"
+      "response": "ImplicitlyDenied",
+      "blockedBy": ["scp"]
     }
   },
   {
@@ -260,7 +262,7 @@
     }
   },
   {
-    "name": "Denied when denied by an SCPs and Allowed By Identity Policy",
+    "name": "Denied when denied by an SCP and Allowed By Identity Policy",
     "request": {
       "action": "s3:ListAllMyBuckets",
       "resource": {
@@ -335,7 +337,8 @@
       }
     ],
     "expected": {
-      "response": "ExplicitlyDenied"
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["scp"]
     }
   }
 ]

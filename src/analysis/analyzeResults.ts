@@ -1,4 +1,5 @@
 import {
+  type BlockedReason,
   type EvaluationResult,
   type IdentityAnalysis,
   type RcpAnalysis,
@@ -22,24 +23,56 @@ export function isAllowedByIdentityPolicies(requestAnalysis: RequestAnalysis): b
   return identityAnalysis.result === 'Allowed'
 }
 
-export type DenialPolicyType =
-  | 'identity'
-  | 'resource'
-  | 'scp'
-  | 'rcp'
-  | 'permissionBoundary'
-  | 'endpointPolicy'
+export type DenialPolicyType = BlockedReason
 
 export type RequestDenial =
   | {
+      /**
+       * The type of policy that caused the denial.
+       */
       policyType: DenialPolicyType
+
+      /**
+       * This denial blocks a request that otherwise could have been allowed.
+       */
+      blocking?: true
+
+      /**
+       * The identifier of the policy that caused the denial, if applicable. This could be a
+       * policy identifier or an organizational unit identifier for SCPs and RCPs.
+       */
       identifier?: string
+
+      /**
+       * The type of denial.
+       */
       denialType: 'Implicit'
     }
   | {
+      /**
+       * The type of policy that caused the denial.
+       */
       policyType: DenialPolicyType
+
+      /**
+       * This denial blocks a request that otherwise could have been allowed.
+       */
+      blocking?: true
+
+      /**
+       * The identifier of the policy that caused the denial. May be undefined, for example
+       * in a resource policy.
+       */
       policyIdentifier?: string
+
+      /**
+       * The statement ID (or index) of the denying statement, if applicable.
+       */
       statementId: string
+
+      /**
+       * The type of denial.
+       */
       denialType: 'Explicit'
     }
 
@@ -62,18 +95,38 @@ export type RequestDenial =
 export function getDenialReasons(requestAnalysis: RequestAnalysis): RequestDenial[] {
   const denials: RequestDenial[] = []
   const overallResult = requestAnalysis.result
+  const blockedBy = new Set(requestAnalysis.blockedBy ?? [])
 
-  addSimplePolicyDenials(requestAnalysis.identityAnalysis, 'identity', overallResult, denials)
-  addSimplePolicyDenials(requestAnalysis.resourceAnalysis, 'resource', overallResult, denials)
-  addOuPolicyDenials(requestAnalysis.scpAnalysis, 'scp', overallResult, denials)
-  addOuPolicyDenials(requestAnalysis.rcpAnalysis, 'rcp', overallResult, denials)
   addSimplePolicyDenials(
-    requestAnalysis.permissionBoundaryAnalysis,
-    'permissionBoundary',
+    requestAnalysis.identityAnalysis,
+    'identity',
     overallResult,
+    blockedBy,
     denials
   )
-  addSimplePolicyDenials(requestAnalysis.endpointAnalysis, 'endpointPolicy', overallResult, denials)
+  addSimplePolicyDenials(
+    requestAnalysis.resourceAnalysis,
+    'resource',
+    overallResult,
+    blockedBy,
+    denials
+  )
+  addOuPolicyDenials(requestAnalysis.scpAnalysis, 'scp', overallResult, blockedBy, denials)
+  addOuPolicyDenials(requestAnalysis.rcpAnalysis, 'rcp', overallResult, blockedBy, denials)
+  addSimplePolicyDenials(
+    requestAnalysis.permissionBoundaryAnalysis,
+    'pb',
+    overallResult,
+    blockedBy,
+    denials
+  )
+  addSimplePolicyDenials(
+    requestAnalysis.endpointAnalysis,
+    'vpce',
+    overallResult,
+    blockedBy,
+    denials
+  )
 
   return denials
 }
@@ -86,16 +139,31 @@ function addSimplePolicyDenials(
   analysis: IdentityAnalysis | ResourceAnalysis | undefined,
   policyType: DenialPolicyType,
   overallResult: EvaluationResult,
+  blockedBy: Set<BlockedReason>,
   denials: RequestDenial[]
 ): void {
   if (!analysis) return
 
-  if (analysis.result === 'ImplicitlyDenied' && overallResult === 'ImplicitlyDenied') {
-    denials.push({ policyType, denialType: 'Implicit' })
-  } else if (analysis.result === 'ExplicitlyDenied' && overallResult === 'ExplicitlyDenied') {
+  const isBlocking = blockedBy.has(policyType)
+  const blocking = isBlocking ? { blocking: true as const } : {}
+
+  if (
+    analysis.result === 'ImplicitlyDenied' &&
+    (isBlocking || overallResult === 'ImplicitlyDenied')
+  ) {
+    denials.push({
+      policyType,
+      denialType: 'Implicit',
+      ...blocking
+    })
+  } else if (
+    analysis.result === 'ExplicitlyDenied' &&
+    (isBlocking || overallResult === 'ExplicitlyDenied')
+  ) {
     for (const stmt of analysis.denyStatements) {
       denials.push({
         policyType,
+        ...blocking,
         policyIdentifier: stmt.policyId,
         statementId: stmt.statement.sid() || stmt.statement.index().toString(),
         denialType: 'Explicit'
@@ -112,17 +180,32 @@ function addOuPolicyDenials(
   analysis: ScpAnalysis | RcpAnalysis | undefined,
   policyType: DenialPolicyType,
   overallResult: EvaluationResult,
+  blockedBy: Set<BlockedReason>,
   denials: RequestDenial[]
 ): void {
   if (!analysis) return
 
-  if (analysis.result === 'ImplicitlyDenied' && overallResult === 'ImplicitlyDenied') {
+  const isBlocking = blockedBy.has(policyType)
+  const blocking = isBlocking ? { blocking: true as const } : {}
+
+  if (
+    analysis.result === 'ImplicitlyDenied' &&
+    (isBlocking || overallResult === 'ImplicitlyDenied')
+  ) {
     for (const ou of analysis.ouAnalysis) {
       if (ou.result === 'ImplicitlyDenied') {
-        denials.push({ policyType, identifier: ou.orgIdentifier, denialType: 'Implicit' })
+        denials.push({
+          policyType,
+          identifier: ou.orgIdentifier,
+          denialType: 'Implicit',
+          ...blocking
+        })
       }
     }
-  } else if (analysis.result === 'ExplicitlyDenied' && overallResult === 'ExplicitlyDenied') {
+  } else if (
+    analysis.result === 'ExplicitlyDenied' &&
+    (isBlocking || overallResult === 'ExplicitlyDenied')
+  ) {
     for (const ou of analysis.ouAnalysis) {
       if (ou.result === 'ExplicitlyDenied') {
         for (const stmt of ou.denyStatements) {
@@ -130,7 +213,8 @@ function addOuPolicyDenials(
             policyType,
             policyIdentifier: stmt.policyId,
             statementId: stmt.statement.sid() || stmt.statement.index().toString(),
-            denialType: 'Explicit'
+            denialType: 'Explicit',
+            ...blocking
           })
         }
       }

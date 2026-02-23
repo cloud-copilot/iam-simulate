@@ -5,13 +5,14 @@ export {
 } from './analysis/analyzeResults.js'
 export { typeForContextKey } from './context_keys/contextKeys.js'
 export {
-  type BaseConditionKeyType,
   isConditionKeyArray,
+  type BaseConditionKeyType,
   type ConditionKeyType
 } from './context_keys/contextKeyTypes.js'
 export { findContextKeys } from './context_keys/findContextKeys.js'
 export type { SimulationMode } from './core_engine/CoreSimulatorEngine.js'
 export type {
+  BlockedReason,
   EvaluationResult,
   IgnoredCondition,
   IgnoredConditions,

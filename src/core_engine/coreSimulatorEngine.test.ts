@@ -5,7 +5,11 @@ import { describe, expect, it } from 'vitest'
 import { StrictContextKeys } from '../context_keys/strictContextKeys.js'
 import { AwsRequestImpl } from '../request/request.js'
 import { RequestContextImpl } from '../requestContext.js'
-import { AuthorizationRequest, authorize, SimulationParameters } from './CoreSimulatorEngine.js'
+import {
+  type AuthorizationRequest,
+  authorize,
+  type SimulationParameters
+} from './CoreSimulatorEngine.js'
 
 function getAllFiles(dir: string, allFiles: string[] = []): string[] {
   const files = readdirSync(dir)
@@ -194,6 +198,24 @@ describe('coreSimulatorEngine', () => {
               ignoredConditionsUndefinedOrEmpty,
               JSON.stringify(analysis.ignoredConditions)
             ).toBe(true)
+          }
+
+          // Check blockedBy
+          const expectedBlockedBy = expected.blockedBy
+          const actualBlockedBy = analysis.blockedBy
+
+          if (expectedBlockedBy && !actualBlockedBy) {
+            expect.fail(
+              `Expected blockedBy to be ${JSON.stringify(expectedBlockedBy)} but was undefined`
+            )
+          } else if (!expectedBlockedBy && actualBlockedBy) {
+            expect.fail(
+              `Expected blockedBy to be undefined but was ${JSON.stringify(actualBlockedBy)}`
+            )
+          } else if (expectedBlockedBy && actualBlockedBy) {
+            const sortedExpected = [...expectedBlockedBy].sort()
+            const sortedActual = [...actualBlockedBy].sort()
+            expect(sortedActual, 'blockedBy mismatch').toEqual(sortedExpected)
           }
         })
       }

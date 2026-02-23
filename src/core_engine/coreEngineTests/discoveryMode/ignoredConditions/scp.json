@@ -130,7 +130,8 @@
       "strictConditionKeys": ["aws:username"]
     },
     "expected": {
-      "response": "ExplicitlyDenied"
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["scp"]
     }
   },
   {
