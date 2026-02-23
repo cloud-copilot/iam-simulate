@@ -1,3 +1,10 @@
+## [0.1.108](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.107...v0.1.108) (2026-02-23)
+
+
+### Features
+
+* Determine if access would be granted if not blocked by guardrails. If access is granted in core policies but blocked by guardrails, report those guardrails. ([57a8894](https://github.com/cloud-copilot/iam-simulate/commit/57a88943d6d0d7a96cfaf22a172106c9c8538a79))
+
 ## [0.1.107](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.106...v0.1.107) (2026-02-23)
 
 ## [0.1.106](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.105...v0.1.106) (2026-02-22)
