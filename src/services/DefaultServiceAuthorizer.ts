@@ -127,7 +127,7 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
       endpointAnalysis: request.endpointAnalysis
     }
 
-    const coreResult = this.corePolicyResult(request)
+    const coreResult = this.initialEvaluationResult(request)
     const blockedByLog = new BlockedByLog(coreResult)
 
     blockedByLog.add('scp', scpResult)
@@ -249,7 +249,22 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     )
   }
 
-  private corePolicyResult(request: ServiceAuthorizationRequest): EvaluationResult {
+  /**
+   * Evaluations whether the minimum requirements for the request to be allowed are met based on the core policies
+   *   - Identity
+   *   - Resource
+   *   - Session
+   *
+   * Depending on the service, and whether the principal and resources are in the same account, the requirements may differ.
+   * For same account requests, for most services an Allow in the resource policy or the identity policy is sufficient to
+   * allow the request, so this function will return 'Allowed'. If there is an explicit deny elsewhere, that is not considered.
+   * This function only determines if there are enough core policies to allow the request, and final determination of the
+   * request is done elsewhere.
+   *
+   * @param request the service authorization request containing all analyses
+   * @returns 'Allowed' if the core policies allow the request, otherwise may return 'ImplicitlyDenied' or 'ExplicitlyDenied' depending on the analyses
+   */
+  private initialEvaluationResult(request: ServiceAuthorizationRequest): EvaluationResult {
     const sessionResult = request.sessionAnalysis?.result
     const identityStatementResult = request.identityAnalysis.result
     const resourcePolicyResult = request.resourceAnalysis?.result

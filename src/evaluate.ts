@@ -9,7 +9,7 @@ export type ResourceEvaluationResult =
   | 'DeniedForAccount'
   | 'ImplicitlyDenied'
 
-export type BlockedReason = 'session' | 'scp' | 'rcp' | 'vpce' | 'identity' | 'resource' | 'pb'
+export type BlockedReason = 'scp' | 'rcp' | 'vpce' | 'identity' | 'resource' | 'pb'
 
 export interface IdentityAnalysis {
   result: EvaluationResult
@@ -157,17 +157,19 @@ export interface RequestAnalysis {
   ignoredRoleSessionName?: boolean
 
   /**
-   * If the request would have been allowed by the core session, identity, and resource policies required, but was blocked
+   * If the request has policies to allow the request in session, identity, and/or resource policies required, but was blocked
    * by another policy, this includes the policy types that blocked the request.
    *
-   * If this array is undefined or empty, it means that the core session, identity, and resource policies did
+   * It is possible for a request to have been allowed by the identity policy but blocked by the resource policy and vice versa.
+   *
+   * If this array is undefined or empty, it means that the core session, identity, and/or resource policies did
    * not grant permission. It does not mean that there are no guardrails in place, just that the request was
    * not allowed by the core policies, so there is no need to look for guardrails that block an otherwise allowed request.
    *
    * "Allowed by core policies" means that it would have been allowed if not for the policies identified in `blockedBy`. So
    * by removing the policies identified in `blockedBy`, the request would be allowed.
    *
-   * Use this to discover what guardrails are in place that might block access even if it is may be allowed by other policies.
+   * Use this to discover what guardrails are in place that might block access even if it may be allowed by other policies.
    */
   blockedBy?: BlockedReason[]
 }

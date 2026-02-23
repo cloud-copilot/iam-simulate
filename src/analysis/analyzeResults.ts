@@ -33,7 +33,7 @@ export type RequestDenial =
       policyType: DenialPolicyType
 
       /**
-       * Whether this denial was a blocking a request that otherwise would have been allowed.
+       * This denial blocks a request that otherwise could have been allowed.
        */
       blocking?: true
 
@@ -55,7 +55,7 @@ export type RequestDenial =
       policyType: DenialPolicyType
 
       /**
-       * Whether this denial was a blocking a request that otherwise would have been allowed.
+       * This denial blocks a request that otherwise could have been allowed.
        */
       blocking?: true
 
