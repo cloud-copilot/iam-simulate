@@ -66,14 +66,34 @@ export type RequestDenial =
       policyIdentifier?: string
 
       /**
-       * The statement ID (or index) of the denying statement, if applicable.
+       * The statement ID (Sid) of the denying policy statement, if present. This corresponds
+       * to the Sid field in the AWS IAM policy statement and may be absent if the statement
+       * does not define a Sid.
        */
-      statementId: string
+      statementId?: string | undefined
+
+      /**
+       * The 1-based index of the denying statement within the policy, if applicable. This is useful when the statement does not have a Sid.
+       */
+      statementIndex: number
 
       /**
        * The type of denial.
        */
       denialType: 'Explicit'
+    }
+
+export type RequestGrant =
+  | {
+      policyType: 'identity'
+      policyIdentifier: string
+      statementId?: string | undefined
+      statementIndex: number
+    }
+  | {
+      policyType: 'resource'
+      statementId?: string | undefined
+      statementIndex: number
     }
 
 /**
@@ -87,7 +107,8 @@ export type RequestDenial =
  * For an explicit denial, it returns:
  * - the policy type (identity, resource, scp, rcp, permission boundary, endpoint policy)
  * - the policy identifier, if applicable for a managed policy or an SCP
- * - the statement ID (or index) of the denying statement.
+ * - the statement ID (Sid), if the denying statement has one
+ * - the statement index (1-based) of the denying statement
  *
  * @param requestAnalysis the request analysis
  * @returns a list of RequestDenial objects describing the reasons for denial
@@ -165,7 +186,8 @@ function addSimplePolicyDenials(
         policyType,
         ...blocking,
         policyIdentifier: stmt.policyId,
-        statementId: stmt.statement.sid() || stmt.statement.index().toString(),
+        statementId: stmt.statement.sid(),
+        statementIndex: stmt.statement.index(),
         denialType: 'Explicit'
       })
     }
@@ -212,12 +234,57 @@ function addOuPolicyDenials(
           denials.push({
             policyType,
             policyIdentifier: stmt.policyId,
-            statementId: stmt.statement.sid() || stmt.statement.index().toString(),
-            denialType: 'Explicit',
-            ...blocking
+            statementId: stmt.statement.sid(),
+            statementIndex: stmt.statement.index(),
+            ...blocking,
+            denialType: 'Explicit'
           })
         }
       }
     }
   }
+}
+
+/**
+ * Find the policy statements that granted access for an allowed request.
+ * Analyzes the RequestAnalysis and returns the specific grants that allowed the request.
+ *
+ * Only identity and resource policies can grant access. SCPs, RCPs, permission boundaries,
+ * and endpoint policies can only deny (not grant).
+ *
+ * @param requestAnalysis the request analysis
+ * @returns a list of RequestGrant objects describing which policies granted access
+ */
+export function getGrantReasons(requestAnalysis: RequestAnalysis): RequestGrant[] {
+  if (requestAnalysis.result !== 'Allowed') {
+    return []
+  }
+
+  const grantDetails: RequestGrant[] = []
+
+  if (requestAnalysis.identityAnalysis?.result === 'Allowed') {
+    for (const stmt of requestAnalysis.identityAnalysis.allowStatements) {
+      grantDetails.push({
+        policyType: 'identity',
+        policyIdentifier: stmt.policyId,
+        statementId: stmt.statement.sid(),
+        statementIndex: stmt.statement.index()
+      })
+    }
+  }
+
+  if (
+    requestAnalysis.resourceAnalysis?.result === 'Allowed' ||
+    requestAnalysis.resourceAnalysis?.result === 'AllowedForAccount'
+  ) {
+    for (const stmt of requestAnalysis.resourceAnalysis.allowStatements) {
+      grantDetails.push({
+        policyType: 'resource',
+        statementId: stmt.statement.sid(),
+        statementIndex: stmt.statement.index()
+      })
+    }
+  }
+
+  return grantDetails
 }

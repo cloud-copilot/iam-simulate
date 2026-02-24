@@ -4,8 +4,10 @@ import type { Simulation } from '../simulation_engine/simulation.js'
 import { runSimulation } from '../simulation_engine/simulationEngine.js'
 import {
   getDenialReasons,
+  getGrantReasons,
   isAllowedByIdentityPolicies,
-  type RequestDenial
+  type RequestDenial,
+  type RequestGrant
 } from './analyzeResults.js'
 
 describe('isAllowedByIdentityPolicies', () => {
@@ -109,6 +111,7 @@ const analyzeResultsTests: {
         policyType: 'identity',
         policyIdentifier: 'DenyPolicy',
         statementId: 'DenyAll',
+        statementIndex: 1,
         denialType: 'Explicit'
       }
     ]
@@ -147,7 +150,7 @@ const analyzeResultsTests: {
       {
         policyType: 'identity',
         policyIdentifier: 'DenyPolicy',
-        statementId: '1',
+        statementIndex: 1,
         denialType: 'Explicit'
       }
     ]
@@ -242,6 +245,7 @@ const analyzeResultsTests: {
         blocking: true,
         policyIdentifier: undefined,
         statementId: 'DenyAlice',
+        statementIndex: 1,
         denialType: 'Explicit'
       }
     ]
@@ -366,6 +370,7 @@ const analyzeResultsTests: {
         blocking: true,
         policyIdentifier: 'DenySCP',
         statementId: 'DenyS3',
+        statementIndex: 2,
         denialType: 'Explicit'
       }
     ]
@@ -428,6 +433,7 @@ const analyzeResultsTests: {
         blocking: true,
         policyIdentifier: 'DenyRCP',
         statementId: 'DenyS3Access',
+        statementIndex: 1,
         denialType: 'Explicit'
       }
     ]
@@ -543,6 +549,7 @@ const analyzeResultsTests: {
         blocking: true,
         policyIdentifier: 'BoundaryPolicy',
         statementId: 'DenyS3InBoundary',
+        statementIndex: 2,
         denialType: 'Explicit'
       }
     ]
@@ -661,6 +668,7 @@ const analyzeResultsTests: {
         blocking: true,
         policyIdentifier: 'EndpointPolicy',
         statementId: 'DenyS3Endpoint',
+        statementIndex: 2,
         denialType: 'Explicit'
       }
     ]
@@ -740,12 +748,14 @@ const analyzeResultsTests: {
         policyType: 'identity',
         policyIdentifier: 'MultiDenyPolicy',
         statementId: 'DenyOne',
+        statementIndex: 1,
         denialType: 'Explicit'
       },
       {
         policyType: 'identity',
         policyIdentifier: 'MultiDenyPolicy',
         statementId: 'DenyTwo',
+        statementIndex: 2,
         denialType: 'Explicit'
       }
     ]
@@ -964,35 +974,41 @@ const analyzeResultsTests: {
         policyType: 'identity',
         policyIdentifier: 'IdentityDenyPolicy',
         statementId: 'IdentityDeny',
+        statementIndex: 1,
         denialType: 'Explicit'
       },
       {
         policyType: 'resource',
         statementId: 'ResourceDeny',
+        statementIndex: 1,
         denialType: 'Explicit'
       },
       {
         policyType: 'scp',
         policyIdentifier: 'SCPDenyPolicy',
         statementId: 'SCPDeny',
+        statementIndex: 2,
         denialType: 'Explicit'
       },
       {
         policyType: 'rcp',
         policyIdentifier: 'RCPDenyPolicy',
         statementId: 'RCPDeny',
+        statementIndex: 1,
         denialType: 'Explicit'
       },
       {
         policyType: 'pb',
         policyIdentifier: 'BoundaryDenyPolicy',
         statementId: 'BoundaryDeny',
+        statementIndex: 2,
         denialType: 'Explicit'
       },
       {
         policyType: 'vpce',
         policyIdentifier: 'EndpointDenyPolicy',
         statementId: 'EndpointDeny',
+        statementIndex: 2,
         denialType: 'Explicit'
       }
     ]
@@ -1073,6 +1089,7 @@ const analyzeResultsTests: {
         blocking: true,
         policyIdentifier: 'BoundaryPolicy',
         statementId: 'BoundaryDenyS3',
+        statementIndex: 2,
         denialType: 'Explicit'
       },
       {
@@ -1160,6 +1177,7 @@ const analyzeResultsTests: {
         blocking: true,
         policyIdentifier: 'DenySCP',
         statementId: 'SCPDenyS3',
+        statementIndex: 2,
         denialType: 'Explicit'
       },
       {
@@ -1190,6 +1208,284 @@ describe('getDenialReasons', () => {
       const result = getDenialReasons(requestAnalysis)
 
       // Then the result should match the expected denying statements
+      expect(result.sort(jsonSort)).toEqual(test.expected.sort(jsonSort))
+    })
+  }
+})
+
+const getGrantReasonsTests: {
+  name: string
+  only?: true
+  simulation: Simulation
+  expected: RequestGrant[]
+}[] = [
+  {
+    name: 'identity policy grant with named sid',
+    simulation: {
+      request: {
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        action: 's3:ListBucket',
+        resource: {
+          resource: 'arn:aws:s3:::example_bucket',
+          accountId: '123456789012'
+        },
+        contextVariables: {}
+      },
+      identityPolicies: [
+        {
+          name: 'AllowPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Sid: 'AllowS3',
+                Effect: 'Allow',
+                Action: 's3:*',
+                Resource: '*'
+              }
+            ]
+          }
+        }
+      ],
+      serviceControlPolicies: [],
+      resourceControlPolicies: []
+    },
+    expected: [
+      {
+        policyType: 'identity',
+        policyIdentifier: 'AllowPolicy',
+        statementId: 'AllowS3',
+        statementIndex: 1
+      }
+    ]
+  },
+  {
+    name: 'identity policy grant without sid',
+    simulation: {
+      request: {
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        action: 's3:ListBucket',
+        resource: {
+          resource: 'arn:aws:s3:::example_bucket',
+          accountId: '123456789012'
+        },
+        contextVariables: {}
+      },
+      identityPolicies: [
+        {
+          name: 'AllowPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Effect: 'Allow',
+                Action: 's3:*',
+                Resource: '*'
+              }
+            ]
+          }
+        }
+      ],
+      serviceControlPolicies: [],
+      resourceControlPolicies: []
+    },
+    expected: [
+      {
+        policyType: 'identity',
+        policyIdentifier: 'AllowPolicy',
+        statementIndex: 1
+      }
+    ]
+  },
+  {
+    name: 'cross-account resource policy grant returns both identity and resource grants',
+    simulation: {
+      request: {
+        principal: 'arn:aws:iam::111111111111:user/Alice',
+        action: 's3:GetObject',
+        resource: {
+          resource: 'arn:aws:s3:::example_bucket/object.txt',
+          accountId: '222222222222'
+        },
+        contextVariables: {}
+      },
+      identityPolicies: [
+        {
+          name: 'AllowPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Sid: 'AllowS3',
+                Effect: 'Allow',
+                Action: 's3:*',
+                Resource: '*'
+              }
+            ]
+          }
+        }
+      ],
+      resourcePolicy: {
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Sid: 'AllowCrossAccount',
+            Effect: 'Allow',
+            Principal: { AWS: 'arn:aws:iam::111111111111:root' },
+            Action: 's3:GetObject',
+            Resource: '*'
+          }
+        ]
+      },
+      serviceControlPolicies: [],
+      resourceControlPolicies: []
+    },
+    expected: [
+      {
+        policyType: 'identity',
+        policyIdentifier: 'AllowPolicy',
+        statementId: 'AllowS3',
+        statementIndex: 1
+      },
+      {
+        policyType: 'resource',
+        statementId: 'AllowCrossAccount',
+        statementIndex: 1
+      }
+    ]
+  },
+  {
+    name: 'multiple allow statements returns one entry per matching statement',
+    simulation: {
+      request: {
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        action: 's3:ListBucket',
+        resource: {
+          resource: 'arn:aws:s3:::example_bucket',
+          accountId: '123456789012'
+        },
+        contextVariables: {}
+      },
+      identityPolicies: [
+        {
+          name: 'MultiAllowPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Sid: 'AllowOne',
+                Effect: 'Allow',
+                Action: 's3:ListBucket',
+                Resource: '*'
+              },
+              {
+                Sid: 'AllowTwo',
+                Effect: 'Allow',
+                Action: 's3:*',
+                Resource: 'arn:aws:s3:::example_bucket'
+              }
+            ]
+          }
+        }
+      ],
+      serviceControlPolicies: [],
+      resourceControlPolicies: []
+    },
+    expected: [
+      {
+        policyType: 'identity',
+        policyIdentifier: 'MultiAllowPolicy',
+        statementId: 'AllowOne',
+        statementIndex: 1
+      },
+      {
+        policyType: 'identity',
+        policyIdentifier: 'MultiAllowPolicy',
+        statementId: 'AllowTwo',
+        statementIndex: 2
+      }
+    ]
+  },
+  {
+    name: 'explicitly denied request returns empty array',
+    simulation: {
+      request: {
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        action: 's3:ListBucket',
+        resource: {
+          resource: 'arn:aws:s3:::example_bucket',
+          accountId: '123456789012'
+        },
+        contextVariables: {}
+      },
+      identityPolicies: [
+        {
+          name: 'DenyPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Sid: 'DenyAll',
+                Effect: 'Deny',
+                Action: '*',
+                Resource: '*'
+              }
+            ]
+          }
+        }
+      ],
+      resourcePolicy: {
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Sid: 'AllowAlice',
+            Effect: 'Allow',
+            Principal: { AWS: 'arn:aws:iam::123456789012:user/Alice' },
+            Action: 's3:ListBucket',
+            Resource: 'arn:aws:s3:::example_bucket'
+          }
+        ]
+      },
+      serviceControlPolicies: [],
+      resourceControlPolicies: []
+    },
+    expected: []
+  },
+  {
+    name: 'implicitly denied request returns empty array',
+    simulation: {
+      request: {
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        action: 's3:ListBucket',
+        resource: {
+          resource: 'arn:aws:s3:::example_bucket',
+          accountId: '123456789012'
+        },
+        contextVariables: {}
+      },
+      identityPolicies: [],
+      serviceControlPolicies: [],
+      resourceControlPolicies: []
+    },
+    expected: []
+  }
+]
+
+describe('getGrantReasons', () => {
+  for (const test of getGrantReasonsTests) {
+    const testFn = test.only ? it.only : it
+    testFn(`should correctly identify granting policy statements: ${test.name}`, async () => {
+      // Given a response to a simulation request
+      const response = await runSimulation(test.simulation, {})
+      if (response.resultType !== 'single') {
+        throw new Error('Expected a single simulation result')
+      }
+      const requestAnalysis = response.result.analysis!
+
+      // When we get the grant reasons
+      const result = getGrantReasons(requestAnalysis)
+
+      // Then the result should match the expected granting statements
       expect(result.sort(jsonSort)).toEqual(test.expected.sort(jsonSort))
     })
   }
