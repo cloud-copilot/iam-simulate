@@ -72,6 +72,11 @@ export interface SimulationResourceResult {
    * If no context keys were ignored, this will be present and an empty array.
    */
   ignoredContextKeys?: string[]
+
+  /**
+   * The resource type that was used for the simulation.
+   */
+  resourceType: string
 }
 
 /**
@@ -80,10 +85,7 @@ export interface SimulationResourceResult {
  */
 export interface WildcardSimulationResourceResult extends SimulationResourceResult {
   /**
-   * The resource type that was used for the simulation, if applicable.
-   *
-   * Will only be present if the request passes validation to reach the policy
-   * evaluation stage and the action is not a wildcard-only action.
+   * The resource type that was used for the simulation.
    */
   resourceType: string
 
@@ -444,6 +446,7 @@ export async function runSimulation(
       overallResult: singleResult.result,
       result: {
         analysis: singleResult,
+        resourceType: resourceTypes?.at(0)?.key ?? 'unknown',
         ignoredContextKeys
       }
     }
