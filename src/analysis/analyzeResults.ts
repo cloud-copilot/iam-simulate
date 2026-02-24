@@ -66,7 +66,9 @@ export type RequestDenial =
       policyIdentifier?: string
 
       /**
-       * The statement ID (or index) of the denying statement, if applicable.
+       * The statement ID (Sid) of the denying policy statement, if present. This corresponds
+       * to the Sid field in the AWS IAM policy statement and may be absent if the statement
+       * does not define a Sid.
        */
       statementId?: string | undefined
 
