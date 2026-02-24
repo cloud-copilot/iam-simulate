@@ -1,6 +1,8 @@
 export {
   getDenialReasons,
+  getGrantReasons,
   type DenialPolicyType,
+  type RequestGrant,
   type RequestDenial
 } from './analysis/analyzeResults.js'
 export { typeForContextKey } from './context_keys/contextKeys.js'
