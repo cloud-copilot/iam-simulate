@@ -182,11 +182,12 @@ function addSimplePolicyDenials(
     (isBlocking || overallResult === 'ExplicitlyDenied')
   ) {
     for (const stmt of analysis.denyStatements) {
+      const sid = stmt.statement.sid()
       denials.push({
         policyType,
         ...blocking,
         policyIdentifier: stmt.policyId,
-        statementId: stmt.statement.sid(),
+        ...(sid ? { statementId: sid } : {}),
         statementIndex: stmt.statement.index(),
         denialType: 'Explicit'
       })
@@ -231,10 +232,11 @@ function addOuPolicyDenials(
     for (const ou of analysis.ouAnalysis) {
       if (ou.result === 'ExplicitlyDenied') {
         for (const stmt of ou.denyStatements) {
+          const sid = stmt.statement.sid()
           denials.push({
             policyType,
             policyIdentifier: stmt.policyId,
-            statementId: stmt.statement.sid(),
+            ...(sid ? { statementId: sid } : {}),
             statementIndex: stmt.statement.index(),
             ...blocking,
             denialType: 'Explicit'
@@ -264,10 +266,11 @@ export function getGrantReasons(requestAnalysis: RequestAnalysis): RequestGrant[
 
   if (requestAnalysis.identityAnalysis?.result === 'Allowed') {
     for (const stmt of requestAnalysis.identityAnalysis.allowStatements) {
+      const sid = stmt.statement.sid()
       grantDetails.push({
         policyType: 'identity',
         policyIdentifier: stmt.policyId,
-        statementId: stmt.statement.sid(),
+        ...(sid ? { statementId: sid } : {}),
         statementIndex: stmt.statement.index()
       })
     }
@@ -278,9 +281,10 @@ export function getGrantReasons(requestAnalysis: RequestAnalysis): RequestGrant[
     requestAnalysis.resourceAnalysis?.result === 'AllowedForAccount'
   ) {
     for (const stmt of requestAnalysis.resourceAnalysis.allowStatements) {
+      const sid = stmt.statement.sid()
       grantDetails.push({
         policyType: 'resource',
-        statementId: stmt.statement.sid(),
+        ...(sid ? { statementId: sid } : {}),
         statementIndex: stmt.statement.index()
       })
     }
