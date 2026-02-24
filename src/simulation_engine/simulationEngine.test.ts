@@ -1,5 +1,5 @@
 import {
-  ConditionKey,
+  type ConditionKey,
   getAllGlobalConditionKeys,
   getGlobalConditionKeyByName,
   getGlobalConditionKeyByPrefix,

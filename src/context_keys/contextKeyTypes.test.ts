@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ArrayConditionKeyType, getBaseConditionKeyType } from './contextKeyTypes.js'
+import { type ArrayConditionKeyType, getBaseConditionKeyType } from './contextKeyTypes.js'
 
 type GetBaseConditionKeyTypeTestCase = {
   name: string

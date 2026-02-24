@@ -1,7 +1,7 @@
-import { ResourceType } from '@cloud-copilot/iam-data'
-import { loadPolicy, Statement } from '@cloud-copilot/iam-policy'
+import type { ResourceType } from '@cloud-copilot/iam-data'
+import { loadPolicy, type Statement } from '@cloud-copilot/iam-policy'
 import { describe, expect, it } from 'vitest'
-import { PolicyWithName } from '../core_engine/CoreSimulatorEngine.js'
+import type { PolicyWithName } from '../core_engine/CoreSimulatorEngine.js'
 import {
   getMatchingResourceStringsForPolicies,
   getResourceStringsFromStatement,

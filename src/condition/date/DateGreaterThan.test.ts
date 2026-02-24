@@ -1,4 +1,4 @@
-import { BaseOperatorTest, testOperator } from '../baseConditionperatorTests.js'
+import { type BaseOperatorTest, testOperator } from '../baseConditionperatorTests.js'
 import { DateGreaterThan } from './DateGreaterThan.js'
 
 const dateGreaterThanTests: BaseOperatorTest[] = [

@@ -1,6 +1,10 @@
-import { loadPolicy, NotResourceStatement, ResourceStatement } from '@cloud-copilot/iam-policy'
+import {
+  loadPolicy,
+  type NotResourceStatement,
+  type ResourceStatement
+} from '@cloud-copilot/iam-policy'
 import { describe, expect, it } from 'vitest'
-import { ResourceExplain } from '../explain/statementExplain.js'
+import type { ResourceExplain } from '../explain/statementExplain.js'
 import { AwsRequestImpl } from '../request/request.js'
 import { RequestContextImpl } from '../requestContext.js'
 import { requestMatchesNotResources, requestMatchesResources } from './resource.js'

@@ -1,6 +1,6 @@
-import { Condition, loadPolicy } from '@cloud-copilot/iam-policy'
+import { type Condition, loadPolicy } from '@cloud-copilot/iam-policy'
 import { describe, expect, it } from 'vitest'
-import { SimulationParameters } from '../core_engine/CoreSimulatorEngine.js'
+import type { SimulationParameters } from '../core_engine/CoreSimulatorEngine.js'
 import { AwsRequestImpl } from '../request/request.js'
 import { RequestContextImpl } from '../requestContext.js'
 import { requestMatchesConditions, singleConditionMatchesRequest } from './condition.js'
