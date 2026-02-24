@@ -1,7 +1,7 @@
 import { describe, expect } from 'vitest'
 import { AwsRequestImpl } from '../request/request.js'
 import { RequestContextImpl } from '../requestContext.js'
-import { BaseConditionOperator } from './BaseConditionOperator.js'
+import type { BaseConditionOperator } from './BaseConditionOperator.js'
 
 export interface BaseOperatorTest {
   name: string

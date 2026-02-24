@@ -1,4 +1,4 @@
-import { BaseOperatorTest, testOperator } from '../baseConditionperatorTests.js'
+import { type BaseOperatorTest, testOperator } from '../baseConditionperatorTests.js'
 import { ArnNotLike } from './ArnNotLike.js'
 
 const ArnNotLikeTests: BaseOperatorTest[] = [

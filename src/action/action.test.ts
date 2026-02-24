@@ -1,4 +1,8 @@
-import { ActionStatement, loadPolicy, NotActionStatement } from '@cloud-copilot/iam-policy'
+import {
+  type ActionStatement,
+  loadPolicy,
+  type NotActionStatement
+} from '@cloud-copilot/iam-policy'
 import { describe, expect, it } from 'vitest'
 import { AwsRequestImpl } from '../request/request.js'
 import { RequestContextImpl } from '../requestContext.js'
