@@ -1,3 +1,10 @@
+## [0.1.113](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.112...v0.1.113) (2026-02-24)
+
+
+### Features
+
+* Add resource type to single resource simulation result ([238473b](https://github.com/cloud-copilot/iam-simulate/commit/238473b40cd726decdc5989d2d9818003016568f))
+
 ## [0.1.112](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.111...v0.1.112) (2026-02-24)
 
 ## [0.1.111](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.110...v0.1.111) (2026-02-24)
