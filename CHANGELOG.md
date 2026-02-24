@@ -1,3 +1,10 @@
+## [0.1.110](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.109...v0.1.110) (2026-02-24)
+
+
+### Features
+
+* Allow getting grant details from an analysis ([64eaae2](https://github.com/cloud-copilot/iam-simulate/commit/64eaae25750356706b32b0487464adecf16484c4))
+
 ## [0.1.109](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.108...v0.1.109) (2026-02-23)
 
 ## [0.1.108](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.107...v0.1.108) (2026-02-23)
