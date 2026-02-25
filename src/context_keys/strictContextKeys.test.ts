@@ -102,7 +102,7 @@ const strictContextKeysTests: {
       { key: 'aws:Source', expected: true },
       { key: 'aws:SourceVpc', expected: false },
       { key: 'aws:SourceIp', expected: false },
-      { key: 'aws:Sourc', expected: false }
+      { key: 'aws:Sour', expected: false }
     ]
   },
   {

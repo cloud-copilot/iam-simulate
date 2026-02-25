@@ -105,7 +105,7 @@ describe('convertIamString', () => {
     })
 
     it('should replace a variable with its default value if it does not exist, and a default is set', () => {
-      //Given a string with a variable witha  default
+      //Given a string with a variable with a default
       const value = "arn:aws:s3:::${aws:PrincipalAccountId, '123456789012'}"
       //And a request without that variable
       const request = testRequestWithContext({})
@@ -137,7 +137,7 @@ describe('convertIamString', () => {
       expect(result.pattern.exec('arn:aws:s3:::123456789012')).toBeTruthy()
     })
 
-    it('should return a pattern that will not match any value if a request value does not exist and no defalt is set', () => {
+    it('should return a pattern that will not match any value if a request value does not exist and no default is set', () => {
       //Given a string with a variable
       const value = 'arn:aws:s3:::${aws:PrincipalAccountId}'
       //And a request with that variable

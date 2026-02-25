@@ -39,7 +39,7 @@ const boolTests: BaseOperatorTest[] = [
     ]
   },
   {
-    name: 'should return true if true and fase are both in the policy values',
+    name: 'should return true if true and false are both in the policy values',
     policyValues: ['true', 'false'],
     testValue: 'true',
     expected: true,

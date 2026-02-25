@@ -771,7 +771,7 @@ const notResourceTests: ResourceTest[] = [
     ]
   },
   {
-    name: 'should match if all resoures do not match',
+    name: 'should match if all resources do not match',
     notResourceStatements: ['arn:aws:s3:::my_corporate_bucket', 'arn:aws:s3:::different_bucket'],
     resource: {
       resource: 'arn:aws:s3:::yet_another_bucket',
