@@ -1,3 +1,10 @@
+## [0.1.114](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.113...v0.1.114) (2026-02-25)
+
+
+### Bug Fixes
+
+* Don't return resource type for wildcard only actions ([05e0394](https://github.com/cloud-copilot/iam-simulate/commit/05e039439d87d7ee227fd4e0b28c038c41c87fd6))
+
 ## [0.1.113](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.112...v0.1.113) (2026-02-24)
 
 
