@@ -76,7 +76,7 @@ export interface SimulationResourceResult {
   /**
    * The resource type that was used for the simulation.
    */
-  resourceType: string
+  resourceType?: string | undefined
 }
 
 /**
@@ -446,7 +446,7 @@ export async function runSimulation(
       overallResult: singleResult.result,
       result: {
         analysis: singleResult,
-        resourceType: resourceTypes?.at(0)?.key ?? 'unknown',
+        ...(resourceTypes?.length === 1 ? { resourceType: resourceTypes![0].key } : {}),
         ignoredContextKeys
       }
     }
