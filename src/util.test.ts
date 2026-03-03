@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { AwsRequest, AwsRequestImpl } from './request/request.js'
+import { type AwsRequest, AwsRequestImpl } from './request/request.js'
 import { RequestContextImpl } from './requestContext.js'
 import { convertIamString, getVariablesFromString, isS3BucketOrObjectArn } from './util.js'
 
