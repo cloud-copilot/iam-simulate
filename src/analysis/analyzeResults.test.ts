@@ -45,7 +45,7 @@ describe('isAllowedByIdentityPolicies', () => {
   })
 })
 
-const analyzeResultsTests: {
+const getDenialReasonsTests: {
   name: string
   only?: true
   simulation: Simulation
@@ -1194,7 +1194,7 @@ function jsonSort(a: any, b: any): number {
 }
 
 describe('getDenialReasons', () => {
-  for (const test of analyzeResultsTests) {
+  for (const test of getDenialReasonsTests) {
     const testFn = test.only ? it.only : it
     testFn(`should correctly analyze denying policy statements: ${test.name}`, async () => {
       // Given a response to a simulation request
@@ -1468,6 +1468,748 @@ const getGrantReasonsTests: {
       resourceControlPolicies: []
     },
     expected: []
+  },
+  {
+    name: 'SCP grant',
+    simulation: {
+      request: {
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        action: 's3:ListBucket',
+        resource: {
+          resource: 'arn:aws:s3:::example_bucket',
+          accountId: '123456789012'
+        },
+        contextVariables: {}
+      },
+      identityPolicies: [
+        {
+          name: 'AllowPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Sid: 'AllowS3',
+                Effect: 'Allow',
+                Action: 's3:*',
+                Resource: '*'
+              }
+            ]
+          }
+        }
+      ],
+      serviceControlPolicies: [
+        {
+          orgIdentifier: 'ou-root',
+          policies: [
+            {
+              name: 'AllowSCP',
+              policy: {
+                Version: '2012-10-17',
+                Statement: [
+                  {
+                    Sid: 'AllowAll',
+                    Effect: 'Allow',
+                    Action: 's3:*',
+                    Resource: '*'
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      resourceControlPolicies: []
+    },
+    expected: [
+      {
+        policyType: 'identity',
+        policyIdentifier: 'AllowPolicy',
+        statementId: 'AllowS3',
+        statementIndex: 1
+      },
+      {
+        policyType: 'scp',
+        orgIdentifier: 'ou-root',
+        policyIdentifier: 'AllowSCP',
+        statementId: 'AllowAll',
+        statementIndex: 1
+      }
+    ]
+  },
+  {
+    name: 'RCP grant — default RCPFullAWSAccess allow is surfaced as a grant',
+    simulation: {
+      request: {
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        action: 's3:ListBucket',
+        resource: {
+          resource: 'arn:aws:s3:::example_bucket',
+          accountId: '123456789012'
+        },
+        contextVariables: {}
+      },
+      identityPolicies: [
+        {
+          name: 'AllowPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Sid: 'AllowS3',
+                Effect: 'Allow',
+                Action: 's3:*',
+                Resource: '*'
+              }
+            ]
+          }
+        }
+      ],
+      serviceControlPolicies: [],
+      resourceControlPolicies: [
+        {
+          orgIdentifier: 'ou-root',
+          policies: [
+            {
+              name: 'DenyEC2RCP',
+              policy: {
+                Version: '2012-10-17',
+                Statement: [
+                  {
+                    Effect: 'Deny',
+                    Principal: '*',
+                    Action: 'ec2:*',
+                    Resource: '*'
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    expected: [
+      {
+        policyType: 'identity',
+        policyIdentifier: 'AllowPolicy',
+        statementId: 'AllowS3',
+        statementIndex: 1
+      },
+      {
+        policyType: 'rcp',
+        orgIdentifier: 'ou-root',
+        policyIdentifier: 'RCPFullAWSAccess',
+        statementIndex: 1
+      }
+    ]
+  },
+  {
+    name: 'permission boundary grant',
+    simulation: {
+      request: {
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        action: 's3:ListBucket',
+        resource: {
+          resource: 'arn:aws:s3:::example_bucket',
+          accountId: '123456789012'
+        },
+        contextVariables: {}
+      },
+      identityPolicies: [
+        {
+          name: 'AllowPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Sid: 'AllowS3',
+                Effect: 'Allow',
+                Action: 's3:*',
+                Resource: '*'
+              }
+            ]
+          }
+        }
+      ],
+      permissionBoundaryPolicies: [
+        {
+          name: 'BoundaryPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Sid: 'AllowS3InBoundary',
+                Effect: 'Allow',
+                Action: 's3:*',
+                Resource: '*'
+              }
+            ]
+          }
+        }
+      ],
+      serviceControlPolicies: [],
+      resourceControlPolicies: []
+    },
+    expected: [
+      {
+        policyType: 'identity',
+        policyIdentifier: 'AllowPolicy',
+        statementId: 'AllowS3',
+        statementIndex: 1
+      },
+      {
+        policyType: 'pb',
+        policyIdentifier: 'BoundaryPolicy',
+        statementId: 'AllowS3InBoundary',
+        statementIndex: 1
+      }
+    ]
+  },
+  {
+    name: 'VPC endpoint policy grant',
+    simulation: {
+      request: {
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        action: 's3:ListBucket',
+        resource: {
+          resource: 'arn:aws:s3:::example_bucket',
+          accountId: '123456789012'
+        },
+        contextVariables: {}
+      },
+      identityPolicies: [
+        {
+          name: 'AllowPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Sid: 'AllowS3',
+                Effect: 'Allow',
+                Action: 's3:*',
+                Resource: '*'
+              }
+            ]
+          }
+        }
+      ],
+      vpcEndpointPolicies: [
+        {
+          name: 'EndpointPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Sid: 'AllowS3Endpoint',
+                Effect: 'Allow',
+                Principal: '*',
+                Action: 's3:*',
+                Resource: '*'
+              }
+            ]
+          }
+        }
+      ],
+      serviceControlPolicies: [],
+      resourceControlPolicies: []
+    },
+    expected: [
+      {
+        policyType: 'identity',
+        policyIdentifier: 'AllowPolicy',
+        statementId: 'AllowS3',
+        statementIndex: 1
+      },
+      {
+        policyType: 'vpce',
+        policyIdentifier: 'EndpointPolicy',
+        statementId: 'AllowS3Endpoint',
+        statementIndex: 1
+      }
+    ]
+  },
+  {
+    name: 'multiple allow statements in a single SCP policy come back separately',
+    simulation: {
+      request: {
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        action: 's3:ListBucket',
+        resource: {
+          resource: 'arn:aws:s3:::example_bucket',
+          accountId: '123456789012'
+        },
+        contextVariables: {}
+      },
+      identityPolicies: [
+        {
+          name: 'AllowPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Sid: 'AllowS3',
+                Effect: 'Allow',
+                Action: 's3:*',
+                Resource: '*'
+              }
+            ]
+          }
+        }
+      ],
+      serviceControlPolicies: [
+        {
+          orgIdentifier: 'ou-root',
+          policies: [
+            {
+              name: 'MultiAllowSCP',
+              policy: {
+                Version: '2012-10-17',
+                Statement: [
+                  {
+                    Sid: 'AllowListBucket',
+                    Effect: 'Allow',
+                    Action: 's3:ListBucket',
+                    Resource: '*'
+                  },
+                  {
+                    Sid: 'AllowAllS3',
+                    Effect: 'Allow',
+                    Action: 's3:*',
+                    Resource: '*'
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      resourceControlPolicies: []
+    },
+    expected: [
+      {
+        policyType: 'identity',
+        policyIdentifier: 'AllowPolicy',
+        statementId: 'AllowS3',
+        statementIndex: 1
+      },
+      {
+        policyType: 'scp',
+        orgIdentifier: 'ou-root',
+        policyIdentifier: 'MultiAllowSCP',
+        statementId: 'AllowListBucket',
+        statementIndex: 1
+      },
+      {
+        policyType: 'scp',
+        orgIdentifier: 'ou-root',
+        policyIdentifier: 'MultiAllowSCP',
+        statementId: 'AllowAllS3',
+        statementIndex: 2
+      }
+    ]
+  },
+  // No-Sid tests for new policy types
+  {
+    name: 'pb grant without sid uses only index',
+    simulation: {
+      request: {
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        action: 's3:ListBucket',
+        resource: {
+          resource: 'arn:aws:s3:::example_bucket',
+          accountId: '123456789012'
+        },
+        contextVariables: {}
+      },
+      identityPolicies: [
+        {
+          name: 'AllowPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [{ Effect: 'Allow', Action: 's3:*', Resource: '*' }]
+          }
+        }
+      ],
+      permissionBoundaryPolicies: [
+        {
+          name: 'BoundaryPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [{ Effect: 'Allow', Action: 's3:*', Resource: '*' }]
+          }
+        }
+      ],
+      serviceControlPolicies: [],
+      resourceControlPolicies: []
+    },
+    expected: [
+      { policyType: 'identity', policyIdentifier: 'AllowPolicy', statementIndex: 1 },
+      { policyType: 'pb', policyIdentifier: 'BoundaryPolicy', statementIndex: 1 }
+    ]
+  },
+  {
+    name: 'vpce grant without sid uses only index',
+    simulation: {
+      request: {
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        action: 's3:ListBucket',
+        resource: {
+          resource: 'arn:aws:s3:::example_bucket',
+          accountId: '123456789012'
+        },
+        contextVariables: {}
+      },
+      identityPolicies: [
+        {
+          name: 'AllowPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [{ Effect: 'Allow', Action: 's3:*', Resource: '*' }]
+          }
+        }
+      ],
+      vpcEndpointPolicies: [
+        {
+          name: 'EndpointPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [{ Effect: 'Allow', Principal: '*', Action: 's3:*', Resource: '*' }]
+          }
+        }
+      ],
+      serviceControlPolicies: [],
+      resourceControlPolicies: []
+    },
+    expected: [
+      { policyType: 'identity', policyIdentifier: 'AllowPolicy', statementIndex: 1 },
+      { policyType: 'vpce', policyIdentifier: 'EndpointPolicy', statementIndex: 1 }
+    ]
+  },
+  {
+    name: 'scp grant without sid uses only index',
+    simulation: {
+      request: {
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        action: 's3:ListBucket',
+        resource: {
+          resource: 'arn:aws:s3:::example_bucket',
+          accountId: '123456789012'
+        },
+        contextVariables: {}
+      },
+      identityPolicies: [
+        {
+          name: 'AllowPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [{ Effect: 'Allow', Action: 's3:*', Resource: '*' }]
+          }
+        }
+      ],
+      serviceControlPolicies: [
+        {
+          orgIdentifier: 'ou-root',
+          policies: [
+            {
+              name: 'AllowSCP',
+              policy: {
+                Version: '2012-10-17',
+                Statement: [{ Effect: 'Allow', Action: 's3:*', Resource: '*' }]
+              }
+            }
+          ]
+        }
+      ],
+      resourceControlPolicies: []
+    },
+    expected: [
+      { policyType: 'identity', policyIdentifier: 'AllowPolicy', statementIndex: 1 },
+      {
+        policyType: 'scp',
+        orgIdentifier: 'ou-root',
+        policyIdentifier: 'AllowSCP',
+        statementIndex: 1
+      }
+    ]
+  },
+  // Multi-OU org scoping edge cases
+  {
+    name: 'multi-OU SCP: grants are collected from all OUs',
+    simulation: {
+      request: {
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        action: 's3:ListBucket',
+        resource: {
+          resource: 'arn:aws:s3:::example_bucket',
+          accountId: '123456789012'
+        },
+        contextVariables: {}
+      },
+      identityPolicies: [
+        {
+          name: 'AllowPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [{ Sid: 'AllowS3', Effect: 'Allow', Action: 's3:*', Resource: '*' }]
+          }
+        }
+      ],
+      serviceControlPolicies: [
+        {
+          orgIdentifier: 'ou-root',
+          policies: [
+            {
+              name: 'RootSCP',
+              policy: {
+                Version: '2012-10-17',
+                Statement: [{ Sid: 'AllowAllRoot', Effect: 'Allow', Action: 's3:*', Resource: '*' }]
+              }
+            }
+          ]
+        },
+        {
+          orgIdentifier: 'ou-child',
+          policies: [
+            {
+              name: 'ChildSCP',
+              policy: {
+                Version: '2012-10-17',
+                Statement: [
+                  { Sid: 'AllowListChild', Effect: 'Allow', Action: 's3:ListBucket', Resource: '*' }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      resourceControlPolicies: []
+    },
+    expected: [
+      {
+        policyType: 'identity',
+        policyIdentifier: 'AllowPolicy',
+        statementId: 'AllowS3',
+        statementIndex: 1
+      },
+      {
+        policyType: 'scp',
+        orgIdentifier: 'ou-root',
+        policyIdentifier: 'RootSCP',
+        statementId: 'AllowAllRoot',
+        statementIndex: 1
+      },
+      {
+        policyType: 'scp',
+        orgIdentifier: 'ou-child',
+        policyIdentifier: 'ChildSCP',
+        statementId: 'AllowListChild',
+        statementIndex: 1
+      }
+    ]
+  },
+  {
+    name: 'multi-OU RCP: grants are collected from all OUs',
+    simulation: {
+      request: {
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        action: 's3:ListBucket',
+        resource: {
+          resource: 'arn:aws:s3:::example_bucket',
+          accountId: '123456789012'
+        },
+        contextVariables: {}
+      },
+      identityPolicies: [
+        {
+          name: 'AllowPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [{ Sid: 'AllowS3', Effect: 'Allow', Action: 's3:*', Resource: '*' }]
+          }
+        }
+      ],
+      serviceControlPolicies: [],
+      resourceControlPolicies: [
+        {
+          orgIdentifier: 'ou-root',
+          policies: [
+            {
+              name: 'DenyEC2Root',
+              policy: {
+                Version: '2012-10-17',
+                Statement: [{ Effect: 'Deny', Principal: '*', Action: 'ec2:*', Resource: '*' }]
+              }
+            }
+          ]
+        },
+        {
+          orgIdentifier: 'ou-child',
+          policies: [
+            {
+              name: 'DenyEC2Child',
+              policy: {
+                Version: '2012-10-17',
+                Statement: [{ Effect: 'Deny', Principal: '*', Action: 'ec2:*', Resource: '*' }]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    expected: [
+      {
+        policyType: 'identity',
+        policyIdentifier: 'AllowPolicy',
+        statementId: 'AllowS3',
+        statementIndex: 1
+      },
+      {
+        policyType: 'rcp',
+        orgIdentifier: 'ou-root',
+        policyIdentifier: 'RCPFullAWSAccess',
+        statementIndex: 1
+      },
+      {
+        policyType: 'rcp',
+        orgIdentifier: 'ou-child',
+        policyIdentifier: 'RCPFullAWSAccess',
+        statementIndex: 1
+      }
+    ]
+  },
+  {
+    name: 'non-matching allow statements are not included in grants',
+    simulation: {
+      request: {
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        action: 's3:ListBucket',
+        resource: {
+          resource: 'arn:aws:s3:::example_bucket',
+          accountId: '123456789012'
+        },
+        contextVariables: {}
+      },
+      identityPolicies: [
+        {
+          name: 'MixedPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Sid: 'AllowS3ListBucket',
+                Effect: 'Allow',
+                Action: 's3:ListBucket',
+                Resource: '*'
+              },
+              {
+                Sid: 'AllowEC2',
+                Effect: 'Allow',
+                Action: 'ec2:DescribeInstances',
+                Resource: '*'
+              }
+            ]
+          }
+        }
+      ],
+      serviceControlPolicies: [],
+      resourceControlPolicies: []
+    },
+    expected: [
+      {
+        policyType: 'identity',
+        policyIdentifier: 'MixedPolicy',
+        statementId: 'AllowS3ListBucket',
+        statementIndex: 1
+      }
+    ]
+  },
+  {
+    name: 'multiple grant types: identity, SCP, and permission boundary',
+    simulation: {
+      request: {
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        action: 's3:ListBucket',
+        resource: {
+          resource: 'arn:aws:s3:::example_bucket',
+          accountId: '123456789012'
+        },
+        contextVariables: {}
+      },
+      identityPolicies: [
+        {
+          name: 'AllowPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Sid: 'AllowS3',
+                Effect: 'Allow',
+                Action: 's3:*',
+                Resource: '*'
+              }
+            ]
+          }
+        }
+      ],
+      permissionBoundaryPolicies: [
+        {
+          name: 'BoundaryPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Sid: 'AllowS3InBoundary',
+                Effect: 'Allow',
+                Action: 's3:*',
+                Resource: '*'
+              }
+            ]
+          }
+        }
+      ],
+      serviceControlPolicies: [
+        {
+          orgIdentifier: 'ou-root',
+          policies: [
+            {
+              name: 'AllowSCP',
+              policy: {
+                Version: '2012-10-17',
+                Statement: [
+                  {
+                    Sid: 'AllowAll',
+                    Effect: 'Allow',
+                    Action: 's3:*',
+                    Resource: '*'
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      resourceControlPolicies: []
+    },
+    expected: [
+      {
+        policyType: 'identity',
+        policyIdentifier: 'AllowPolicy',
+        statementId: 'AllowS3',
+        statementIndex: 1
+      },
+      {
+        policyType: 'scp',
+        orgIdentifier: 'ou-root',
+        policyIdentifier: 'AllowSCP',
+        statementId: 'AllowAll',
+        statementIndex: 1
+      },
+      {
+        policyType: 'pb',
+        policyIdentifier: 'BoundaryPolicy',
+        statementId: 'AllowS3InBoundary',
+        statementIndex: 1
+      }
+    ]
   }
 ]
 
