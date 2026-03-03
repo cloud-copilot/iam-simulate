@@ -1,3 +1,10 @@
+## [0.1.117](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.116...v0.1.117) (2026-03-03)
+
+
+### Features
+
+* Update new service specific OIDC Keys ([f4771fb](https://github.com/cloud-copilot/iam-simulate/commit/f4771fbdeccd4c2334643387a473ec3540da4460))
+
 ## [0.1.116](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.115...v0.1.116) (2026-03-02)
 
 ## [0.1.115](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.114...v0.1.115) (2026-02-25)
