@@ -9,7 +9,28 @@ import {
 import { getGlobalConditionKeyWithOrWithoutPrefix } from '../global_conditions/globalConditionKeys.js'
 import { type ConditionKeyType } from './contextKeyTypes.js'
 
-const oidcKeys = new Set(['aud', 'sub', 'email', 'oaud', 'sub'])
+const oidcKeys = new Set([
+  'amr',
+  'aud',
+  'email',
+  'oaud',
+  'sub',
+  'actor',
+  'actor_id',
+  'job_workflow_ref',
+  'repository',
+  'repository_id',
+  'workflow',
+  'ref',
+  'environment',
+  'enterprise_id',
+  'app_id',
+  'user_id',
+  'id',
+  'project_id',
+  'rpst_id',
+  'google/organization_number'
+])
 const oidcProviderPattern = /^[0-9a-zA-Z\._\-]+$/
 
 /**
