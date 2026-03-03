@@ -85,13 +85,20 @@ export type RequestDenial =
 
 export type RequestGrant =
   | {
-      policyType: 'identity'
+      policyType: 'identity' | 'pb' | 'vpce'
       policyIdentifier: string
       statementId?: string | undefined
       statementIndex: number
     }
   | {
       policyType: 'resource'
+      statementId?: string | undefined
+      statementIndex: number
+    }
+  | {
+      policyType: 'scp' | 'rcp'
+      orgIdentifier: string
+      policyIdentifier: string
       statementId?: string | undefined
       statementIndex: number
     }
@@ -251,9 +258,6 @@ function addOuPolicyDenials(
  * Find the policy statements that granted access for an allowed request.
  * Analyzes the RequestAnalysis and returns the specific grants that allowed the request.
  *
- * Only identity and resource policies can grant access. SCPs, RCPs, permission boundaries,
- * and endpoint policies can only deny (not grant).
- *
  * @param requestAnalysis the request analysis
  * @returns a list of RequestGrant objects describing which policies granted access
  */
@@ -264,31 +268,64 @@ export function getGrantReasons(requestAnalysis: RequestAnalysis): RequestGrant[
 
   const grantDetails: RequestGrant[] = []
 
-  if (requestAnalysis.identityAnalysis?.result === 'Allowed') {
-    for (const stmt of requestAnalysis.identityAnalysis.allowStatements) {
-      const sid = stmt.statement.sid()
-      grantDetails.push({
-        policyType: 'identity',
+  addSimplePolicyGrants(requestAnalysis.identityAnalysis, 'identity', grantDetails)
+  addSimplePolicyGrants(requestAnalysis.resourceAnalysis, 'resource', grantDetails)
+  addSimplePolicyGrants(requestAnalysis.permissionBoundaryAnalysis, 'pb', grantDetails)
+  addSimplePolicyGrants(requestAnalysis.endpointAnalysis, 'vpce', grantDetails)
+  addOuPolicyGrants(requestAnalysis.scpAnalysis, 'scp', grantDetails)
+  addOuPolicyGrants(requestAnalysis.rcpAnalysis, 'rcp', grantDetails)
+
+  return grantDetails
+}
+
+/**
+ * Helper for simple policy grants (identity, resource, pb, vpce).
+ */
+function addSimplePolicyGrants(
+  analysis: IdentityAnalysis | ResourceAnalysis | undefined,
+  policyType: 'identity' | 'resource' | 'pb' | 'vpce',
+  grants: RequestGrant[]
+): void {
+  if (analysis?.result !== 'Allowed' && analysis?.result !== 'AllowedForAccount') return
+  for (const stmt of analysis.allowStatements) {
+    const sid = stmt.statement.sid()
+    if (policyType === 'resource') {
+      grants.push({
+        policyType: 'resource',
+        ...(sid ? { statementId: sid } : {}),
+        statementIndex: stmt.statement.index()
+      })
+    } else {
+      grants.push({
+        policyType,
         policyIdentifier: stmt.policyId,
         ...(sid ? { statementId: sid } : {}),
         statementIndex: stmt.statement.index()
       })
     }
   }
+}
 
-  if (
-    requestAnalysis.resourceAnalysis?.result === 'Allowed' ||
-    requestAnalysis.resourceAnalysis?.result === 'AllowedForAccount'
-  ) {
-    for (const stmt of requestAnalysis.resourceAnalysis.allowStatements) {
+/**
+ * Helper for OU-based policy grants (scp, rcp).
+ */
+function addOuPolicyGrants(
+  analysis: ScpAnalysis | RcpAnalysis | undefined,
+  policyType: 'scp' | 'rcp',
+  grants: RequestGrant[]
+): void {
+  if (!analysis) return
+  for (const ou of analysis.ouAnalysis) {
+    if (ou.result !== 'Allowed') continue
+    for (const stmt of ou.allowStatements) {
       const sid = stmt.statement.sid()
-      grantDetails.push({
-        policyType: 'resource',
+      grants.push({
+        policyType,
+        orgIdentifier: ou.orgIdentifier,
+        policyIdentifier: stmt.policyId,
         ...(sid ? { statementId: sid } : {}),
         statementIndex: stmt.statement.index()
       })
     }
   }
-
-  return grantDetails
 }
