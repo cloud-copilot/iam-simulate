@@ -3,7 +3,7 @@ import { join, resolve } from 'path'
 import { describe, expect, it } from 'vitest'
 import type { EvaluationResult } from '../evaluate.js'
 import type { Simulation } from './simulation.js'
-import { runSimulation, SimulationResultType } from './simulationEngine.js'
+import { runSimulation, type SimulationResultType } from './simulationEngine.js'
 import type { SimulationOptions } from './simulationOptions.js'
 
 interface ExpectedResult {

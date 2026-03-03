@@ -35,7 +35,8 @@ describe('allowedContextKeysForRequest', () => {
       service,
       action,
       'arn:aws:s3:us-east-1:12345:access-grants/default',
-      false
+      false,
+      undefined
     )
 
     //Then it should return the expected context keys
@@ -82,7 +83,8 @@ describe('allowedContextKeysForRequest', () => {
       service,
       action,
       'arn:aws:s3:::muh-bucket/object-123',
-      false
+      false,
+      undefined
     )
 
     //Then it should have the global keys, the keys for the action, and the keys for the resource type
@@ -133,7 +135,8 @@ describe('allowedContextKeysForRequest', () => {
       service,
       action,
       'arn:aws:s3:::muh-bucket/object-123',
-      false
+      false,
+      undefined
     )
 
     //Then it should not include the S3 ABAC keys
@@ -177,7 +180,8 @@ describe('allowedContextKeysForRequest', () => {
       service,
       action,
       'arn:aws:s3:::muh-bucket/object-123',
-      true
+      true,
+      undefined
     )
 
     //Then it should include the S3 ABAC keys

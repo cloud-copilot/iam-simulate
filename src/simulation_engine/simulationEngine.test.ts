@@ -12,7 +12,7 @@ import {
   iamServiceExists
 } from '@cloud-copilot/iam-data'
 import { describe, expect, it, vi } from 'vitest'
-import { Simulation } from './simulation.js'
+import type { Simulation } from './simulation.js'
 import { normalizeSimulationParameters, runSimulation } from './simulationEngine.js'
 import type { ErrorSimulationResult, RunSimulationResults } from './simulationEngine.js'
 
@@ -295,8 +295,10 @@ describe('normalizeSimulationParameters', () => {
     }
 
     //When we normalize the simulation parameters
-    const { validContextValues, ignoredContextKeys } =
-      await normalizeSimulationParameters(simulation)
+    const { validContextValues, ignoredContextKeys } = await normalizeSimulationParameters(
+      simulation,
+      undefined
+    )
 
     //Then the result correct the capitalization of the keys
     expect(Object.keys(validContextValues).sort()).toEqual([
@@ -328,8 +330,10 @@ describe('normalizeSimulationParameters', () => {
     }
 
     //When we normalize the simulation parameters
-    const { validContextValues, ignoredContextKeys } =
-      await normalizeSimulationParameters(simulation)
+    const { validContextValues, ignoredContextKeys } = await normalizeSimulationParameters(
+      simulation,
+      undefined
+    )
 
     //Then the result should put the single value in an array
     expect(validContextValues).toEqual({
@@ -361,8 +365,10 @@ describe('normalizeSimulationParameters', () => {
     }
 
     //When we normalize the simulation parameters
-    const { validContextValues, ignoredContextKeys } =
-      await normalizeSimulationParameters(simulation)
+    const { validContextValues, ignoredContextKeys } = await normalizeSimulationParameters(
+      simulation,
+      undefined
+    )
 
     //Then the result should only contain the first value
     expect(validContextValues).toEqual({
@@ -395,8 +401,10 @@ describe('normalizeSimulationParameters', () => {
     }
 
     //When we normalize the simulation parameters
-    const { validContextValues, ignoredContextKeys } =
-      await normalizeSimulationParameters(simulation)
+    const { validContextValues, ignoredContextKeys } = await normalizeSimulationParameters(
+      simulation,
+      undefined
+    )
 
     //Then the result should put the single value in an array
     expect(validContextValues).toEqual({
