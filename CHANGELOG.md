@@ -1,3 +1,10 @@
+## [0.1.118](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.117...v0.1.118) (2026-03-03)
+
+
+### Features
+
+* Include grant details for all policy types ([32b1903](https://github.com/cloud-copilot/iam-simulate/commit/32b1903a5e2a6f387ed2883601180286d0532ac6))
+
 ## [0.1.117](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.116...v0.1.117) (2026-03-03)
 
 
