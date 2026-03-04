@@ -169,25 +169,12 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
         if (resourcePolicyResult === 'Allowed') {
           const principal = request.request.principal.value()
           if (
-            isIamRoleArn(principal) &&
-            request.simulationParameters.simulationMode === 'Discovery'
-          ) {
-            // Principal is a role and may match a session. Check since we are in Discovery mode.
-            if (
-              !request.resourceAnalysis.allowStatements.some(
-                (statement) =>
-                  statement.principalMatch === 'Match' && statement.ignoredRoleSessionName
-              )
-            ) {
-              blockedByLog.add('pb', 'ImplicitlyDenied')
-            }
-          } else if (
             isAssumedRoleArn(principal) ||
             isIamUserArn(principal) ||
             isFederatedUserArn(principal)
           ) {
-            // If the principal is an assumed role, IAM user, or federated user ARN, check if the resource
-            // policy allows the exact ARN.
+            // If the resource policy allows the principal directly (including via a wildcard Principal),
+            // the permission boundary implicit deny does not apply for same-account requests.
             if (
               !request.resourceAnalysis.allowStatements.some(
                 (statement) => statement.principalMatch === 'Match'
@@ -195,8 +182,23 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
             ) {
               blockedByLog.add('pb', 'ImplicitlyDenied')
             }
+          } else if (isIamRoleArn(principal)) {
+            // For IAM role ARNs, the permission boundary implicit deny is bypassed if
+            // * The resource policy grants access via a wildcard principal ("*"), or
+            // * In discovery mode when a session ARN in the resource policy was matched by ignoring the session name.
+            if (
+              !request.resourceAnalysis.allowStatements.some(
+                (statement) =>
+                  statement.principalMatch === 'Match' &&
+                  (statement.ignoredRoleSessionName ||
+                    (statement.statement.isPrincipalStatement() &&
+                      statement.statement.principals().some((p) => p.isWildcardPrincipal())))
+              )
+            ) {
+              blockedByLog.add('pb', 'ImplicitlyDenied')
+            }
           } else {
-            // Not in discovery mode or doesn't match a session/user exactly, so the permission boundary implicit deny applies.
+            // Service principals or other principal types: permission boundary implicit deny applies.
             blockedByLog.add('pb', 'ImplicitlyDenied')
           }
         } else {
