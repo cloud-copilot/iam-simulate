@@ -314,13 +314,13 @@ export async function runSimulation(
     return {
       resultType: 'error',
       errors: {
-        sessionPolicyErrors,
-        identityPolicyErrors,
-        serviceControlPolicyErrors: serviceControlPolicyErrors,
-        resourceControlPolicyErrors,
-        resourcePolicyErrors,
-        permissionBoundaryErrors,
-        vpcEndpointErrors,
+        ...(sessionPolicyErrors.length > 0 && { sessionPolicyErrors }),
+        ...(Object.keys(identityPolicyErrors).length > 0 && { identityPolicyErrors }),
+        ...(Object.keys(serviceControlPolicyErrors).length > 0 && { serviceControlPolicyErrors }),
+        ...(Object.keys(resourceControlPolicyErrors).length > 0 && { resourceControlPolicyErrors }),
+        ...(resourcePolicyErrors.length > 0 && { resourcePolicyErrors }),
+        ...(Object.keys(permissionBoundaryErrors).length > 0 && { permissionBoundaryErrors }),
+        ...(Object.keys(vpcEndpointErrors).length > 0 && { vpcEndpointErrors }),
         message: 'policy.errors'
       }
     }
