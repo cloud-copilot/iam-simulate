@@ -1,3 +1,10 @@
+## [0.1.121](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.120...v0.1.121) (2026-03-04)
+
+
+### Features
+
+* Only return error collections that are populated ([906d9ea](https://github.com/cloud-copilot/iam-simulate/commit/906d9ea10d6ba137eab30f1aef7ff5c614be093a))
+
 ## [0.1.120](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.119...v0.1.120) (2026-03-04)
 
 
