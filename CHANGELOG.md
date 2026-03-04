@@ -1,3 +1,10 @@
+## [0.1.122](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.121...v0.1.122) (2026-03-04)
+
+
+### Bug Fixes
+
+* Allow commas in action strings because AWS does ([23506cb](https://github.com/cloud-copilot/iam-simulate/commit/23506cb856f8dfad1a7971c9ab9387a74fff493e))
+
 ## [0.1.121](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.120...v0.1.121) (2026-03-04)
 
 
