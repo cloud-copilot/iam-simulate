@@ -1,3 +1,10 @@
+## [0.1.120](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.119...v0.1.120) (2026-03-04)
+
+
+### Bug Fixes
+
+* When a resource policy allows a wildcard principal in the same account; ignore implicit deny from a permission boundary ([ffa61a5](https://github.com/cloud-copilot/iam-simulate/commit/ffa61a5c5cd02ba1a3220c47b7ea9892bb3321ed))
+
 ## [0.1.119](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.118...v0.1.119) (2026-03-03)
 
 ## [0.1.118](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.117...v0.1.118) (2026-03-03)
