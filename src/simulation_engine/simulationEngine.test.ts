@@ -68,12 +68,18 @@ vi.mocked(iamResourceTypeDetails).mockImplementation(async (service, resource) =
       conditionKeys: [],
       key: 'bucket'
     }
+  } else if (resource === 'parameter') {
+    return {
+      arn: 'arn:${Partition}:ssm:${Region}:${Account}:parameter/${FullyQualifiedParameterName}',
+      conditionKeys: [],
+      key: 'parameter'
+    }
   }
   throw new Error('Resource not found in mock')
 })
 
 vi.mocked(iamServiceExists).mockImplementation(async (service) => {
-  return ['s3'].includes(service)
+  return ['s3', 'ssm'].includes(service)
 })
 vi.mocked(iamConditionKeysForService).mockImplementation(async (service) => {
   if (service === 's3') {
@@ -99,8 +105,9 @@ vi.mocked(iamConditionKeyExists).mockImplementation(async (service, key) => {
 
 vi.mocked(iamActionExists).mockImplementation(async (service, action) => {
   return (
-    service === 's3' &&
-    ['GetObjects', 'GetObject', 'ListAllMyBuckets', 'ListBucket'].includes(action)
+    (service === 's3' &&
+      ['GetObjects', 'GetObject', 'ListAllMyBuckets', 'ListBucket'].includes(action)) ||
+    (service === 'ssm' && ['GetParameter', 'DescribeParameters'].includes(action))
   )
 })
 
@@ -231,6 +238,23 @@ vi.mocked(iamActionDetails).mockImplementation(async (service, actionKey) => {
       ],
       isWildcardOnly: false,
       dependentActions: []
+    }
+  } else if (actionKey === 'GetParameter') {
+    return {
+      name: 'GetParameter',
+      description: 'Grants permission to get information about a parameter',
+      accessLevel: 'Read',
+      resourceTypes: [
+        {
+          name: 'parameter',
+          required: true,
+          conditionKeys: [],
+          dependentActions: []
+        }
+      ],
+      conditionKeys: [],
+      dependentActions: [],
+      isWildcardOnly: false
     }
   }
   throw new Error('Action not found in mock')
@@ -1392,5 +1416,49 @@ describe('runSimulation', () => {
     //Then there should be no errors
     //And the ignored context keys should be empty
     expect(result.ignoredContextKeys).toEqual([])
+  })
+
+  it('should return not allowed without erroring when an identity policy has a CloudFormation Sub resource string', async () => {
+    //Given an identity policy with a CloudFormation Sub-style resource string (not a standard ARN)
+    const simulation: Simulation = {
+      identityPolicies: [
+        {
+          name: 'ssmPolicy',
+          policy: {
+            Statement: {
+              Action: ['ssm:Get*', 'ssm:Describe*'],
+              Effect: 'Allow',
+              Resource: [
+                'Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter"/String/3528394562/*'
+              ]
+            }
+          }
+        }
+      ],
+      serviceControlPolicies: [],
+      resourceControlPolicies: [],
+      request: {
+        action: 'ssm:GetParameter',
+        resource: {
+          resource: 'arn:aws:ssm:us-east-1:123456789012:parameter/String/3528394562/myParam',
+          accountId: '123456789012'
+        },
+        principal: 'arn:aws:iam::123456789012:user/Alice',
+        contextVariables: {}
+      }
+    }
+
+    //When the simulation is run
+    const response = await runSimulation(simulation, {})
+
+    //Then it should not return an error
+    expect(response.resultType).not.toEqual('error')
+    expect(response.resultType).toEqual('single')
+    if (response.resultType !== 'single') {
+      throw new Error('Expected single result')
+    }
+
+    //And the request should be denied (resource does not match the CloudFormation-style string)
+    expect(response.result.analysis?.result).not.toEqual('Allowed')
   })
 })
