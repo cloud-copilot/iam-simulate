@@ -1,0 +1,38 @@
+[
+  {
+    "name": "CloudFormation Sub resource string is denied without error",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "ssmPolicy",
+          "policy": {
+            "Statement": {
+              "Action": ["ssm:Get*", "ssm:Describe*"],
+              "Effect": "Allow",
+              "Resource": [
+                "Sub \"arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter\"/String/3528394562/*"
+              ]
+            }
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "request": {
+        "action": "ssm:GetParameter",
+        "resource": {
+          "resource": "arn:aws:ssm:us-east-1:123456789012:parameter/*",
+          "accountId": "123456789012"
+        },
+        "principal": "arn:aws:iam::123456789012:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "simulationOptions": {},
+    "expected": {
+      "results": [],
+      "overallResult": "ImplicitlyDenied",
+      "resultType": "wildcard"
+    }
+  }
+]
