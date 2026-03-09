@@ -1,3 +1,5 @@
+## [0.1.124](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.123...v0.1.124) (2026-03-09)
+
 ## [0.1.123](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.122...v0.1.123) (2026-03-07)
 
 ## [0.1.122](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.121...v0.1.122) (2026-03-04)
