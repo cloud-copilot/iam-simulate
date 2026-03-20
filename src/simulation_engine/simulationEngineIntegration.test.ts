@@ -67,8 +67,8 @@ describe('simulationEngineIntegration', () => {
           )
 
           expect(response.resultType).toEqual(testCase.expected.resultType)
-          if (response.resultType !== 'wildcard') {
-            throw new Error('Expected wildcard simulation results')
+          if (response.resultType === 'error') {
+            throw new Error('Simulation resulted in error: ' + JSON.stringify(response.errors))
           }
           if (testCase.expected.overallResult) {
             expect(response.overallResult, 'Overall Result').toEqual(
@@ -76,17 +76,19 @@ describe('simulationEngineIntegration', () => {
             )
           }
 
-          const normalizedResults: ExpectedResult[] = response.results.map((result) => ({
-            resourceType: result.resourceType,
-            resourcePattern: result.resourcePattern,
-            result: result.analysis?.result
-          }))
+          if (response.resultType === 'wildcard') {
+            const normalizedResults: ExpectedResult[] = response.results.map((result) => ({
+              resourceType: result.resourceType,
+              resourcePattern: result.resourcePattern,
+              result: result.analysis?.result
+            }))
 
-          const expectedResults = [...testCase.expected.results]
+            const expectedResults = [...testCase.expected.results]
 
-          expect(normalizedResults.sort(sortByResourcePattern)).toEqual(
-            expectedResults.sort(sortByResourcePattern)
-          )
+            expect(normalizedResults.sort(sortByResourcePattern)).toEqual(
+              expectedResults.sort(sortByResourcePattern)
+            )
+          }
         })
       }
     })

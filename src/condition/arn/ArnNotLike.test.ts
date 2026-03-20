@@ -58,6 +58,32 @@ const ArnNotLikeTests: BaseOperatorTest[] = [
     ]
   },
   {
+    name: 'should return false for root of the same account',
+    requestContext: {},
+    policyValues: ['arn:aws:iam::123456789012:*'],
+    testValue: 'arn:aws:iam::123456789012:root',
+    expected: false,
+    explains: [
+      {
+        matches: false,
+        value: 'arn:aws:iam::123456789012:*'
+      }
+    ]
+  },
+  {
+    name: 'should return true for root of a different account',
+    requestContext: {},
+    policyValues: ['arn:aws:iam::111111111111:*'],
+    testValue: 'arn:aws:iam::222222222222:root',
+    expected: true,
+    explains: [
+      {
+        matches: true,
+        value: 'arn:aws:iam::111111111111:*'
+      }
+    ]
+  },
+  {
     name: 'should return false if any match',
     requestContext: {},
     policyValues: [

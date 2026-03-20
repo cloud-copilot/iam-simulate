@@ -1,0 +1,76 @@
+[
+  {
+    "name": "no allowed patterns found",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "other-bucket",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [
+        {
+          "orgIdentifier": "ou-1",
+          "policies": [
+            {
+              "name": "DenyAssume",
+              "policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Deny",
+                    "Action": "sts:AssumeRole",
+                    "Resource": "*",
+                    "Principal": "*",
+                    "Condition": {
+                      "ArnNotLike": {
+                        "aws:PrincipalArn": "arn:aws:iam::222222222222:*"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "resourcePolicy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "sts:AssumeRole",
+            "Principal": "*"
+          }
+        ]
+      },
+      "request": {
+        "action": "sts:AssumeRole",
+        "resource": {
+          "resource": "arn:aws:iam::111111111111:role/example-role",
+          "accountId": "111111111111"
+        },
+        "principal": "arn:aws:iam::222222222222:root",
+        "contextVariables": {
+          "aws:PrincipalArn": "arn:aws:iam::222222222222:root"
+        }
+      }
+    },
+    "simulationOptions": {},
+    "expected": {
+      "results": [],
+      "overallResult": "Allowed",
+      "resultType": "single"
+    }
+  }
+]
