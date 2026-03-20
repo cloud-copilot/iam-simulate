@@ -1,9 +1,12 @@
 import { type ResourceType } from '@cloud-copilot/iam-data'
 import { type Statement } from '@cloud-copilot/iam-policy'
-import { actionMatchesPattern, resourceArnWithWildcardsToRegex } from '@cloud-copilot/iam-utils'
+import {
+  actionMatchesPattern,
+  resourceArnWithWildcardsToRegex,
+  resourceStringMatchesResourceTypePattern
+} from '@cloud-copilot/iam-utils'
 import { type PolicyWithName } from '../core_engine/CoreSimulatorEngine.js'
 import { resourceArnsOverlap } from '../util/resourceStrings.js'
-import { resourceStringMatchesResourceTypePattern } from './resourceTypes.js'
 
 /**
  * Extracts matching resource strings from a set of policies for a given action and resource pattern.

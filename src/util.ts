@@ -278,21 +278,6 @@ export async function isWildcardOnlyAction(service: string, action: string): Pro
 }
 
 /**
- * Convert a resource pattern from iam-data to a regex pattern
- *
- * @param pattern the pattern to convert to a regex
- * @returns the regex pattern
- */
-export function convertResourcePatternToRegex(pattern: string): string {
-  const regex = pattern.replace(/\$\{.*?\}/g, (match) => {
-    const name = match.substring(2, match.length - 1)
-    const camelName = name.at(0)?.toLowerCase() + name.substring(1)
-    return `(?<${camelName}>(.+?))`
-  })
-  return `^${regex}$`
-}
-
-/**
  * Lowercase all strings in an array
  *
  * @param strings the strings to lowercase
