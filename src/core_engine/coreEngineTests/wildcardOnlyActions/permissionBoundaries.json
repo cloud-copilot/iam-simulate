@@ -1,0 +1,81 @@
+[
+  {
+    "name": "wildcard only action: permission boundary with * allows access",
+    "request": {
+      "action": "s3:ListAllMyBuckets",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "wildcardOnlyAction": true
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "wildcard only action: permission boundary with specific ARN denies access",
+    "request": {
+      "action": "s3:ListAllMyBuckets",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "wildcardOnlyAction": true
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:*",
+            "Resource": "arn:aws:s3:::my-bucket"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied",
+      "blockedBy": ["pb"]
+    }
+  }
+]

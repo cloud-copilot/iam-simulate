@@ -417,7 +417,8 @@ export async function runSimulation(
           accountId: simulation.request.resource.accountId
         },
         simulation.request.action,
-        new RequestContextImpl(curriedContextValues)
+        new RequestContextImpl(curriedContextValues),
+        isWildCardOnlyAction
       ),
       sessionPolicy,
       identityPolicies,

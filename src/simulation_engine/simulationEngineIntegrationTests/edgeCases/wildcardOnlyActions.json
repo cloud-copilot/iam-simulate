@@ -1,0 +1,40 @@
+[
+  {
+    "name": "wildcard only action with a specific resource ARN does not grant access",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "specific-bucket-policy",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:ListAllMyBuckets",
+                "Resource": "arn:aws:s3:::my-bucket"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "s3:ListAllMyBuckets",
+        "resource": {
+          "resource": "*",
+          "accountId": "123456789012"
+        },
+        "principal": "arn:aws:iam::123456789012:user/test-user",
+        "contextVariables": {}
+      }
+    },
+    "simulationOptions": {},
+    "expected": {
+      "results": [],
+      "overallResult": "ImplicitlyDenied",
+      "resultType": "single"
+    }
+  }
+]

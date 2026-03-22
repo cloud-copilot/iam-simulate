@@ -156,6 +156,15 @@ function singleResourceMatchesRequest(
 
   // Request is all resources
   if (request.resource?.isAllResources()) {
+    // For wildcard-only actions, only a literal "*" policy resource (handled above) grants access.
+    // A specific ARN in the policy does not match a wildcard-only action's "*" request resource.
+    if (request.wildcardOnlyAction) {
+      return {
+        resource: policyResource.value(),
+        matches: false
+      }
+    }
+
     if (effect === 'Allow' && resourceType === 'Resource') {
       return {
         resource: policyResource.value(),

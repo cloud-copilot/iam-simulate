@@ -20,6 +20,14 @@ export interface AwsRequest {
   resource: RequestResource
 
   /**
+   * Whether the action is a wildcard-only action, meaning it does not support
+   * resource-level permissions and must use "*" as the resource. When true,
+   * only a literal "*" policy resource will match a "*" request resource;
+   * specific ARNs in the policy will not match.
+   */
+  wildcardOnlyAction: boolean
+
+  /**
    * The context of the request
    */
   context: RequestContext
@@ -43,12 +51,17 @@ export interface AwsRequest {
 }
 
 export class AwsRequestImpl implements AwsRequest {
+  public readonly wildcardOnlyAction: boolean
+
   constructor(
     public readonly principalString: string,
     public readonly resourceIdentifier: { resource: string; accountId: string },
     public readonly actionString: string,
-    public readonly context: RequestContext
-  ) {}
+    public readonly context: RequestContext,
+    wildcardOnlyAction?: boolean
+  ) {
+    this.wildcardOnlyAction = wildcardOnlyAction ?? false
+  }
 
   get action(): RequestAction {
     return new RequestActionImpl(this.actionString)
