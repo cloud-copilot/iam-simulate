@@ -1,3 +1,10 @@
+## [0.1.128](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.127...v0.1.128) (2026-03-22)
+
+
+### Bug Fixes
+
+* Fix wildcard resource ARNs are required for wildcard only actions ([6a43074](https://github.com/cloud-copilot/iam-simulate/commit/6a430740ac1fcc63905024cd8496e021336d871d))
+
 ## [0.1.127](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.126...v0.1.127) (2026-03-22)
 
 ## [0.1.126](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.125...v0.1.126) (2026-03-20)
