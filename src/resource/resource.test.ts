@@ -27,6 +27,7 @@ type ResourceTest = {
     resource: string
     accountId: string
   }
+  wildcardOnlyAction?: boolean
   expectMatch: boolean
   context?: Record<string, string | string[]>
   explains: ResourceExplain[]
@@ -675,6 +676,108 @@ const resourceTests: ResourceTest[] = [
         matches: false
       }
     ]
+  },
+  {
+    name: 'wildcard-only action: should match when policy resource is *',
+    resourceStatements: ['*'],
+    wildcardOnlyAction: true,
+    resource: {
+      resource: '*',
+      accountId: '123456789012'
+    },
+    expectMatch: true,
+    explains: [
+      {
+        resource: '*',
+        matches: true
+      }
+    ]
+  },
+  {
+    name: 'wildcard-only action: should not match Allow/Resource with specific ARN',
+    resourceStatements: ['arn:aws:s3:::my-bucket'],
+    wildcardOnlyAction: true,
+    resource: {
+      resource: '*',
+      accountId: '123456789012'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:s3:::my-bucket',
+        matches: false
+      }
+    ]
+  },
+  {
+    name: 'wildcard-only action: should not match Allow/Resource with wildcard ARN',
+    resourceStatements: ['arn:aws:s3:::my-bucket/*'],
+    wildcardOnlyAction: true,
+    resource: {
+      resource: '*',
+      accountId: '123456789012'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:s3:::my-bucket/*',
+        matches: false
+      }
+    ]
+  },
+  {
+    name: 'wildcard-only action: should match Allow/Resource when one resource is *',
+    resourceStatements: ['arn:aws:s3:::my-bucket', '*'],
+    wildcardOnlyAction: true,
+    resource: {
+      resource: '*',
+      accountId: '123456789012'
+    },
+    expectMatch: true,
+    explains: [
+      {
+        resource: 'arn:aws:s3:::my-bucket',
+        matches: false
+      },
+      {
+        resource: '*',
+        matches: true
+      }
+    ]
+  },
+  {
+    name: 'wildcard-only action: should not match Deny/Resource with specific ARN',
+    resourceStatements: ['arn:aws:s3:::my-bucket'],
+    effect: 'Deny',
+    wildcardOnlyAction: true,
+    resource: {
+      resource: '*',
+      accountId: '123456789012'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:s3:::my-bucket',
+        matches: false
+      }
+    ]
+  },
+  {
+    name: 'wildcard-only action: should match Deny/Resource when policy resource is *',
+    resourceStatements: ['*'],
+    effect: 'Deny',
+    wildcardOnlyAction: true,
+    resource: {
+      resource: '*',
+      accountId: '123456789012'
+    },
+    expectMatch: true,
+    explains: [
+      {
+        resource: '*',
+        matches: true
+      }
+    ]
   }
 ]
 
@@ -717,7 +820,8 @@ describe('requestMatchesResources', () => {
         'principal',
         rt.resource,
         's3:GetBucket',
-        new RequestContextImpl(rt.context || {})
+        new RequestContextImpl(rt.context || {}),
+        rt.wildcardOnlyAction
       )
 
       //When the request is checked against the resource statement
@@ -998,6 +1102,72 @@ const notResourceTests: ResourceTest[] = [
         matches: true
       }
     ]
+  },
+  {
+    name: 'wildcard-only action: should match Allow/NotResource with specific ARN',
+    notResourceStatements: ['arn:aws:s3:::my-bucket'],
+    wildcardOnlyAction: true,
+    resource: {
+      resource: '*',
+      accountId: '123456789012'
+    },
+    expectMatch: true,
+    explains: [
+      {
+        resource: 'arn:aws:s3:::my-bucket',
+        matches: true
+      }
+    ]
+  },
+  {
+    name: 'wildcard-only action: should not match Allow/NotResource with * resource',
+    notResourceStatements: ['*'],
+    wildcardOnlyAction: true,
+    resource: {
+      resource: '*',
+      accountId: '123456789012'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: '*',
+        matches: false
+      }
+    ]
+  },
+  {
+    name: 'wildcard-only action: should match Deny/NotResource with specific ARN',
+    notResourceStatements: ['arn:aws:s3:::my-bucket'],
+    effect: 'Deny',
+    wildcardOnlyAction: true,
+    resource: {
+      resource: '*',
+      accountId: '123456789012'
+    },
+    expectMatch: true,
+    explains: [
+      {
+        resource: 'arn:aws:s3:::my-bucket',
+        matches: true
+      }
+    ]
+  },
+  {
+    name: 'wildcard-only action: should not match Deny/NotResource with * resource',
+    notResourceStatements: ['*'],
+    effect: 'Deny',
+    wildcardOnlyAction: true,
+    resource: {
+      resource: '*',
+      accountId: '123456789012'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: '*',
+        matches: false
+      }
+    ]
   }
 ]
 
@@ -1018,7 +1188,8 @@ describe('requestMatchesNotResources', () => {
         'principal',
         rt.resource,
         's3:GetBucket',
-        new RequestContextImpl(rt.context || {})
+        new RequestContextImpl(rt.context || {}),
+        rt.wildcardOnlyAction
       )
 
       //When the request is checked against the resource statement

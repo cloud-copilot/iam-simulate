@@ -1,0 +1,114 @@
+[
+  {
+    "name": "wildcard only action: Allow/NotResource with specific ARN grants access",
+    "request": {
+      "action": "s3:ListAllMyBuckets",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "wildcardOnlyAction": true
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "NotResource": "arn:aws:s3:::my-bucket"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "wildcard only action: Allow/NotResource with * does not grant access",
+    "request": {
+      "action": "s3:ListAllMyBuckets",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "wildcardOnlyAction": true
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "NotResource": "*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "wildcard only action: multiple resources with only specific ARNs does not grant access",
+    "request": {
+      "action": "s3:ListAllMyBuckets",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "wildcardOnlyAction": true
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "Resource": [
+              "arn:aws:s3:::bucket-one",
+              "arn:aws:s3:::bucket-two",
+              "arn:aws:s3:::bucket-three/*"
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "wildcard only action: multiple resources with one * grants access",
+    "request": {
+      "action": "s3:ListAllMyBuckets",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "wildcardOnlyAction": true
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "Resource": ["arn:aws:s3:::bucket-one", "*"]
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  }
+]

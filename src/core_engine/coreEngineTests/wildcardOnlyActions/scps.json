@@ -1,0 +1,190 @@
+[
+  {
+    "name": "wildcard only action: SCP with * allows access",
+    "request": {
+      "action": "s3:ListAllMyBuckets",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "wildcardOnlyAction": true
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-root",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "wildcard only action: SCP with specific ARN implicitly denies access",
+    "request": {
+      "action": "s3:ListAllMyBuckets",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "wildcardOnlyAction": true
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-root",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:ListAllMyBuckets",
+                "Resource": "arn:aws:s3:::my-bucket"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied",
+      "blockedBy": ["scp"]
+    }
+  },
+  {
+    "name": "wildcard only action: SCP explicit deny with * denies access",
+    "request": {
+      "action": "s3:ListAllMyBuckets",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "wildcardOnlyAction": true
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-root",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              },
+              {
+                "Effect": "Deny",
+                "Action": "s3:ListAllMyBuckets",
+                "Resource": "*"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["scp"]
+    }
+  },
+  {
+    "name": "wildcard only action: SCP explicit deny with specific ARN does not deny access",
+    "request": {
+      "action": "s3:ListAllMyBuckets",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "wildcardOnlyAction": true
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-root",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              },
+              {
+                "Effect": "Deny",
+                "Action": "s3:ListAllMyBuckets",
+                "Resource": "arn:aws:s3:::my-bucket"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  }
+]

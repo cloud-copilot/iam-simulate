@@ -73,12 +73,13 @@ describe('coreSimulatorEngine', () => {
         }
         testFunc(testCase.name, () => {
           //Given the request
-          const { principal, resource, action, context } = testCase.request
+          const { principal, resource, action, context, wildcardOnlyAction } = testCase.request
           const request = new AwsRequestImpl(
             principal,
             resource,
             action,
-            new RequestContextImpl(context)
+            new RequestContextImpl(context),
+            wildcardOnlyAction
           )
           // And Policies
           const identityPolicies = testCase.identityPolicies.map((p: any, idx: number) =>
