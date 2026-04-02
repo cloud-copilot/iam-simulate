@@ -1,7 +1,60 @@
 import { type Resource, type Statement } from '@cloud-copilot/iam-policy'
 import { type ResourceExplain, type StatementExplain } from '../explain/statementExplain.js'
+import { type PolicyType } from '../policyType.js'
 import { type AwsRequest } from '../request/request.js'
 import { convertIamString, getResourceSegments } from '../util.js'
+
+type ShortArnBehavior = 'expand' | 'reject' | 'noMatch'
+
+/**
+ * Settings that control how short ARNs (fewer than 6 colon-separated segments) are handled
+ * for a given policy type during resource matching.
+ */
+interface PolicyTypeResourceSettings {
+  /** Behavior for short ARNs without any wildcard characters. */
+  shortArnWithoutWildcard: ShortArnBehavior
+  /** Behavior for short ARNs with wildcard characters. */
+  shortArnWithWildcard: ShortArnBehavior
+}
+
+/**
+ * Map of resource matching settings per policy type. Controls how short ARNs are treated:
+ * - `'expand'` — treat missing trailing segments as `*`, then match normally
+ * - `'reject'` — return an error (ARN is not valid for this policy type)
+ * - `'noMatch'` — silently does not match
+ */
+const policyTypeResourceSettings: Record<PolicyType, PolicyTypeResourceSettings> = {
+  identity: { shortArnWithoutWildcard: 'expand', shortArnWithWildcard: 'expand' },
+  session: { shortArnWithoutWildcard: 'expand', shortArnWithWildcard: 'expand' },
+  pb: { shortArnWithoutWildcard: 'expand', shortArnWithWildcard: 'expand' },
+  resource: { shortArnWithoutWildcard: 'noMatch', shortArnWithWildcard: 'expand' },
+  vpce: { shortArnWithoutWildcard: 'noMatch', shortArnWithWildcard: 'expand' },
+  scp: { shortArnWithoutWildcard: 'reject', shortArnWithWildcard: 'expand' },
+  rcp: { shortArnWithoutWildcard: 'reject', shortArnWithWildcard: 'reject' }
+}
+
+/**
+ * Create a lightweight Resource object from an expanded ARN string.
+ * Used when a short ARN is padded with `*` segments to form a full 6-segment ARN.
+ *
+ * @param expandedValue the full 6-segment ARN string
+ * @returns a Resource object that can be used in the existing matching logic
+ */
+function createExpandedResource(expandedValue: string): Resource {
+  const parts = expandedValue.split(':')
+  const resource = {
+    value: () => expandedValue,
+    isAllResources: () => false,
+    isArnResource: () => true,
+    path: () => '',
+    partition: () => parts[1],
+    service: () => parts[2],
+    region: () => parts[3],
+    account: () => parts[4],
+    resource: () => parts.slice(5).join(':')
+  }
+  return resource as unknown as Resource
+}
 
 /**
  * Convert a resource segment to a regular expression. This is without variables.
@@ -22,18 +75,21 @@ function convertResourceSegmentToRegex(segment: string): RegExp {
  *
  * @param request the request to check
  * @param statement the statement to check against
+ * @param policyType the type of policy being evaluated
  * @returns true if the request matches the resources in the statement, false otherwise
  */
 export function requestMatchesStatementResources(
   request: AwsRequest,
-  statement: Statement
+  statement: Statement,
+  policyType: PolicyType
 ): { matches: boolean; details: Pick<StatementExplain, 'resources' | 'notResources'> } {
   if (statement.isResourceStatement()) {
     const { matches, explains } = requestMatchesResources(
       request,
       statement.resources(),
       'Resource',
-      statement.effect() as 'Allow' | 'Deny'
+      statement.effect() as 'Allow' | 'Deny',
+      policyType
     )
     if (!statement.resourceIsArray()) {
       return { matches, details: { resources: explains[0] } }
@@ -44,7 +100,8 @@ export function requestMatchesStatementResources(
       request,
       statement.notResources(),
       'NotResource',
-      statement.effect() as 'Allow' | 'Deny'
+      statement.effect() as 'Allow' | 'Deny',
+      policyType
     )
     if (!statement.notResourceIsArray()) {
       return { matches, details: { notResources: explains[0] } }
@@ -59,16 +116,20 @@ export function requestMatchesStatementResources(
  *
  * @param request the request to check
  * @param policyResources the resources to check against
+ * @param resourceType whether this is a Resource or NotResource element
+ * @param effect the effect of the statement
+ * @param policyType the type of policy being evaluated
  * @returns true if the request matches any of the resources, false otherwise
  */
 export function requestMatchesResources(
   request: AwsRequest,
   policyResources: Resource[],
   resourceType: 'Resource' | 'NotResource',
-  effect: 'Allow' | 'Deny'
+  effect: 'Allow' | 'Deny',
+  policyType: PolicyType
 ): { matches: boolean; explains: ResourceExplain[] } {
   const explains = policyResources.map((policyResource) =>
-    singleResourceMatchesRequest(request, policyResource, resourceType, effect)
+    singleResourceMatchesRequest(request, policyResource, resourceType, effect, policyType)
   )
   const matches = explains.some((explain) => explain.matches)
   return { matches, explains }
@@ -79,16 +140,26 @@ export function requestMatchesResources(
  *
  * @param request the request to check
  * @param policyResources the resources to check against
+ * @param resourceType whether this is a Resource or NotResource element
+ * @param effect the effect of the statement
+ * @param policyType the type of policy being evaluated
  * @returns true if the request does not match any of the resources, false otherwise
  */
 export function requestMatchesNotResources(
   request: AwsRequest,
   policyResources: Resource[],
   resourceType: 'Resource' | 'NotResource',
-  effect: 'Allow' | 'Deny'
+  effect: 'Allow' | 'Deny',
+  policyType: PolicyType
 ): { matches: boolean; explains: ResourceExplain[] } {
   const explains = policyResources.map((policyResource) => {
-    const explain = singleResourceMatchesRequest(request, policyResource, resourceType, effect)
+    const explain = singleResourceMatchesRequest(
+      request,
+      policyResource,
+      resourceType,
+      effect,
+      policyType
+    )
     if (!explain.errors) {
       explain.matches = !explain.matches
     }
@@ -138,13 +209,17 @@ For a Deny/NotResource Statement:
  *
  * @param request the request to check against
  * @param policyResource the resource to check against
+ * @param resourceType whether this is a Resource or NotResource element
+ * @param effect the effect of the statement
+ * @param policyType the type of policy being evaluated
  * @returns true if the request matches the resource, false otherwise
  */
 function singleResourceMatchesRequest(
   request: AwsRequest,
   policyResource: Resource,
   resourceType: 'Resource' | 'NotResource',
-  effect: 'Allow' | 'Deny'
+  effect: 'Allow' | 'Deny',
+  policyType: PolicyType
 ): ResourceExplain {
   // Policy is all resources
   if (policyResource.isAllResources()) {
@@ -152,6 +227,50 @@ function singleResourceMatchesRequest(
       resource: policyResource.value(),
       matches: true
     }
+  }
+
+  // Short ARN handling — fewer than 6 colon-separated segments
+  if (policyResource.isArnResource() && policyResource.value().split(':').length < 6) {
+    const settings = policyTypeResourceSettings[policyType]
+    // For policy types that reject short ARNs without wildcards, only a wildcard
+    // in the last segment counts — a wildcard in the middle doesn't make it valid.
+    const lastSegment = policyResource.value().split(':').at(-1) ?? ''
+    const hasTrailingWildcard = lastSegment.endsWith('*')
+    const hasAnyWildcard = policyResource.value().includes('*')
+    const hasWildcard =
+      settings.shortArnWithoutWildcard === 'reject' ? hasTrailingWildcard : hasAnyWildcard
+    const behavior = hasWildcard ? settings.shortArnWithWildcard : settings.shortArnWithoutWildcard
+
+    if (behavior === 'reject') {
+      return {
+        resource: policyResource.value(),
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    }
+
+    if (behavior === 'noMatch') {
+      return {
+        resource: policyResource.value(),
+        matches: false
+      }
+    }
+
+    // behavior === 'expand': pad missing segments with '*' and recurse with expanded resource
+    const segments = policyResource.value().split(':')
+    while (segments.length < 6) {
+      segments.push('*')
+    }
+    const result = singleResourceMatchesRequest(
+      request,
+      createExpandedResource(segments.join(':')),
+      resourceType,
+      effect,
+      policyType
+    )
+    // Preserve the original (unexpanded) resource value in the explain
+    result.resource = policyResource.value()
+    return result
   }
 
   // Request is all resources

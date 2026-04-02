@@ -26,6 +26,7 @@ import { isWildcardOnlyAction } from '../util.js'
 import { allowedContextKeysForRequest } from './contextKeys.js'
 import { calculateOverallResult } from './overallResult.js'
 import { getMatchingResourceStringsForPolicies } from './policyResources.js'
+import { expandShortArn } from '../util/resourceStrings.js'
 import { getResourceTypesForAction } from './resourceTypes.js'
 import { type Simulation } from './simulation.js'
 import { type SimulationOptions } from './simulationOptions.js'
@@ -413,7 +414,7 @@ export async function runSimulation(
       request: new AwsRequestImpl(
         principal,
         {
-          resource: curriedResourceString,
+          resource: expandShortArn(curriedResourceString),
           accountId: simulation.request.resource.accountId
         },
         simulation.request.action,
@@ -433,7 +434,8 @@ export async function runSimulation(
       }
     })
 
-  const policiesThatGrantAccess = [resourcePolicy, ...identityPolicies]
+  const identityPoliciesThatGrantAccess: (PolicyWithName | undefined)[] = [...identityPolicies]
+  const resourcePoliciesThatGrantAccess: (PolicyWithName | undefined)[] = [resourcePolicy]
 
   // If there is only one simulation to run, run it
   if (!runMultipleSimulations) {
@@ -476,12 +478,21 @@ export async function runSimulation(
       })
     } else {
       let resourceStrings = [simulation.request.resource.resource]
-      resourceStrings = getMatchingResourceStringsForPolicies(
-        policiesThatGrantAccess,
+      const identityResourceStrings = getMatchingResourceStringsForPolicies(
+        identityPoliciesThatGrantAccess,
         simulation.request.action,
         resourceType,
-        simulation.request.resource.resource
+        simulation.request.resource.resource,
+        true
       )
+      const resourcePolicyResourceStrings = getMatchingResourceStringsForPolicies(
+        resourcePoliciesThatGrantAccess,
+        simulation.request.action,
+        resourceType,
+        simulation.request.resource.resource,
+        false
+      )
+      resourceStrings = [...new Set([...identityResourceStrings, ...resourcePolicyResourceStrings])]
 
       for (const resourceString of resourceStrings) {
         const simulationResult = curriedAuthorize(resourceString, validContextValues)

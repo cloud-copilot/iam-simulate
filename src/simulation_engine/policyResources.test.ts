@@ -350,7 +350,8 @@ describe('statementResourceStringsForResourceTypeAndPattern', () => {
       const result = statementResourceStringsForResourceTypeAndPattern(
         statement,
         testCase.resourceType ?? s3ObjectType,
-        testCase.resourceArnPattern
+        testCase.resourceArnPattern,
+        true
       )
       expect(result).toEqual(testCase.expected)
     })
@@ -365,7 +366,8 @@ describe('getResourceStringsFromStatement', () => {
         statement,
         testCase.action,
         s3ObjectType,
-        testCase.resourceArnPattern
+        testCase.resourceArnPattern,
+        true
       )
       expect(result).toEqual(testCase.expected)
     })

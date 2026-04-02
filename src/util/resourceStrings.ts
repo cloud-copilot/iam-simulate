@@ -11,8 +11,13 @@ export function resourceArnsOverlap(arn1: string, arn2: string): boolean {
   if (arn1 === arn2) return true
   if (arn1 === '*' || arn2 === '*') return true
 
-  const A = [...arn1]
-  const B = [...arn2]
+  // Short ARN expansion: ARNs with fewer than 6 colon-separated segments
+  // have missing trailing segments treated as implicit wildcards.
+  const expanded1 = expandShortArn(arn1)
+  const expanded2 = expandShortArn(arn2)
+
+  const A = [...expanded1]
+  const B = [...expanded2]
 
   const n = A.length
   const m = B.length
@@ -80,4 +85,26 @@ function nextIdxAfterOneChar(p: string[], idx: number): number[] {
   if (t === null) return []
   if (t === '*') return [idx] // '*' stays and can keep consuming
   return [idx + 1] // literal or '?' consumes one and advances
+}
+
+/**
+ * Expands a short ARN (fewer than 6 colon-separated segments) by padding
+ * missing trailing segments with `*`. Non-ARN strings and full ARNs are
+ * returned unchanged.
+ *
+ * @param arn the ARN string to expand
+ * @returns the expanded ARN string with missing segments filled with `*`
+ */
+export function expandShortArn(arn: string): string {
+  if (!arn.startsWith('arn:')) {
+    return arn
+  }
+  const segments = arn.split(':')
+  if (segments.length >= 6) {
+    return arn
+  }
+  while (segments.length < 6) {
+    segments.push('*')
+  }
+  return segments.join(':')
 }
