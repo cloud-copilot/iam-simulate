@@ -5,6 +5,7 @@ import {
 } from '@cloud-copilot/iam-policy'
 import { describe, expect, it } from 'vitest'
 import type { ResourceExplain } from '../explain/statementExplain.js'
+import type { PolicyType } from '../policyType.js'
 import { AwsRequestImpl } from '../request/request.js'
 import { RequestContextImpl } from '../requestContext.js'
 import { requestMatchesNotResources, requestMatchesResources } from './resource.js'
@@ -23,6 +24,7 @@ type ResourceTest = {
   name?: string
   only?: true
   effect?: 'Allow' | 'Deny'
+  policyType?: PolicyType
   resource: {
     resource: string
     accountId: string
@@ -778,6 +780,1078 @@ const resourceTests: ResourceTest[] = [
         matches: true
       }
     ]
+  },
+
+  // ── Short ARN tests: Identity Policy (Allow) ──────────────────────────
+  {
+    name: 'identity: P1 arn:aws:sqs matches Q',
+    policyType: 'identity',
+    resourceStatements: ['arn:aws:sqs'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs', matches: true }]
+  },
+  {
+    name: 'identity: P2 arn:aws:sqs:us-east-1 matches Q',
+    policyType: 'identity',
+    resourceStatements: ['arn:aws:sqs:us-east-1'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1', matches: true }]
+  },
+  {
+    name: 'identity: P3 arn:aws:sqs:us-east-1:111111111111 matches Q',
+    policyType: 'identity',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111', matches: true }]
+  },
+  {
+    name: 'identity: P4 arn:aws:sqs:* matches Q',
+    policyType: 'identity',
+    resourceStatements: ['arn:aws:sqs:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:*', matches: true }]
+  },
+  {
+    name: 'identity: P5 arn:aws:sqs:us-east-1:* matches Q',
+    policyType: 'identity',
+    resourceStatements: ['arn:aws:sqs:us-east-1:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:*', matches: true }]
+  },
+  {
+    name: 'identity: P6 arn:aws:sqs:us-east-1:111111111111:* matches Q',
+    policyType: 'identity',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:*', matches: true }]
+  },
+  {
+    name: 'identity: P7 arn:aws:sqs:us-west-2 does not match Q',
+    policyType: 'identity',
+    resourceStatements: ['arn:aws:sqs:us-west-2'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      { resource: 'arn:aws:sqs:us-west-2', matches: false, errors: ['Region does not match'] }
+    ]
+  },
+  {
+    name: 'identity: P8 arn:aws:sqs:us-east-1:222222222222 does not match Q',
+    policyType: 'identity',
+    resourceStatements: ['arn:aws:sqs:us-east-1:222222222222'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-east-1:222222222222',
+        matches: false,
+        errors: ['Account does not match']
+      }
+    ]
+  },
+  {
+    name: 'identity: P9 arn:aws:sqs:us-east-1:111111111111:other-queue does not match Q',
+    policyType: 'identity',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111:other-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:other-queue', matches: false }]
+  },
+  {
+    name: 'identity: P10 exact match Q',
+    policyType: 'identity',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue', matches: true }]
+  },
+
+  // ── Short ARN tests: Session Policy (Allow) ───────────────────────────
+  {
+    name: 'session: P1 arn:aws:sqs matches Q',
+    policyType: 'session',
+    resourceStatements: ['arn:aws:sqs'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs', matches: true }]
+  },
+  {
+    name: 'session: P2 arn:aws:sqs:us-east-1 matches Q',
+    policyType: 'session',
+    resourceStatements: ['arn:aws:sqs:us-east-1'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1', matches: true }]
+  },
+  {
+    name: 'session: P3 arn:aws:sqs:us-east-1:111111111111 matches Q',
+    policyType: 'session',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111', matches: true }]
+  },
+  {
+    name: 'session: P4 arn:aws:sqs:* matches Q',
+    policyType: 'session',
+    resourceStatements: ['arn:aws:sqs:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:*', matches: true }]
+  },
+  {
+    name: 'session: P5 arn:aws:sqs:us-east-1:* matches Q',
+    policyType: 'session',
+    resourceStatements: ['arn:aws:sqs:us-east-1:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:*', matches: true }]
+  },
+  {
+    name: 'session: P6 arn:aws:sqs:us-east-1:111111111111:* matches Q',
+    policyType: 'session',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:*', matches: true }]
+  },
+  {
+    name: 'session: P7 arn:aws:sqs:us-west-2 does not match Q',
+    policyType: 'session',
+    resourceStatements: ['arn:aws:sqs:us-west-2'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      { resource: 'arn:aws:sqs:us-west-2', matches: false, errors: ['Region does not match'] }
+    ]
+  },
+  {
+    name: 'session: P8 arn:aws:sqs:us-east-1:222222222222 does not match Q',
+    policyType: 'session',
+    resourceStatements: ['arn:aws:sqs:us-east-1:222222222222'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-east-1:222222222222',
+        matches: false,
+        errors: ['Account does not match']
+      }
+    ]
+  },
+  {
+    name: 'session: P9 arn:aws:sqs:us-east-1:111111111111:other-queue does not match Q',
+    policyType: 'session',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111:other-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:other-queue', matches: false }]
+  },
+  {
+    name: 'session: P10 exact match Q',
+    policyType: 'session',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue', matches: true }]
+  },
+
+  // ── Short ARN tests: Permission Boundary (Allow) ──────────────────────
+  {
+    name: 'pb: P1 arn:aws:sqs matches Q',
+    policyType: 'pb',
+    resourceStatements: ['arn:aws:sqs'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs', matches: true }]
+  },
+  {
+    name: 'pb: P2 arn:aws:sqs:us-east-1 matches Q',
+    policyType: 'pb',
+    resourceStatements: ['arn:aws:sqs:us-east-1'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1', matches: true }]
+  },
+  {
+    name: 'pb: P3 arn:aws:sqs:us-east-1:111111111111 matches Q',
+    policyType: 'pb',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111', matches: true }]
+  },
+  {
+    name: 'pb: P4 arn:aws:sqs:* matches Q',
+    policyType: 'pb',
+    resourceStatements: ['arn:aws:sqs:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:*', matches: true }]
+  },
+  {
+    name: 'pb: P5 arn:aws:sqs:us-east-1:* matches Q',
+    policyType: 'pb',
+    resourceStatements: ['arn:aws:sqs:us-east-1:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:*', matches: true }]
+  },
+  {
+    name: 'pb: P6 arn:aws:sqs:us-east-1:111111111111:* matches Q',
+    policyType: 'pb',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:*', matches: true }]
+  },
+  {
+    name: 'pb: P7 arn:aws:sqs:us-west-2 does not match Q',
+    policyType: 'pb',
+    resourceStatements: ['arn:aws:sqs:us-west-2'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      { resource: 'arn:aws:sqs:us-west-2', matches: false, errors: ['Region does not match'] }
+    ]
+  },
+  {
+    name: 'pb: P8 arn:aws:sqs:us-east-1:222222222222 does not match Q',
+    policyType: 'pb',
+    resourceStatements: ['arn:aws:sqs:us-east-1:222222222222'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-east-1:222222222222',
+        matches: false,
+        errors: ['Account does not match']
+      }
+    ]
+  },
+  {
+    name: 'pb: P9 arn:aws:sqs:us-east-1:111111111111:other-queue does not match Q',
+    policyType: 'pb',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111:other-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:other-queue', matches: false }]
+  },
+  {
+    name: 'pb: P10 exact match Q',
+    policyType: 'pb',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue', matches: true }]
+  },
+
+  // ── Short ARN tests: Resource Policy (Allow) ──────────────────────────
+  {
+    name: 'resource: P1 arn:aws:sqs does not match Q',
+    policyType: 'resource',
+    resourceStatements: ['arn:aws:sqs'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs', matches: false }]
+  },
+  {
+    name: 'resource: P2 arn:aws:sqs:us-east-1 does not match Q',
+    policyType: 'resource',
+    resourceStatements: ['arn:aws:sqs:us-east-1'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1', matches: false }]
+  },
+  {
+    name: 'resource: P3 arn:aws:sqs:us-east-1:111111111111 does not match Q',
+    policyType: 'resource',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111', matches: false }]
+  },
+  {
+    name: 'resource: P4 arn:aws:sqs:* matches Q',
+    policyType: 'resource',
+    resourceStatements: ['arn:aws:sqs:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:*', matches: true }]
+  },
+  {
+    name: 'resource: P5 arn:aws:sqs:us-east-1:* matches Q',
+    policyType: 'resource',
+    resourceStatements: ['arn:aws:sqs:us-east-1:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:*', matches: true }]
+  },
+  {
+    name: 'resource: P6 arn:aws:sqs:us-east-1:111111111111:* matches Q',
+    policyType: 'resource',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:*', matches: true }]
+  },
+  {
+    name: 'resource: P7 arn:aws:sqs:us-west-2 does not match Q',
+    policyType: 'resource',
+    resourceStatements: ['arn:aws:sqs:us-west-2'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-west-2', matches: false }]
+  },
+  {
+    name: 'resource: P8 arn:aws:sqs:us-east-1:222222222222 does not match Q',
+    policyType: 'resource',
+    resourceStatements: ['arn:aws:sqs:us-east-1:222222222222'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:222222222222', matches: false }]
+  },
+  {
+    name: 'resource: P9 arn:aws:sqs:us-east-1:111111111111:other-queue does not match Q',
+    policyType: 'resource',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111:other-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:other-queue', matches: false }]
+  },
+  {
+    name: 'resource: P10 exact match Q',
+    policyType: 'resource',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue', matches: true }]
+  },
+
+  // ── Short ARN tests: SCP (Deny) ───────────────────────────────────────
+  {
+    name: 'scp: P1 arn:aws:sqs rejected',
+    policyType: 'scp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'scp: P2 arn:aws:sqs:us-east-1 rejected',
+    policyType: 'scp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs:us-east-1'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-east-1',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'scp: P3 arn:aws:sqs:us-east-1:111111111111 rejected',
+    policyType: 'scp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-east-1:111111111111',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'scp: P4 arn:aws:sqs:* matches Q as deny',
+    policyType: 'scp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:*', matches: true }]
+  },
+  {
+    name: 'scp: P5 arn:aws:sqs:us-east-1:* matches Q as deny',
+    policyType: 'scp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs:us-east-1:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:*', matches: true }]
+  },
+  {
+    name: 'scp: P6 arn:aws:sqs:us-east-1:111111111111:* matches Q as deny',
+    policyType: 'scp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:*', matches: true }]
+  },
+  {
+    name: 'scp: P7 arn:aws:sqs:us-west-2 rejected',
+    policyType: 'scp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs:us-west-2'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-west-2',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'scp: P8 arn:aws:sqs:us-east-1:222222222222 rejected',
+    policyType: 'scp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs:us-east-1:222222222222'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-east-1:222222222222',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'scp: P9 arn:aws:sqs:us-east-1:111111111111:other-queue does not match Q',
+    policyType: 'scp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111:other-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:other-queue', matches: false }]
+  },
+  {
+    name: 'scp: P10 exact match Q as deny',
+    policyType: 'scp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue', matches: true }]
+  },
+
+  // ── Short ARN tests: RCP (Deny) ───────────────────────────────────────
+  {
+    name: 'rcp: P1 arn:aws:sqs rejected',
+    policyType: 'rcp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'rcp: P2 arn:aws:sqs:us-east-1 rejected',
+    policyType: 'rcp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs:us-east-1'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-east-1',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'rcp: P3 arn:aws:sqs:us-east-1:111111111111 rejected',
+    policyType: 'rcp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-east-1:111111111111',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'rcp: P4 arn:aws:sqs:* is not valid for RCP',
+    policyType: 'rcp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:*',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'rcp: P5 arn:aws:sqs:us-east-1:* is not valid for RCP',
+    policyType: 'rcp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs:us-east-1:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-east-1:*',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'rcp: P6 arn:aws:sqs:us-east-1:111111111111:* matches Q as deny',
+    policyType: 'rcp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:*', matches: true }]
+  },
+  {
+    name: 'rcp: P7 arn:aws:sqs:us-west-2 is not valid for RCP',
+    policyType: 'rcp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs:us-west-2'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-west-2',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'rcp: P8 arn:aws:sqs:us-east-1:222222222222 is not valid for RCP',
+    policyType: 'rcp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs:us-east-1:222222222222'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-east-1:222222222222',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'rcp: P9 arn:aws:sqs:us-east-1:111111111111:other-queue does not match Q',
+    policyType: 'rcp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111:other-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:other-queue', matches: false }]
+  },
+  {
+    name: 'rcp: P10 exact match Q as deny',
+    policyType: 'rcp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs:us-east-1:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue', matches: true }]
+  },
+
+  // ── Short ARN negative tests: expanded but explicit segments mismatch ──────
+  // Request: arn:aws:sqs:us-east-2:111111111111:MyQueue
+  {
+    name: 'identity: short ARN region mismatch after expansion (4 seg)',
+    policyType: 'identity',
+    resourceStatements: ['arn:aws:sqs:us-east-1'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-2:111111111111:MyQueue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      { resource: 'arn:aws:sqs:us-east-1', matches: false, errors: ['Region does not match'] }
+    ]
+  },
+  {
+    name: 'identity: short ARN account mismatch after expansion (5 seg)',
+    policyType: 'identity',
+    resourceStatements: ['arn:aws:sqs:us-east-2:222222222222'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-2:111111111111:MyQueue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-east-2:222222222222',
+        matches: false,
+        errors: ['Account does not match']
+      }
+    ]
+  },
+  {
+    name: 'identity: short ARN service mismatch after expansion (3 seg)',
+    policyType: 'identity',
+    resourceStatements: ['arn:aws:ec2'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-2:111111111111:MyQueue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:ec2', matches: false, errors: ['Service does not match'] }]
+  },
+  {
+    name: 'identity: short ARN with wildcard region mismatch in account (5 seg)',
+    policyType: 'identity',
+    resourceStatements: ['arn:aws:sqs:*:222222222222'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-2:111111111111:MyQueue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      { resource: 'arn:aws:sqs:*:222222222222', matches: false, errors: ['Account does not match'] }
+    ]
+  },
+  {
+    name: 'resource: short ARN with wildcard region mismatch in account (5 seg)',
+    policyType: 'resource',
+    resourceStatements: ['arn:aws:sqs:*:222222222222'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-2:111111111111:MyQueue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      { resource: 'arn:aws:sqs:*:222222222222', matches: false, errors: ['Account does not match'] }
+    ]
+  },
+  {
+    name: 'scp: short ARN with wildcard in middle rejected (5 seg, deny)',
+    policyType: 'scp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs:*:222222222222'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-2:111111111111:MyQueue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:*:222222222222',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'resource: short ARN without wildcard does not expand (4 seg, region mismatch)',
+    policyType: 'resource',
+    resourceStatements: ['arn:aws:sqs:us-east-1'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-2:111111111111:MyQueue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1', matches: false }]
+  },
+  {
+    name: 'resource: short ARN without wildcard does not expand (5 seg, account mismatch)',
+    policyType: 'resource',
+    resourceStatements: ['arn:aws:sqs:us-east-2:222222222222'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-2:111111111111:MyQueue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-2:222222222222', matches: false }]
+  },
+
+  // ── Middle-wildcard tests: PM1 arn:aws:sqs:*:111111111111 (5 seg, wildcard in region) ──
+  {
+    name: 'identity: PM1 arn:aws:sqs:*:111111111111 matches Q (wildcard in middle)',
+    policyType: 'identity',
+    resourceStatements: ['arn:aws:sqs:*:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111', matches: true }]
+  },
+  {
+    name: 'session: PM1 arn:aws:sqs:*:111111111111 matches Q (wildcard in middle)',
+    policyType: 'session',
+    resourceStatements: ['arn:aws:sqs:*:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111', matches: true }]
+  },
+  {
+    name: 'pb: PM1 arn:aws:sqs:*:111111111111 matches Q (wildcard in middle)',
+    policyType: 'pb',
+    resourceStatements: ['arn:aws:sqs:*:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111', matches: true }]
+  },
+  {
+    name: 'resource: PM1 arn:aws:sqs:*:111111111111 matches Q (wildcard in middle)',
+    policyType: 'resource',
+    resourceStatements: ['arn:aws:sqs:*:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111', matches: true }]
+  },
+  {
+    name: 'vpce: PM1 arn:aws:sqs:*:111111111111 matches Q (wildcard in middle)',
+    policyType: 'vpce',
+    resourceStatements: ['arn:aws:sqs:*:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111', matches: true }]
+  },
+  {
+    name: 'scp: PM1 arn:aws:sqs:*:111111111111 rejected (wildcard in middle, not at end)',
+    policyType: 'scp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs:*:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:*:111111111111',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'rcp: PM1 arn:aws:sqs:*:111111111111 rejected (wildcard in middle)',
+    policyType: 'rcp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs:*:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:*:111111111111',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+
+  // ── Middle-wildcard tests: PM2 arn:aws:sqs:*:111111111111:test-queue (6 seg, full ARN) ──
+  {
+    name: 'identity: PM2 arn:aws:sqs:*:111111111111:test-queue matches Q (full ARN, wildcard in region)',
+    policyType: 'identity',
+    resourceStatements: ['arn:aws:sqs:*:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111:test-queue', matches: true }]
+  },
+  {
+    name: 'session: PM2 arn:aws:sqs:*:111111111111:test-queue matches Q (full ARN, wildcard in region)',
+    policyType: 'session',
+    resourceStatements: ['arn:aws:sqs:*:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111:test-queue', matches: true }]
+  },
+  {
+    name: 'pb: PM2 arn:aws:sqs:*:111111111111:test-queue matches Q (full ARN, wildcard in region)',
+    policyType: 'pb',
+    resourceStatements: ['arn:aws:sqs:*:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111:test-queue', matches: true }]
+  },
+  {
+    name: 'resource: PM2 arn:aws:sqs:*:111111111111:test-queue matches Q (full ARN, wildcard in region)',
+    policyType: 'resource',
+    resourceStatements: ['arn:aws:sqs:*:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111:test-queue', matches: true }]
+  },
+  {
+    name: 'vpce: PM2 arn:aws:sqs:*:111111111111:test-queue matches Q (full ARN, wildcard in region)',
+    policyType: 'vpce',
+    resourceStatements: ['arn:aws:sqs:*:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111:test-queue', matches: true }]
+  },
+  {
+    name: 'scp: PM2 arn:aws:sqs:*:111111111111:test-queue matches Q as deny (full ARN, wildcard in region)',
+    policyType: 'scp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs:*:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111:test-queue', matches: true }]
+  },
+  {
+    name: 'rcp: PM2 arn:aws:sqs:*:111111111111:test-queue matches Q as deny (full ARN, wildcard in region)',
+    policyType: 'rcp',
+    effect: 'Deny',
+    resourceStatements: ['arn:aws:sqs:*:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111:test-queue', matches: true }]
   }
 ]
 
@@ -829,7 +1903,8 @@ describe('requestMatchesResources', () => {
         request,
         (policy.statements()[0] as ResourceStatement).resources(),
         rt.resourceStatements ? 'Resource' : 'NotResource',
-        rt.effect ?? 'Allow'
+        rt.effect ?? 'Allow',
+        rt.policyType ?? 'identity'
       )
 
       //Then the request should match the resource statement
@@ -1168,6 +2243,1077 @@ const notResourceTests: ResourceTest[] = [
         matches: false
       }
     ]
+  },
+
+  // ── Short ARN tests: Identity Policy NotResource (Allow) ──────────────
+  {
+    name: 'identity NotResource: P1 arn:aws:sqs does not match Q (inverted from match)',
+    policyType: 'identity',
+    notResourceStatements: ['arn:aws:sqs'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs', matches: false }]
+  },
+  {
+    name: 'identity NotResource: P2 arn:aws:sqs:us-east-1 does not match Q (inverted from match)',
+    policyType: 'identity',
+    notResourceStatements: ['arn:aws:sqs:us-east-1'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1', matches: false }]
+  },
+  {
+    name: 'identity NotResource: P3 arn:aws:sqs:us-east-1:111111111111 does not match Q (inverted from match)',
+    policyType: 'identity',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111', matches: false }]
+  },
+  {
+    name: 'identity NotResource: P4 arn:aws:sqs:* does not match Q (inverted from match)',
+    policyType: 'identity',
+    notResourceStatements: ['arn:aws:sqs:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:*', matches: false }]
+  },
+  {
+    name: 'identity NotResource: P5 arn:aws:sqs:us-east-1:* does not match Q (inverted from match)',
+    policyType: 'identity',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:*', matches: false }]
+  },
+  {
+    name: 'identity NotResource: P6 arn:aws:sqs:us-east-1:111111111111:* does not match Q (inverted from match)',
+    policyType: 'identity',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:*', matches: false }]
+  },
+  {
+    name: 'identity NotResource: P7 arn:aws:sqs:us-west-2 does not match Q (expanded, region mismatch)',
+    policyType: 'identity',
+    notResourceStatements: ['arn:aws:sqs:us-west-2'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      { resource: 'arn:aws:sqs:us-west-2', matches: false, errors: ['Region does not match'] }
+    ]
+  },
+  {
+    name: 'identity NotResource: P8 arn:aws:sqs:us-east-1:222222222222 does not match Q (expanded, account mismatch)',
+    policyType: 'identity',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:222222222222'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-east-1:222222222222',
+        matches: false,
+        errors: ['Account does not match']
+      }
+    ]
+  },
+  {
+    name: 'identity NotResource: P9 arn:aws:sqs:us-east-1:111111111111:other-queue matches Q (inverted from no match)',
+    policyType: 'identity',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111:other-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:other-queue', matches: true }]
+  },
+  {
+    name: 'identity NotResource: P10 exact match Q does not match (inverted from match)',
+    policyType: 'identity',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue', matches: false }]
+  },
+
+  // ── Short ARN tests: Session Policy NotResource (Allow) ───────────────
+  {
+    name: 'session NotResource: P1 arn:aws:sqs does not match Q (inverted from match)',
+    policyType: 'session',
+    notResourceStatements: ['arn:aws:sqs'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs', matches: false }]
+  },
+  {
+    name: 'session NotResource: P2 arn:aws:sqs:us-east-1 does not match Q (inverted from match)',
+    policyType: 'session',
+    notResourceStatements: ['arn:aws:sqs:us-east-1'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1', matches: false }]
+  },
+  {
+    name: 'session NotResource: P3 arn:aws:sqs:us-east-1:111111111111 does not match Q (inverted from match)',
+    policyType: 'session',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111', matches: false }]
+  },
+  {
+    name: 'session NotResource: P4 arn:aws:sqs:* does not match Q (inverted from match)',
+    policyType: 'session',
+    notResourceStatements: ['arn:aws:sqs:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:*', matches: false }]
+  },
+  {
+    name: 'session NotResource: P5 arn:aws:sqs:us-east-1:* does not match Q (inverted from match)',
+    policyType: 'session',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:*', matches: false }]
+  },
+  {
+    name: 'session NotResource: P6 arn:aws:sqs:us-east-1:111111111111:* does not match Q (inverted from match)',
+    policyType: 'session',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:*', matches: false }]
+  },
+  {
+    name: 'session NotResource: P7 arn:aws:sqs:us-west-2 does not match Q (expanded, region mismatch)',
+    policyType: 'session',
+    notResourceStatements: ['arn:aws:sqs:us-west-2'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      { resource: 'arn:aws:sqs:us-west-2', matches: false, errors: ['Region does not match'] }
+    ]
+  },
+  {
+    name: 'session NotResource: P8 arn:aws:sqs:us-east-1:222222222222 does not match Q (expanded, account mismatch)',
+    policyType: 'session',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:222222222222'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-east-1:222222222222',
+        matches: false,
+        errors: ['Account does not match']
+      }
+    ]
+  },
+  {
+    name: 'session NotResource: P9 arn:aws:sqs:us-east-1:111111111111:other-queue matches Q (inverted from no match)',
+    policyType: 'session',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111:other-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:other-queue', matches: true }]
+  },
+  {
+    name: 'session NotResource: P10 exact match Q does not match (inverted from match)',
+    policyType: 'session',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue', matches: false }]
+  },
+
+  // ── Short ARN tests: Permission Boundary NotResource (Allow) ──────────
+  {
+    name: 'pb NotResource: P1 arn:aws:sqs does not match Q (inverted from match)',
+    policyType: 'pb',
+    notResourceStatements: ['arn:aws:sqs'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs', matches: false }]
+  },
+  {
+    name: 'pb NotResource: P2 arn:aws:sqs:us-east-1 does not match Q (inverted from match)',
+    policyType: 'pb',
+    notResourceStatements: ['arn:aws:sqs:us-east-1'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1', matches: false }]
+  },
+  {
+    name: 'pb NotResource: P3 arn:aws:sqs:us-east-1:111111111111 does not match Q (inverted from match)',
+    policyType: 'pb',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111', matches: false }]
+  },
+  {
+    name: 'pb NotResource: P4 arn:aws:sqs:* does not match Q (inverted from match)',
+    policyType: 'pb',
+    notResourceStatements: ['arn:aws:sqs:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:*', matches: false }]
+  },
+  {
+    name: 'pb NotResource: P5 arn:aws:sqs:us-east-1:* does not match Q (inverted from match)',
+    policyType: 'pb',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:*', matches: false }]
+  },
+  {
+    name: 'pb NotResource: P6 arn:aws:sqs:us-east-1:111111111111:* does not match Q (inverted from match)',
+    policyType: 'pb',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:*', matches: false }]
+  },
+  {
+    name: 'pb NotResource: P7 arn:aws:sqs:us-west-2 does not match Q (expanded, region mismatch)',
+    policyType: 'pb',
+    notResourceStatements: ['arn:aws:sqs:us-west-2'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      { resource: 'arn:aws:sqs:us-west-2', matches: false, errors: ['Region does not match'] }
+    ]
+  },
+  {
+    name: 'pb NotResource: P8 arn:aws:sqs:us-east-1:222222222222 does not match Q (expanded, account mismatch)',
+    policyType: 'pb',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:222222222222'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-east-1:222222222222',
+        matches: false,
+        errors: ['Account does not match']
+      }
+    ]
+  },
+  {
+    name: 'pb NotResource: P9 arn:aws:sqs:us-east-1:111111111111:other-queue matches Q (inverted from no match)',
+    policyType: 'pb',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111:other-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:other-queue', matches: true }]
+  },
+  {
+    name: 'pb NotResource: P10 exact match Q does not match (inverted from match)',
+    policyType: 'pb',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue', matches: false }]
+  },
+
+  // ── Short ARN tests: Resource Policy NotResource (Allow) ──────────────
+  {
+    name: 'resource NotResource: P1 arn:aws:sqs matches Q (inverted from no match)',
+    policyType: 'resource',
+    notResourceStatements: ['arn:aws:sqs'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs', matches: true }]
+  },
+  {
+    name: 'resource NotResource: P2 arn:aws:sqs:us-east-1 matches Q (inverted from no match)',
+    policyType: 'resource',
+    notResourceStatements: ['arn:aws:sqs:us-east-1'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1', matches: true }]
+  },
+  {
+    name: 'resource NotResource: P3 arn:aws:sqs:us-east-1:111111111111 matches Q (inverted from no match)',
+    policyType: 'resource',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111', matches: true }]
+  },
+  {
+    name: 'resource NotResource: P4 arn:aws:sqs:* does not match Q (inverted from match)',
+    policyType: 'resource',
+    notResourceStatements: ['arn:aws:sqs:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:*', matches: false }]
+  },
+  {
+    name: 'resource NotResource: P5 arn:aws:sqs:us-east-1:* does not match Q (inverted from match)',
+    policyType: 'resource',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:*', matches: false }]
+  },
+  {
+    name: 'resource NotResource: P6 arn:aws:sqs:us-east-1:111111111111:* does not match Q (inverted from match)',
+    policyType: 'resource',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:*', matches: false }]
+  },
+  {
+    name: 'resource NotResource: P7 arn:aws:sqs:us-west-2 matches Q (inverted from no match)',
+    policyType: 'resource',
+    notResourceStatements: ['arn:aws:sqs:us-west-2'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-west-2', matches: true }]
+  },
+  {
+    name: 'resource NotResource: P8 arn:aws:sqs:us-east-1:222222222222 matches Q (inverted from no match)',
+    policyType: 'resource',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:222222222222'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:222222222222', matches: true }]
+  },
+  {
+    name: 'resource NotResource: P9 arn:aws:sqs:us-east-1:111111111111:other-queue matches Q (inverted from no match)',
+    policyType: 'resource',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111:other-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:other-queue', matches: true }]
+  },
+  {
+    name: 'resource NotResource: P10 exact match Q does not match (inverted from match)',
+    policyType: 'resource',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue', matches: false }]
+  },
+
+  // ── Short ARN tests: SCP NotResource (Deny) ──────────────────────────
+  {
+    name: 'scp NotResource: P1 arn:aws:sqs rejected (errors not inverted)',
+    policyType: 'scp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'scp NotResource: P2 arn:aws:sqs:us-east-1 rejected (errors not inverted)',
+    policyType: 'scp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs:us-east-1'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-east-1',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'scp NotResource: P3 arn:aws:sqs:us-east-1:111111111111 rejected (errors not inverted)',
+    policyType: 'scp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-east-1:111111111111',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'scp NotResource: P4 arn:aws:sqs:* matches Q (inverted from match)',
+    policyType: 'scp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:*', matches: false }]
+  },
+  {
+    name: 'scp NotResource: P5 arn:aws:sqs:us-east-1:* matches Q (inverted from match)',
+    policyType: 'scp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:*', matches: false }]
+  },
+  {
+    name: 'scp NotResource: P6 arn:aws:sqs:us-east-1:111111111111:* matches Q (inverted from match)',
+    policyType: 'scp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:*', matches: false }]
+  },
+  {
+    name: 'scp NotResource: P7 arn:aws:sqs:us-west-2 rejected (errors not inverted)',
+    policyType: 'scp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs:us-west-2'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-west-2',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'scp NotResource: P8 arn:aws:sqs:us-east-1:222222222222 rejected (errors not inverted)',
+    policyType: 'scp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:222222222222'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-east-1:222222222222',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'scp NotResource: P9 arn:aws:sqs:us-east-1:111111111111:other-queue matches Q (inverted from no match)',
+    policyType: 'scp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111:other-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:other-queue', matches: true }]
+  },
+  {
+    name: 'scp NotResource: P10 exact match Q does not match (inverted from match)',
+    policyType: 'scp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue', matches: false }]
+  },
+
+  // ── Short ARN tests: RCP NotResource (Deny) ──────────────────────────
+  {
+    name: 'rcp NotResource: P1 arn:aws:sqs rejected (errors not inverted)',
+    policyType: 'rcp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'rcp NotResource: P2 arn:aws:sqs:us-east-1 rejected (errors not inverted)',
+    policyType: 'rcp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs:us-east-1'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-east-1',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'rcp NotResource: P3 arn:aws:sqs:us-east-1:111111111111 rejected (errors not inverted)',
+    policyType: 'rcp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-east-1:111111111111',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'rcp NotResource: P4 arn:aws:sqs:* matches Q (inverted from no match)',
+    policyType: 'rcp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:*',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'rcp NotResource: P5 arn:aws:sqs:us-east-1:* rejected (errors not inverted)',
+    policyType: 'rcp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-east-1:*',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'rcp NotResource: P6 arn:aws:sqs:us-east-1:111111111111:* does not match Q (inverted from match)',
+    policyType: 'rcp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111:*'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:*', matches: false }]
+  },
+  {
+    name: 'rcp NotResource: P7 arn:aws:sqs:us-west-2 rejected (errors not inverted)',
+    policyType: 'rcp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs:us-west-2'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-west-2',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'rcp NotResource: P8 arn:aws:sqs:us-east-1:222222222222 rejected (errors not inverted)',
+    policyType: 'rcp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:222222222222'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-east-1:222222222222',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'rcp NotResource: P9 arn:aws:sqs:us-east-1:111111111111:other-queue matches Q (inverted from no match)',
+    policyType: 'rcp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111:other-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:other-queue', matches: true }]
+  },
+  {
+    name: 'rcp NotResource: P10 exact match Q does not match (inverted from match)',
+    policyType: 'rcp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs:us-east-1:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue', matches: false }]
+  },
+
+  // ── Short ARN negative NotResource tests: expanded but explicit segments mismatch ──
+  {
+    name: 'identity NotResource: short ARN region mismatch after expansion (4 seg, errors not inverted)',
+    policyType: 'identity',
+    notResourceStatements: ['arn:aws:sqs:us-east-1'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-2:111111111111:MyQueue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      { resource: 'arn:aws:sqs:us-east-1', matches: false, errors: ['Region does not match'] }
+    ]
+  },
+  {
+    name: 'identity NotResource: short ARN account mismatch after expansion (5 seg, errors not inverted)',
+    policyType: 'identity',
+    notResourceStatements: ['arn:aws:sqs:us-east-2:222222222222'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-2:111111111111:MyQueue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:us-east-2:222222222222',
+        matches: false,
+        errors: ['Account does not match']
+      }
+    ]
+  },
+  {
+    name: 'identity NotResource: short ARN service mismatch after expansion (3 seg, errors not inverted)',
+    policyType: 'identity',
+    notResourceStatements: ['arn:aws:ec2'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-2:111111111111:MyQueue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:ec2', matches: false, errors: ['Service does not match'] }]
+  },
+  {
+    name: 'identity NotResource: short ARN with wildcard region mismatch in account (5 seg, errors not inverted)',
+    policyType: 'identity',
+    notResourceStatements: ['arn:aws:sqs:*:222222222222'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-2:111111111111:MyQueue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      { resource: 'arn:aws:sqs:*:222222222222', matches: false, errors: ['Account does not match'] }
+    ]
+  },
+  {
+    name: 'resource NotResource: short ARN with wildcard region mismatch in account (5 seg, errors not inverted)',
+    policyType: 'resource',
+    notResourceStatements: ['arn:aws:sqs:*:222222222222'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-2:111111111111:MyQueue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      { resource: 'arn:aws:sqs:*:222222222222', matches: false, errors: ['Account does not match'] }
+    ]
+  },
+  {
+    name: 'scp NotResource: short ARN with wildcard in middle rejected (5 seg, errors not inverted)',
+    policyType: 'scp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs:*:222222222222'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-2:111111111111:MyQueue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:*:222222222222',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'resource NotResource: short ARN without wildcard does not expand (4 seg, inverted to match)',
+    policyType: 'resource',
+    notResourceStatements: ['arn:aws:sqs:us-east-1'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-2:111111111111:MyQueue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-1', matches: true }]
+  },
+  {
+    name: 'resource NotResource: short ARN without wildcard does not expand (5 seg, inverted to match)',
+    policyType: 'resource',
+    notResourceStatements: ['arn:aws:sqs:us-east-2:222222222222'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-2:111111111111:MyQueue',
+      accountId: '111111111111'
+    },
+    expectMatch: true,
+    explains: [{ resource: 'arn:aws:sqs:us-east-2:222222222222', matches: true }]
+  },
+
+  // ── Middle-wildcard NotResource tests: PM1 arn:aws:sqs:*:111111111111 (5 seg) ──
+  {
+    name: 'identity NotResource: PM1 arn:aws:sqs:*:111111111111 does not match Q (inverted from match)',
+    policyType: 'identity',
+    notResourceStatements: ['arn:aws:sqs:*:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111', matches: false }]
+  },
+  {
+    name: 'session NotResource: PM1 arn:aws:sqs:*:111111111111 does not match Q (inverted from match)',
+    policyType: 'session',
+    notResourceStatements: ['arn:aws:sqs:*:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111', matches: false }]
+  },
+  {
+    name: 'pb NotResource: PM1 arn:aws:sqs:*:111111111111 does not match Q (inverted from match)',
+    policyType: 'pb',
+    notResourceStatements: ['arn:aws:sqs:*:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111', matches: false }]
+  },
+  {
+    name: 'resource NotResource: PM1 arn:aws:sqs:*:111111111111 does not match Q (inverted from match)',
+    policyType: 'resource',
+    notResourceStatements: ['arn:aws:sqs:*:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111', matches: false }]
+  },
+  {
+    name: 'vpce NotResource: PM1 arn:aws:sqs:*:111111111111 does not match Q (inverted from match)',
+    policyType: 'vpce',
+    notResourceStatements: ['arn:aws:sqs:*:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111', matches: false }]
+  },
+  {
+    name: 'scp NotResource: PM1 arn:aws:sqs:*:111111111111 rejected (wildcard in middle, not at end)',
+    policyType: 'scp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs:*:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:*:111111111111',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+  {
+    name: 'rcp NotResource: PM1 arn:aws:sqs:*:111111111111 rejected (errors not inverted)',
+    policyType: 'rcp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs:*:111111111111'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [
+      {
+        resource: 'arn:aws:sqs:*:111111111111',
+        matches: false,
+        errors: ['Policy resource ARN is not valid for this policy type']
+      }
+    ]
+  },
+
+  // ── Middle-wildcard NotResource tests: PM2 arn:aws:sqs:*:111111111111:test-queue (6 seg) ──
+  {
+    name: 'identity NotResource: PM2 arn:aws:sqs:*:111111111111:test-queue does not match Q (inverted from match)',
+    policyType: 'identity',
+    notResourceStatements: ['arn:aws:sqs:*:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111:test-queue', matches: false }]
+  },
+  {
+    name: 'session NotResource: PM2 arn:aws:sqs:*:111111111111:test-queue does not match Q (inverted from match)',
+    policyType: 'session',
+    notResourceStatements: ['arn:aws:sqs:*:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111:test-queue', matches: false }]
+  },
+  {
+    name: 'pb NotResource: PM2 arn:aws:sqs:*:111111111111:test-queue does not match Q (inverted from match)',
+    policyType: 'pb',
+    notResourceStatements: ['arn:aws:sqs:*:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111:test-queue', matches: false }]
+  },
+  {
+    name: 'resource NotResource: PM2 arn:aws:sqs:*:111111111111:test-queue does not match Q (inverted from match)',
+    policyType: 'resource',
+    notResourceStatements: ['arn:aws:sqs:*:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111:test-queue', matches: false }]
+  },
+  {
+    name: 'vpce NotResource: PM2 arn:aws:sqs:*:111111111111:test-queue does not match Q (inverted from match)',
+    policyType: 'vpce',
+    notResourceStatements: ['arn:aws:sqs:*:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111:test-queue', matches: false }]
+  },
+  {
+    name: 'scp NotResource: PM2 arn:aws:sqs:*:111111111111:test-queue does not match Q (inverted from match)',
+    policyType: 'scp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs:*:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111:test-queue', matches: false }]
+  },
+  {
+    name: 'rcp NotResource: PM2 arn:aws:sqs:*:111111111111:test-queue does not match Q (inverted from match)',
+    policyType: 'rcp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:sqs:*:111111111111:test-queue'],
+    resource: {
+      resource: 'arn:aws:sqs:us-east-1:111111111111:test-queue',
+      accountId: '111111111111'
+    },
+    expectMatch: false,
+    explains: [{ resource: 'arn:aws:sqs:*:111111111111:test-queue', matches: false }]
   }
 ]
 
@@ -1197,7 +3343,8 @@ describe('requestMatchesNotResources', () => {
         request,
         (policy.statements()[0] as NotResourceStatement).notResources(),
         rt.resourceStatements ? 'Resource' : 'NotResource',
-        rt.effect ?? 'Allow'
+        rt.effect ?? 'Allow',
+        rt.policyType ?? 'identity'
       )
 
       //Then the request should match the resource statement

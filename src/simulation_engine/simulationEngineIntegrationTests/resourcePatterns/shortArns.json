@@ -1,0 +1,648 @@
+[
+  {
+    "name": "short ARN arn:aws:sqs (3 seg) expands and matches wildcard request",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "short-arn-policy",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "sqs:SendMessage",
+                "Resource": "arn:aws:sqs"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "sqs:SendMessage",
+        "resource": {
+          "resource": "*",
+          "accountId": "111111111111"
+        },
+        "principal": "arn:aws:iam::111111111111:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "expected": {
+      "resultType": "wildcard",
+      "results": [
+        {
+          "resourceType": "queue",
+          "resourcePattern": "arn:aws:sqs",
+          "result": "Allowed"
+        }
+      ],
+      "overallResult": "Allowed"
+    }
+  },
+  {
+    "name": "short ARN arn:aws:sqs (3 seg) expands and matches wildcard request",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "short-arn-policy",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "sqs:SendMessage",
+                "Resource": "arn:aws:sqs"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "sqs:SendMessage",
+        "resource": {
+          "resource": "arn:aws:sqs:us-east-1:111111111111:*",
+          "accountId": "111111111111"
+        },
+        "principal": "arn:aws:iam::111111111111:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "expected": {
+      "resultType": "wildcard",
+      "results": [
+        {
+          "resourceType": "queue",
+          "resourcePattern": "arn:aws:sqs",
+          "result": "Allowed"
+        }
+      ],
+      "overallResult": "Allowed"
+    }
+  },
+  {
+    "name": "short ARN arn:aws:sqs:us-east-1 (4 seg) expands and matches wildcard request",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "short-arn-policy",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "sqs:SendMessage",
+                "Resource": "arn:aws:sqs:us-east-1"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "sqs:SendMessage",
+        "resource": {
+          "resource": "arn:aws:sqs:us-east-1:111111111111:*",
+          "accountId": "111111111111"
+        },
+        "principal": "arn:aws:iam::111111111111:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "expected": {
+      "resultType": "wildcard",
+      "results": [
+        {
+          "resourceType": "queue",
+          "resourcePattern": "arn:aws:sqs:us-east-1",
+          "result": "Allowed"
+        }
+      ],
+      "overallResult": "Allowed"
+    }
+  },
+  {
+    "name": "short ARN arn:aws:sqs:us-east-1:111111111111 (5 seg) expands and matches wildcard request",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "short-arn-policy",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "sqs:SendMessage",
+                "Resource": "arn:aws:sqs:us-east-1:111111111111"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "sqs:SendMessage",
+        "resource": {
+          "resource": "arn:aws:sqs:us-east-1:111111111111:*",
+          "accountId": "111111111111"
+        },
+        "principal": "arn:aws:iam::111111111111:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "expected": {
+      "resultType": "wildcard",
+      "results": [
+        {
+          "resourceType": "queue",
+          "resourcePattern": "arn:aws:sqs:us-east-1:111111111111",
+          "result": "Allowed"
+        }
+      ],
+      "overallResult": "Allowed"
+    }
+  },
+  {
+    "name": "short ARN arn:aws:sqs:* (4 seg, wildcard) expands and matches wildcard request",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "short-arn-policy",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "sqs:SendMessage",
+                "Resource": "arn:aws:sqs:*"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "sqs:SendMessage",
+        "resource": {
+          "resource": "arn:aws:sqs:us-east-1:111111111111:*",
+          "accountId": "111111111111"
+        },
+        "principal": "arn:aws:iam::111111111111:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "expected": {
+      "resultType": "wildcard",
+      "results": [
+        {
+          "resourceType": "queue",
+          "resourcePattern": "arn:aws:sqs:*",
+          "result": "Allowed"
+        }
+      ],
+      "overallResult": "Allowed"
+    }
+  },
+  {
+    "name": "short ARN arn:aws:sqs:us-west-2 (4 seg, region mismatch) does not match wildcard request",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "short-arn-policy",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "sqs:SendMessage",
+                "Resource": "arn:aws:sqs:us-west-2"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "sqs:SendMessage",
+        "resource": {
+          "resource": "arn:aws:sqs:us-east-1:111111111111:*",
+          "accountId": "111111111111"
+        },
+        "principal": "arn:aws:iam::111111111111:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "expected": {
+      "resultType": "wildcard",
+      "results": [],
+      "overallResult": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "short ARN arn:aws:sqs:us-east-1:222222222222 (5 seg, account mismatch) does not match wildcard request",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "short-arn-policy",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "sqs:SendMessage",
+                "Resource": "arn:aws:sqs:us-east-1:222222222222"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "sqs:SendMessage",
+        "resource": {
+          "resource": "arn:aws:sqs:us-east-1:111111111111:*",
+          "accountId": "111111111111"
+        },
+        "principal": "arn:aws:iam::111111111111:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "expected": {
+      "resultType": "wildcard",
+      "results": [],
+      "overallResult": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "full ARN arn:aws:sqs:us-east-1:111111111111:specific-queue matches wildcard request",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "full-arn-policy",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "sqs:SendMessage",
+                "Resource": "arn:aws:sqs:us-east-1:111111111111:specific-queue"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "sqs:SendMessage",
+        "resource": {
+          "resource": "arn:aws:sqs:us-east-1:111111111111:*",
+          "accountId": "111111111111"
+        },
+        "principal": "arn:aws:iam::111111111111:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "expected": {
+      "resultType": "wildcard",
+      "results": [
+        {
+          "resourceType": "queue",
+          "resourcePattern": "arn:aws:sqs:us-east-1:111111111111:specific-queue",
+          "result": "Allowed"
+        }
+      ],
+      "overallResult": "Allowed"
+    }
+  },
+  {
+    "name": "short ARN arn:aws:ec2 (3 seg, service mismatch) does not match wildcard request",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "wrong-service-policy",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "sqs:SendMessage",
+                "Resource": "arn:aws:ec2"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "sqs:SendMessage",
+        "resource": {
+          "resource": "arn:aws:sqs:us-east-1:111111111111:*",
+          "accountId": "111111111111"
+        },
+        "principal": "arn:aws:iam::111111111111:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "expected": {
+      "resultType": "wildcard",
+      "results": [],
+      "overallResult": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "cross-service short ARN arn:aws:kms:* with wildcard action does not match wildcard sqs request",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "kms-wildcard-policy",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "arn:aws:kms:*"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "sqs:SendMessage",
+        "resource": {
+          "resource": "arn:aws:sqs:us-east-1:111111111111:*",
+          "accountId": "111111111111"
+        },
+        "principal": "arn:aws:iam::111111111111:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "expected": {
+      "resultType": "wildcard",
+      "results": [],
+      "overallResult": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "short Deny ARN arn:aws:sqs (3 seg) explicitly denies wildcard request",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "allow-and-deny",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "sqs:SendMessage",
+                "Resource": "arn:aws:sqs:us-east-1:111111111111:*"
+              },
+              {
+                "Effect": "Deny",
+                "Action": "sqs:SendMessage",
+                "Resource": "arn:aws:sqs"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "sqs:SendMessage",
+        "resource": {
+          "resource": "arn:aws:sqs:us-east-1:111111111111:*",
+          "accountId": "111111111111"
+        },
+        "principal": "arn:aws:iam::111111111111:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "expected": {
+      "resultType": "wildcard",
+      "results": [
+        {
+          "resourceType": "queue",
+          "resourcePattern": "arn:aws:sqs:us-east-1:111111111111:*",
+          "result": "ExplicitlyDenied"
+        }
+      ],
+      "overallResult": "ExplicitlyDenied"
+    }
+  },
+  {
+    "name": "short Deny ARN arn:aws:sqs:us-east-1 (4 seg, region match) explicitly denies wildcard request",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "allow-and-deny",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "sqs:SendMessage",
+                "Resource": "arn:aws:sqs:us-east-1:111111111111:*"
+              },
+              {
+                "Effect": "Deny",
+                "Action": "sqs:SendMessage",
+                "Resource": "arn:aws:sqs:us-east-1"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "sqs:SendMessage",
+        "resource": {
+          "resource": "arn:aws:sqs:us-east-1:111111111111:*",
+          "accountId": "111111111111"
+        },
+        "principal": "arn:aws:iam::111111111111:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "expected": {
+      "resultType": "wildcard",
+      "results": [
+        {
+          "resourceType": "queue",
+          "resourcePattern": "arn:aws:sqs:us-east-1:111111111111:*",
+          "result": "ExplicitlyDenied"
+        }
+      ],
+      "overallResult": "ExplicitlyDenied"
+    }
+  },
+  {
+    "name": "short Deny ARN arn:aws:sqs:us-west-2 (4 seg, region mismatch) does not deny wildcard request",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "allow-and-deny",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "sqs:SendMessage",
+                "Resource": "arn:aws:sqs:us-east-1:111111111111:*"
+              },
+              {
+                "Effect": "Deny",
+                "Action": "sqs:SendMessage",
+                "Resource": "arn:aws:sqs:us-west-2"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "sqs:SendMessage",
+        "resource": {
+          "resource": "arn:aws:sqs:us-east-1:111111111111:*",
+          "accountId": "111111111111"
+        },
+        "principal": "arn:aws:iam::111111111111:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "expected": {
+      "resultType": "wildcard",
+      "results": [
+        {
+          "resourceType": "queue",
+          "resourcePattern": "arn:aws:sqs:us-east-1:111111111111:*",
+          "result": "Allowed"
+        }
+      ],
+      "overallResult": "Allowed"
+    }
+  },
+  {
+    "name": "short Deny ARN arn:aws:sqs:* (4 seg, wildcard) explicitly denies wildcard request",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "allow-and-deny",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "sqs:SendMessage",
+                "Resource": "arn:aws:sqs:us-east-1:111111111111:*"
+              },
+              {
+                "Effect": "Deny",
+                "Action": "sqs:SendMessage",
+                "Resource": "arn:aws:sqs:*"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "sqs:SendMessage",
+        "resource": {
+          "resource": "arn:aws:sqs:us-east-1:111111111111:*",
+          "accountId": "111111111111"
+        },
+        "principal": "arn:aws:iam::111111111111:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "expected": {
+      "resultType": "wildcard",
+      "results": [
+        {
+          "resourceType": "queue",
+          "resourcePattern": "arn:aws:sqs:us-east-1:111111111111:*",
+          "result": "ExplicitlyDenied"
+        }
+      ],
+      "overallResult": "ExplicitlyDenied"
+    }
+  },
+  {
+    "name": "cross-service short Deny ARN arn:aws:kms:* does not deny wildcard sqs request",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "allow-and-deny",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "sqs:SendMessage",
+                "Resource": "arn:aws:sqs:us-east-1:111111111111:*"
+              },
+              {
+                "Effect": "Deny",
+                "Action": "*",
+                "Resource": "arn:aws:kms:*"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "sqs:SendMessage",
+        "resource": {
+          "resource": "arn:aws:sqs:us-east-1:111111111111:*",
+          "accountId": "111111111111"
+        },
+        "principal": "arn:aws:iam::111111111111:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "expected": {
+      "resultType": "wildcard",
+      "results": [
+        {
+          "resourceType": "queue",
+          "resourcePattern": "arn:aws:sqs:us-east-1:111111111111:*",
+          "result": "Allowed"
+        }
+      ],
+      "overallResult": "Allowed"
+    }
+  }
+]

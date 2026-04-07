@@ -18,6 +18,7 @@ import {
   type PrincipalMatchResult,
   requestMatchesStatementPrincipals
 } from '../principal/principal.js'
+import { type PolicyType } from '../policyType.js'
 import { type AwsRequest } from '../request/request.js'
 import { requestMatchesStatementResources } from '../resource/resource.js'
 import { DefaultServiceAuthorizer } from '../services/DefaultServiceAuthorizer.js'
@@ -147,13 +148,19 @@ export function authorize(request: AuthorizationRequest): RequestAnalysis {
   const simulationParameters = request.simulationParameters
 
   const sessionAnalysis = request.sessionPolicy
-    ? analyzeIdentityPolicies([request.sessionPolicy], request.request, simulationParameters)
+    ? analyzeIdentityPolicies(
+        [request.sessionPolicy],
+        request.request,
+        simulationParameters,
+        'session'
+      )
     : undefined
 
   const identityAnalysis = analyzeIdentityPolicies(
     request.identityPolicies,
     request.request,
-    simulationParameters
+    simulationParameters,
+    'identity'
   )
 
   const permissionBoundaryAnalysis = analyzePermissionBoundaryPolicies(
@@ -165,13 +172,15 @@ export function authorize(request: AuthorizationRequest): RequestAnalysis {
   const scpAnalysis = analyzeControlPolicies(
     request.serviceControlPolicies,
     request.request,
-    simulationParameters
+    simulationParameters,
+    'scp'
   ) as ScpAnalysis
 
   const rcpAnalysis = analyzeControlPolicies(
     request.resourceControlPolicies,
     request.request,
-    simulationParameters
+    simulationParameters,
+    'rcp'
   ) as RcpAnalysis
 
   const resourceAnalysis = analyzeResourcePolicy(
@@ -248,7 +257,8 @@ export function getServiceAuthorizer(request: AuthorizationRequest): ServiceAuth
 export function analyzeIdentityPolicies(
   identityPolicies: PolicyWithName[],
   request: AwsRequest,
-  simulationParameters: SimulationParameters
+  simulationParameters: SimulationParameters,
+  policyType: PolicyType
 ): IdentityAnalysis {
   const identityAnalysis: IdentityAnalysis = {
     result: 'ImplicitlyDenied',
@@ -261,7 +271,8 @@ export function analyzeIdentityPolicies(
     for (const statement of policy.statements()) {
       const { matches: resourceMatch, details: resourceDetails } = requestMatchesStatementResources(
         request,
-        statement
+        statement,
+        policyType
       )
       const { matches: actionMatch, details: actionDetails } = requestMatchesStatementActions(
         request,
@@ -340,7 +351,8 @@ export function analyzeIdentityPolicies(
 export function analyzeControlPolicies(
   controlPolicies: ControlPolicies[],
   request: AwsRequest,
-  simulationParameters: SimulationParameters
+  simulationParameters: SimulationParameters,
+  policyType: PolicyType
 ): ScpAnalysis | RcpAnalysis {
   const analysis: OuScpAnalysis[] = []
   for (const controlPolicy of controlPolicies) {
@@ -354,7 +366,7 @@ export function analyzeControlPolicies(
     for (const policy of controlPolicy.policies) {
       for (const statement of policy.statements()) {
         const { matches: resourceMatch, details: resourceDetails } =
-          requestMatchesStatementResources(request, statement)
+          requestMatchesStatementResources(request, statement, policyType)
         const { matches: actionMatch, details: actionDetails } = requestMatchesStatementActions(
           request,
           statement
@@ -469,7 +481,8 @@ export function analyzeResourcePolicy(
   for (const statement of resourcePolicy.statements()) {
     const { matches: resourceMatch, details: resourceDetails } = requestMatchesStatementResources(
       request,
-      statement
+      statement,
+      'resource'
     )
     const { matches: actionMatch, details: actionDetails } = requestMatchesStatementActions(
       request,
@@ -588,7 +601,7 @@ export function analyzePermissionBoundaryPolicies(
     return undefined
   }
 
-  return analyzeIdentityPolicies(permissionBoundaries, request, simulationParameters)
+  return analyzeIdentityPolicies(permissionBoundaries, request, simulationParameters, 'pb')
 }
 
 export function analyzeVpcEndpointPolicies(
@@ -599,7 +612,7 @@ export function analyzeVpcEndpointPolicies(
   if (!vpcEndPointPolicies || vpcEndPointPolicies.length === 0) {
     return undefined
   }
-  return analyzeIdentityPolicies(vpcEndPointPolicies, request, simulationParameters)
+  return analyzeIdentityPolicies(vpcEndPointPolicies, request, simulationParameters, 'vpce')
 }
 
 function makeStatementExplain(

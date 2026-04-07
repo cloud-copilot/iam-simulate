@@ -6,7 +6,7 @@ import {
   resourceStringMatchesResourceTypePattern
 } from '@cloud-copilot/iam-utils'
 import { type PolicyWithName } from '../core_engine/CoreSimulatorEngine.js'
-import { resourceArnsOverlap } from '../util/resourceStrings.js'
+import { expandShortArn, resourceArnsOverlap } from '../util/resourceStrings.js'
 
 /**
  * Extracts matching resource strings from a set of policies for a given action and resource pattern.
@@ -15,13 +15,15 @@ import { resourceArnsOverlap } from '../util/resourceStrings.js'
  * @param action The action to match against policy statements
  * @param resourceType The resource type to filter resource strings by
  * @param resourceArnPattern The resource ARN pattern to match against
+ * @param shouldExpandShortArns Whether to expand short ARNs (fewer than 6 segments) by padding with wildcards
  * @returns Array of unique resource strings that match the criteria
  */
 export function getMatchingResourceStringsForPolicies(
   policies: (PolicyWithName | undefined)[],
   action: string,
   resourceType: ResourceType,
-  resourceArnPattern: string
+  resourceArnPattern: string,
+  shouldExpandShortArns: boolean
 ): string[] {
   const resourceStrings = new Set<string>()
   for (const policy of policies) {
@@ -33,7 +35,8 @@ export function getMatchingResourceStringsForPolicies(
         statement,
         action,
         resourceType,
-        resourceArnPattern
+        resourceArnPattern,
+        shouldExpandShortArns
       )
       for (const rs of stmtResourceStrings) {
         resourceStrings.add(rs)
@@ -50,19 +53,22 @@ export function getMatchingResourceStringsForPolicies(
  * @param action The action to check if the statement allows
  * @param resourceType The resource type to filter by
  * @param resourceArnPattern The resource ARN pattern to match
+ * @param shouldExpandShortArns Whether to expand short ARNs (fewer than 6 segments) by padding with wildcards
  * @returns Array of resource strings from the statement, or empty array if statement doesn't allow the action
  */
 export function getResourceStringsFromStatement(
   statement: Statement,
   action: string,
   resourceType: ResourceType,
-  resourceArnPattern: string
+  resourceArnPattern: string,
+  shouldExpandShortArns: boolean
 ): string[] {
   if (statementAllowsAction(statement, action)) {
     return statementResourceStringsForResourceTypeAndPattern(
       statement,
       resourceType,
-      resourceArnPattern
+      resourceArnPattern,
+      shouldExpandShortArns
     )
   }
   return []
@@ -74,18 +80,23 @@ export function getResourceStringsFromStatement(
  * @param statement The policy statement to analyze
  * @param resourceType The resource type to filter by
  * @param resourceArnPattern The resource ARN pattern to check for overlap
+ * @param shouldExpandShortArns Whether to expand short ARNs (fewer than 6 segments) by padding with wildcards
  * @returns Array of matching resource strings, or ['*'] for certain NotResource cases
  */
 export function statementResourceStringsForResourceTypeAndPattern(
   statement: Statement,
   resourceType: ResourceType,
-  resourceArnPattern: string
+  resourceArnPattern: string,
+  shouldExpandShortArns: boolean
 ): string[] {
   if (statement.isResourceStatement() && statement.isAllow()) {
     const resourceStrings: string[] = []
     for (const stmtResource of statement.resources()) {
-      if (resourceStringMatchesResourceTypePattern(stmtResource.value(), resourceType.arn)) {
-        if (resourceArnsOverlap(resourceArnPattern, stmtResource.value())) {
+      const effectiveValue = shouldExpandShortArns
+        ? expandShortArn(stmtResource.value())
+        : stmtResource.value()
+      if (resourceStringMatchesResourceTypePattern(effectiveValue, resourceType.arn)) {
+        if (resourceArnsOverlap(resourceArnPattern, effectiveValue)) {
           resourceStrings.push(stmtResource.value())
         }
       }
@@ -95,10 +106,13 @@ export function statementResourceStringsForResourceTypeAndPattern(
 
   if (statement.isNotResourceStatement() && statement.isAllow()) {
     for (const stmtNotResource of statement.notResources()) {
+      const effectiveValue = shouldExpandShortArns
+        ? expandShortArn(stmtNotResource.value())
+        : stmtNotResource.value()
       // If any NotResource string equals or is a superset of the resource type pattern, then the statement does not apply to the string. Otherwise, it should return the string '*'
       if (
-        stmtNotResource.value() === resourceArnPattern ||
-        isResourceArnSuperset(stmtNotResource.value(), resourceArnPattern)
+        effectiveValue === resourceArnPattern ||
+        isResourceArnSuperset(effectiveValue, resourceArnPattern)
       ) {
         return []
       }

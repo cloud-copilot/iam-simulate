@@ -262,6 +262,87 @@ const resourceArnsOverlapTests: {
     patternA: 'arn:aws:execute-api:us-east-1:123456789012:api-id/prod/*',
     patternB: 'arn:aws:execute-api:us-east-1:123456789012:api-id/dev/GET/resource',
     overlaps: false
+  },
+
+  // Short ARN tests — ARNs with fewer than 6 colon-separated segments
+  // Missing trailing segments are treated as implicit wildcards
+  {
+    name: 'short_3seg_overlaps_wildcard_request',
+    patternA: 'arn:aws:sqs:us-east-1:111111111111:*',
+    patternB: 'arn:aws:sqs',
+    overlaps: true
+  },
+  {
+    name: 'short_4seg_overlaps_wildcard_request',
+    patternA: 'arn:aws:sqs:us-east-1:111111111111:*',
+    patternB: 'arn:aws:sqs:us-east-1',
+    overlaps: true
+  },
+  {
+    name: 'short_5seg_overlaps_wildcard_request',
+    patternA: 'arn:aws:sqs:us-east-1:111111111111:*',
+    patternB: 'arn:aws:sqs:us-east-1:111111111111',
+    overlaps: true
+  },
+  {
+    name: 'short_4seg_wildcard_overlaps_wildcard_request',
+    patternA: 'arn:aws:sqs:us-east-1:111111111111:*',
+    patternB: 'arn:aws:sqs:*',
+    overlaps: true
+  },
+  {
+    name: 'short_4seg_region_mismatch_no_overlap',
+    patternA: 'arn:aws:sqs:us-east-1:111111111111:*',
+    patternB: 'arn:aws:sqs:us-west-2',
+    overlaps: false
+  },
+  {
+    name: 'short_5seg_account_mismatch_no_overlap',
+    patternA: 'arn:aws:sqs:us-east-1:111111111111:*',
+    patternB: 'arn:aws:sqs:us-east-1:222222222222',
+    overlaps: false
+  },
+  {
+    name: 'short_3seg_service_mismatch_no_overlap',
+    patternA: 'arn:aws:sqs:us-east-1:111111111111:*',
+    patternB: 'arn:aws:ec2',
+    overlaps: false
+  },
+  {
+    name: 'short_5seg_middle_wildcard_overlaps',
+    patternA: 'arn:aws:sqs:us-east-1:111111111111:*',
+    patternB: 'arn:aws:sqs:*:111111111111',
+    overlaps: true
+  },
+  {
+    name: 'short_4seg_cross_service_no_overlap',
+    patternA: 'arn:aws:sqs:us-east-1:111111111111:*',
+    patternB: 'arn:aws:kms:*',
+    overlaps: false
+  },
+  {
+    name: 'both_short_same_service_overlap',
+    patternA: 'arn:aws:sqs:us-east-1',
+    patternB: 'arn:aws:sqs',
+    overlaps: true
+  },
+  {
+    name: 'both_short_different_service_no_overlap',
+    patternA: 'arn:aws:sqs',
+    patternB: 'arn:aws:ec2',
+    overlaps: false
+  },
+  {
+    name: 'short_against_full_literal_overlaps',
+    patternA: 'arn:aws:sqs:us-east-1:111111111111',
+    patternB: 'arn:aws:sqs:us-east-1:111111111111:MyQueue',
+    overlaps: true
+  },
+  {
+    name: 'short_against_full_literal_region_mismatch_no_overlap',
+    patternA: 'arn:aws:sqs:us-west-2',
+    patternB: 'arn:aws:sqs:us-east-1:111111111111:MyQueue',
+    overlaps: false
   }
 ]
 
