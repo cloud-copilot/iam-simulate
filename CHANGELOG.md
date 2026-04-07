@@ -1,3 +1,10 @@
+## [0.1.131](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.130...v0.1.131) (2026-04-07)
+
+
+### Bug Fixes
+
+* Correctly interpret partial ARNs ([116c679](https://github.com/cloud-copilot/iam-simulate/commit/116c67915e9fc496025cd79d6d5beb26e730f8be))
+
 ## [0.1.130](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.129...v0.1.130) (2026-04-04)
 
 ## [0.1.129](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.128...v0.1.129) (2026-03-28)
