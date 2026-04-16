@@ -1,0 +1,306 @@
+[
+  {
+    "name": "Action with empty action after colon does not match",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "whitespace-action-policy",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:",
+                "Resource": "*"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "s3:ListBucket",
+        "resource": {
+          "resource": "arn:aws:s3:::my-bucket",
+          "accountId": "123456789012"
+        },
+        "principal": "arn:aws:iam::123456789012:user/test-user",
+        "contextVariables": {}
+      }
+    },
+    "simulationOptions": {},
+    "expected": {
+      "resultType": "single",
+      "overallResult": "ImplicitlyDenied",
+      "results": []
+    }
+  },
+  {
+    "name": "Action with whitespace-only action after colon does not match",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "whitespace-action-policy",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:      ",
+                "Resource": "*"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "s3:ListBucket",
+        "resource": {
+          "resource": "arn:aws:s3:::my-bucket",
+          "accountId": "123456789012"
+        },
+        "principal": "arn:aws:iam::123456789012:user/test-user",
+        "contextVariables": {}
+      }
+    },
+    "simulationOptions": {},
+    "expected": {
+      "resultType": "single",
+      "overallResult": "ImplicitlyDenied",
+      "results": []
+    }
+  },
+  {
+    "name": "Action with trailing whitespace does not match",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "whitespace-action-policy",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:ListBucket   ",
+                "Resource": "*"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "s3:ListBucket",
+        "resource": {
+          "resource": "arn:aws:s3:::my-bucket",
+          "accountId": "123456789012"
+        },
+        "principal": "arn:aws:iam::123456789012:user/test-user",
+        "contextVariables": {}
+      }
+    },
+    "simulationOptions": {},
+    "expected": {
+      "resultType": "single",
+      "overallResult": "ImplicitlyDenied",
+      "results": []
+    }
+  },
+  {
+    "name": "Action with leading whitespace does not match",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "whitespace-action-policy",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:   GetBucket",
+                "Resource": "*"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "s3:ListBucket",
+        "resource": {
+          "resource": "arn:aws:s3:::my-bucket",
+          "accountId": "123456789012"
+        },
+        "principal": "arn:aws:iam::123456789012:user/test-user",
+        "contextVariables": {}
+      }
+    },
+    "simulationOptions": {},
+    "expected": {
+      "resultType": "single",
+      "overallResult": "ImplicitlyDenied",
+      "results": []
+    }
+  },
+  {
+    "name": "NotAction with empty action after colon always matches",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "whitespace-notaction-policy",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "NotAction": "s3:",
+                "Resource": "*"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "s3:ListBucket",
+        "resource": {
+          "resource": "arn:aws:s3:::my-bucket",
+          "accountId": "123456789012"
+        },
+        "principal": "arn:aws:iam::123456789012:user/test-user",
+        "contextVariables": {}
+      }
+    },
+    "simulationOptions": {},
+    "expected": {
+      "resultType": "single",
+      "overallResult": "Allowed",
+      "results": []
+    }
+  },
+  {
+    "name": "NotAction with whitespace-only action after colon always matches",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "whitespace-notaction-policy",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "NotAction": "s3:      ",
+                "Resource": "*"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "s3:ListBucket",
+        "resource": {
+          "resource": "arn:aws:s3:::my-bucket",
+          "accountId": "123456789012"
+        },
+        "principal": "arn:aws:iam::123456789012:user/test-user",
+        "contextVariables": {}
+      }
+    },
+    "simulationOptions": {},
+    "expected": {
+      "resultType": "single",
+      "overallResult": "Allowed",
+      "results": []
+    }
+  },
+  {
+    "name": "NotAction with trailing whitespace always matches",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "whitespace-notaction-policy",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "NotAction": "s3:ListBucket   ",
+                "Resource": "*"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "s3:ListBucket",
+        "resource": {
+          "resource": "arn:aws:s3:::my-bucket",
+          "accountId": "123456789012"
+        },
+        "principal": "arn:aws:iam::123456789012:user/test-user",
+        "contextVariables": {}
+      }
+    },
+    "simulationOptions": {},
+    "expected": {
+      "resultType": "single",
+      "overallResult": "Allowed",
+      "results": []
+    }
+  },
+  {
+    "name": "NotAction with leading whitespace always matches",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "whitespace-notaction-policy",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "NotAction": "s3:   GetBucket",
+                "Resource": "*"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": null,
+      "request": {
+        "action": "s3:ListBucket",
+        "resource": {
+          "resource": "arn:aws:s3:::my-bucket",
+          "accountId": "123456789012"
+        },
+        "principal": "arn:aws:iam::123456789012:user/test-user",
+        "contextVariables": {}
+      }
+    },
+    "simulationOptions": {},
+    "expected": {
+      "resultType": "single",
+      "overallResult": "Allowed",
+      "results": []
+    }
+  }
+]
