@@ -1,3 +1,10 @@
+## [0.1.134](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.133...v0.1.134) (2026-04-16)
+
+
+### Bug Fixes
+
+* Correctly handle whitepace in Action/NotAction strings ([ad60903](https://github.com/cloud-copilot/iam-simulate/commit/ad60903da4d28c4964304a6947d664ef2013cbf1))
+
 ## [0.1.133](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.132...v0.1.133) (2026-04-16)
 
 ## [0.1.132](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.131...v0.1.132) (2026-04-11)
