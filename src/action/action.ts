@@ -2,6 +2,8 @@ import { type Action, type Statement } from '@cloud-copilot/iam-policy'
 import { type ActionExplain, type StatementExplain } from '../explain/statementExplain.js'
 import { type AwsRequest } from '../request/request.js'
 
+const whitespaceRegex = /\s/
+
 /**
  * Check if a request matches the Action or NotAction elements of a statement.
  *
@@ -87,13 +89,20 @@ function requestMatchesSingleAction(request: AwsRequest, action: Action): Action
       matches: true
     }
   } else if (action.isServiceAction()) {
+    const actionPart = action.action()
+    if (actionPart.length === 0 || whitespaceRegex.test(actionPart)) {
+      return {
+        action: action.value(),
+        matches: false
+      }
+    }
     if (request.action.service() != action.service()) {
       return {
         action: action.value(),
         matches: false
       }
     }
-    const actionRegex = convertActionToRegex(action.action())
+    const actionRegex = convertActionToRegex(actionPart)
     const matches = actionRegex.test(request.action.action())
     return {
       action: action.value(),

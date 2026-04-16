@@ -242,6 +242,108 @@ describe('action', () => {
     expect(response.matches).toBe(true)
   })
 
+  describe('whitespace actions', () => {
+    it('should not match an empty action after the colon', () => {
+      //Given a policy with an empty action after the colon
+      const policy = loadPolicy({
+        Statement: {
+          Effect: 'Allow',
+          Action: 's3:'
+        }
+      })
+      const statement = policy.statements()[0]
+      const actions = (statement as ActionStatement).actions()
+      //And a request with the s3:GetBucket action
+      const request = new AwsRequestImpl(
+        'principal',
+        { resource: 'resource', accountId: '111111111111' },
+        's3:GetBucket',
+        new RequestContextImpl({})
+      )
+
+      //When the request is checked against the policy
+      const response = requestMatchesActions(request, actions)
+
+      //Then the request should not match the policy
+      expect(response.matches).toBe(false)
+    })
+
+    it('should not match a whitespace-only action after the colon', () => {
+      //Given a policy with a whitespace-only action after the colon
+      const policy = loadPolicy({
+        Statement: {
+          Effect: 'Allow',
+          Action: 's3:      '
+        }
+      })
+      const statement = policy.statements()[0]
+      const actions = (statement as ActionStatement).actions()
+      //And a request with the s3:GetBucket action
+      const request = new AwsRequestImpl(
+        'principal',
+        { resource: 'resource', accountId: '111111111111' },
+        's3:GetBucket',
+        new RequestContextImpl({})
+      )
+
+      //When the request is checked against the policy
+      const response = requestMatchesActions(request, actions)
+
+      //Then the request should not match the policy
+      expect(response.matches).toBe(false)
+    })
+
+    it('should not match an action with trailing whitespace', () => {
+      //Given a policy with trailing whitespace in the action
+      const policy = loadPolicy({
+        Statement: {
+          Effect: 'Allow',
+          Action: 's3:GetBucket   '
+        }
+      })
+      const statement = policy.statements()[0]
+      const actions = (statement as ActionStatement).actions()
+      //And a request with the s3:GetBucket action
+      const request = new AwsRequestImpl(
+        'principal',
+        { resource: 'resource', accountId: '111111111111' },
+        's3:GetBucket',
+        new RequestContextImpl({})
+      )
+
+      //When the request is checked against the policy
+      const response = requestMatchesActions(request, actions)
+
+      //Then the request should not match the policy
+      expect(response.matches).toBe(false)
+    })
+
+    it('should not match an action with leading whitespace', () => {
+      //Given a policy with leading whitespace in the action
+      const policy = loadPolicy({
+        Statement: {
+          Effect: 'Allow',
+          Action: 's3:   GetBucket'
+        }
+      })
+      const statement = policy.statements()[0]
+      const actions = (statement as ActionStatement).actions()
+      //And a request with the s3:GetBucket action
+      const request = new AwsRequestImpl(
+        'principal',
+        { resource: 'resource', accountId: '111111111111' },
+        's3:GetBucket',
+        new RequestContextImpl({})
+      )
+
+      //When the request is checked against the policy
+      const response = requestMatchesActions(request, actions)
+
+      //Then the request should not match the policy
+      expect(response.matches).toBe(false)
+    })
+  })
+
   describe('requestMatchesNotActions', () => {
     it('should return false for a wildcard action', () => {
       //Given a policy that allows not all actions
@@ -291,6 +393,106 @@ describe('action', () => {
 
       //Then the request should not match the policy
       expect(response.matches).toBe(false)
+    })
+
+    it('should return true for an empty action after the colon', () => {
+      //Given a policy with NotAction with an empty action after the colon
+      const policy = loadPolicy({
+        Statement: {
+          Effect: 'Allow',
+          NotAction: 's3:'
+        }
+      })
+      const statement = policy.statements()[0]
+      const actions = (statement as NotActionStatement).notActions()
+      //And a request with the s3:GetBucket action
+      const request = new AwsRequestImpl(
+        'principal',
+        { resource: 'resource', accountId: '111111111111' },
+        's3:GetBucket',
+        new RequestContextImpl({})
+      )
+
+      //When the request is checked against the policy
+      const response = requestMatchesNotActions(request, actions)
+
+      //Then the request should match because the empty action never matches
+      expect(response.matches).toBe(true)
+    })
+
+    it('should return true for a whitespace-only action after the colon', () => {
+      //Given a policy with NotAction with whitespace-only after the colon
+      const policy = loadPolicy({
+        Statement: {
+          Effect: 'Allow',
+          NotAction: 's3:      '
+        }
+      })
+      const statement = policy.statements()[0]
+      const actions = (statement as NotActionStatement).notActions()
+      //And a request with the s3:GetBucket action
+      const request = new AwsRequestImpl(
+        'principal',
+        { resource: 'resource', accountId: '111111111111' },
+        's3:GetBucket',
+        new RequestContextImpl({})
+      )
+
+      //When the request is checked against the policy
+      const response = requestMatchesNotActions(request, actions)
+
+      //Then the request should match because the whitespace action never matches
+      expect(response.matches).toBe(true)
+    })
+
+    it('should return true for an action with trailing whitespace', () => {
+      //Given a policy with NotAction with trailing whitespace
+      const policy = loadPolicy({
+        Statement: {
+          Effect: 'Allow',
+          NotAction: 's3:GetBucket   '
+        }
+      })
+      const statement = policy.statements()[0]
+      const actions = (statement as NotActionStatement).notActions()
+      //And a request with the s3:GetBucket action
+      const request = new AwsRequestImpl(
+        'principal',
+        { resource: 'resource', accountId: '111111111111' },
+        's3:GetBucket',
+        new RequestContextImpl({})
+      )
+
+      //When the request is checked against the policy
+      const response = requestMatchesNotActions(request, actions)
+
+      //Then the request should match because the whitespace action never matches
+      expect(response.matches).toBe(true)
+    })
+
+    it('should return true for an action with leading whitespace', () => {
+      //Given a policy with NotAction with leading whitespace
+      const policy = loadPolicy({
+        Statement: {
+          Effect: 'Allow',
+          NotAction: 's3:   GetBucket'
+        }
+      })
+      const statement = policy.statements()[0]
+      const actions = (statement as NotActionStatement).notActions()
+      //And a request with the s3:GetBucket action
+      const request = new AwsRequestImpl(
+        'principal',
+        { resource: 'resource', accountId: '111111111111' },
+        's3:GetBucket',
+        new RequestContextImpl({})
+      )
+
+      //When the request is checked against the policy
+      const response = requestMatchesNotActions(request, actions)
+
+      //Then the request should match because the whitespace action never matches
+      expect(response.matches).toBe(true)
     })
   })
 })
