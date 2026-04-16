@@ -32,7 +32,7 @@ import { type Simulation } from './simulation.js'
 import { type SimulationOptions } from './simulationOptions.js'
 
 const DEFAULT_RCP = {
-  name: 'RCPFullAWSAccess',
+  arn: 'arn:aws:organizations::aws:policy/resource_control_policy/p-RCPFullAWSAccess',
   policy: {
     Version: '2012-10-17',
     Statement: [
@@ -252,7 +252,7 @@ export async function runSimulation(
     (rcp) => {
       const ouId = rcp.orgIdentifier
       const validPolicies: PolicyWithName[] = []
-      validPolicies.push(loadPolicy(DEFAULT_RCP.policy, { name: DEFAULT_RCP.name }))
+      validPolicies.push(loadPolicy(DEFAULT_RCP.policy, { name: DEFAULT_RCP.arn }))
 
       rcp.policies.forEach((value) => {
         const { name, policy } = value
