@@ -1597,7 +1597,8 @@ const getGrantReasonsTests: {
       {
         policyType: 'rcp',
         orgIdentifier: 'ou-root',
-        policyIdentifier: 'RCPFullAWSAccess',
+        policyIdentifier:
+          'arn:aws:organizations::aws:policy/resource_control_policy/p-RCPFullAWSAccess',
         statementIndex: 1
       }
     ]
@@ -2065,13 +2066,15 @@ const getGrantReasonsTests: {
       {
         policyType: 'rcp',
         orgIdentifier: 'ou-root',
-        policyIdentifier: 'RCPFullAWSAccess',
+        policyIdentifier:
+          'arn:aws:organizations::aws:policy/resource_control_policy/p-RCPFullAWSAccess',
         statementIndex: 1
       },
       {
         policyType: 'rcp',
         orgIdentifier: 'ou-child',
-        policyIdentifier: 'RCPFullAWSAccess',
+        policyIdentifier:
+          'arn:aws:organizations::aws:policy/resource_control_policy/p-RCPFullAWSAccess',
         statementIndex: 1
       }
     ]
