@@ -1,3 +1,10 @@
+## [0.1.135](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.134...v0.1.135) (2026-04-22)
+
+
+### Features
+
+* Leverage ValidatedPolicy in simulation to avoid re-running validation on policies that are already validated. ([3ddf33a](https://github.com/cloud-copilot/iam-simulate/commit/3ddf33a8fbcf0b191d914d83d73c1659eaa39c6e))
+
 ## [0.1.134](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.133...v0.1.134) (2026-04-16)
 
 
