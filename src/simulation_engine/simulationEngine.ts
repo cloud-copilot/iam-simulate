@@ -1,5 +1,6 @@
 import { iamActionExists, iamServiceExists, type ResourceType } from '@cloud-copilot/iam-data'
 import {
+  isValidatedPolicy,
   loadPolicy,
   validateEndpointPolicy,
   validateIdentityPolicy,
@@ -178,6 +179,24 @@ export type SuccessfulRunSimulationResults =
 export type SimulationResultType = RunSimulationResults['resultType']
 
 /**
+ * Returns pre-computed validation errors from a ValidatedPolicy, or runs the
+ * validation function against a raw policy document.
+ *
+ * @param policy a raw policy document or a ValidatedPolicy
+ * @param validateFn the validation function to apply if the policy is not already validated
+ * @returns the array of validation errors (empty if valid)
+ */
+function validateOrReuse(
+  policy: any,
+  validateFn: (policy: any) => ValidationError[]
+): ValidationError[] {
+  if (isValidatedPolicy(policy)) {
+    return [...policy.errors]
+  }
+  return validateFn(policy)
+}
+
+/**
  * Run a simulation with validation
  *
  * @param simulation The simulation to run
@@ -208,7 +227,7 @@ export async function runSimulation(
   }
 
   const sessionPolicyErrors = simulation.sessionPolicy
-    ? validateIdentityPolicy(simulation.sessionPolicy)
+    ? validateOrReuse(simulation.sessionPolicy, validateIdentityPolicy)
     : []
   const sessionPolicy = simulation.sessionPolicy
     ? loadPolicy(simulation.sessionPolicy, { name: 'SessionPolicy' })
@@ -218,7 +237,7 @@ export async function runSimulation(
   const identityPolicies: PolicyWithName[] = []
   simulation.identityPolicies.forEach((value) => {
     const { name, policy } = value
-    const validationErrors = validateIdentityPolicy(policy)
+    const validationErrors = validateOrReuse(policy, validateIdentityPolicy)
     if (validationErrors.length == 0) {
       identityPolicies.push(loadPolicy(policy, { name }))
     } else {
@@ -233,7 +252,7 @@ export async function runSimulation(
 
     scp.policies.forEach((value) => {
       const { name, policy } = value
-      const validationErrors = validateServiceControlPolicy(policy)
+      const validationErrors = validateOrReuse(policy, validateServiceControlPolicy)
       if (validationErrors.length > 0) {
         serviceControlPolicyErrors[name] = validationErrors
       } else {
@@ -256,7 +275,7 @@ export async function runSimulation(
 
       rcp.policies.forEach((value) => {
         const { name, policy } = value
-        const validationErrors = validateResourceControlPolicy(policy)
+        const validationErrors = validateOrReuse(policy, validateResourceControlPolicy)
         if (validationErrors.length > 0) {
           resourceControlPolicyErrors[name] = validationErrors
         } else {
@@ -272,7 +291,7 @@ export async function runSimulation(
   )
 
   const resourcePolicyErrors = simulation.resourcePolicy
-    ? validateResourcePolicy(simulation.resourcePolicy)
+    ? validateOrReuse(simulation.resourcePolicy, validateResourcePolicy)
     : []
 
   const permissionBoundaries: PolicyWithName[] | undefined = simulation.permissionBoundaryPolicies
@@ -281,7 +300,7 @@ export async function runSimulation(
   const permissionBoundaryErrors: Record<string, ValidationError[]> = {}
   simulation.permissionBoundaryPolicies?.map((pb) => {
     const { name, policy } = pb
-    const validationErrors = validateIdentityPolicy(policy)
+    const validationErrors = validateOrReuse(policy, validateIdentityPolicy)
     if (validationErrors.length == 0) {
       permissionBoundaries!.push(loadPolicy(policy, { name }))
     } else {
@@ -295,7 +314,7 @@ export async function runSimulation(
   const vpcEndpointErrors: Record<string, ValidationError[]> = {}
   simulation.vpcEndpointPolicies?.map((endpointPolicy) => {
     const { name, policy } = endpointPolicy
-    const validationErrors = validateEndpointPolicy(policy)
+    const validationErrors = validateOrReuse(policy, validateEndpointPolicy)
     if (validationErrors.length == 0) {
       vpcEndpointPolicies!.push(loadPolicy(policy, { name }))
     } else {
@@ -328,7 +347,9 @@ export async function runSimulation(
   }
 
   const resourcePolicy = simulation.resourcePolicy
-    ? loadPolicy(simulation.resourcePolicy, { name: simulation.resourcePolicy.name })
+    ? loadPolicy<{ name: string }>(simulation.resourcePolicy, {
+        name: simulation.resourcePolicy.name
+      })
     : undefined
 
   if (simulation.request.action.split(':').length != 2) {

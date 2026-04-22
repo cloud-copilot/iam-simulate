@@ -11,10 +11,23 @@ import {
   iamResourceTypeDetails,
   iamServiceExists
 } from '@cloud-copilot/iam-data'
+import {
+  createValidatedPolicy,
+  validateEndpointPolicy,
+  validateIdentityPolicy,
+  validateResourceControlPolicy,
+  validateResourcePolicy,
+  validateServiceControlPolicy,
+  type ValidationError
+} from '@cloud-copilot/iam-policy'
 import { describe, expect, it, vi } from 'vitest'
 import type { Simulation } from './simulation.js'
 import { normalizeSimulationParameters, runSimulation } from './simulationEngine.js'
-import type { ErrorSimulationResult, RunSimulationResults } from './simulationEngine.js'
+import type {
+  ErrorSimulationResult,
+  RunSimulationResults,
+  SimulationErrors
+} from './simulationEngine.js'
 
 vi.mock('@cloud-copilot/iam-data')
 
@@ -441,56 +454,59 @@ describe('normalizeSimulationParameters', () => {
 })
 
 describe('runSimulation', () => {
-  it('should return service control policy errors', async () => {
-    //Given a simulation with an error in a service control policy
-    const simulation: Simulation = {
-      identityPolicies: [],
-      serviceControlPolicies: [
-        {
-          orgIdentifier: 'o-123456',
-          policies: [
-            {
-              name: 'Gandalf',
-              policy: {
-                Statement: {
-                  Effect: 'SHALL NOT PASS',
-                  Action: 's3:GetObject',
-                  Resource: 'arn:aws:s3:::examplebucket/1234'
-                }
-              }
-            }
-          ]
+  interface PolicyErrorCase {
+    name: string
+    badPolicy: any
+    validator: (policy: any) => ValidationError[]
+    buildSimulation: (policy: any) => Simulation
+    getErrors: (errors: SimulationErrors) => ValidationError[] | undefined
+    expectedErrors: ValidationError[]
+  }
+
+  const userRequest = {
+    action: 's3:GetObject',
+    resource: {
+      resource: 'arn:aws:s3:::examplebucket/1234',
+      accountId: '123456789012'
+    },
+    principal: 'arn:aws:iam::123456789012:user/Alice',
+    contextVariables: {}
+  }
+
+  const invalidEffectError: ValidationError = {
+    path: 'Statement.Effect',
+    message: 'Effect must be present and exactly "Allow" or "Deny"'
+  }
+
+  const policyErrorCases: PolicyErrorCase[] = [
+    {
+      name: 'service control policy',
+      badPolicy: {
+        Statement: {
+          Effect: 'SHALL NOT PASS',
+          Action: 's3:GetObject',
+          Resource: 'arn:aws:s3:::examplebucket/1234'
         }
-      ],
-      resourceControlPolicies: [],
-      resourcePolicy: undefined,
-      request: {
-        action: 's3:GetObject',
-        resource: {
-          resource: 'arn:aws:s3:::examplebucket/1234',
-          accountId: '123456789012'
-        },
-        principal: 'arn:aws:iam::123456789012:user/Alice',
-        contextVariables: {}
-      }
-    }
-
-    //When the simulation is run
-    const response = await runSimulation(simulation, {})
-
-    //Then the result should contain an error
-    const errorResponse = assertErrorResult(response)
-    expect(errorResponse.errors!.message).toEqual('policy.errors')
-    expect(errorResponse.errors!.serviceControlPolicyErrors!['Gandalf'].length).toEqual(1)
-  })
-
-  it('should return resource policy errors', async () => {
-    //Given a simulation with an error in a resource policy
-    const simulation: Simulation = {
-      identityPolicies: [],
-      serviceControlPolicies: [],
-      resourceControlPolicies: [],
-      resourcePolicy: {
+      },
+      validator: validateServiceControlPolicy,
+      buildSimulation: (policy) => ({
+        identityPolicies: [],
+        serviceControlPolicies: [
+          {
+            orgIdentifier: 'o-123456',
+            policies: [{ name: 'Gandalf', policy }]
+          }
+        ],
+        resourceControlPolicies: [],
+        resourcePolicy: undefined,
+        request: userRequest
+      }),
+      getErrors: (errors) => errors.serviceControlPolicyErrors?.['Gandalf'],
+      expectedErrors: [invalidEffectError]
+    },
+    {
+      name: 'resource policy',
+      badPolicy: {
         Statement: {
           Effect: 'Invisible',
           Action: 'oneRing:PutOn',
@@ -498,214 +514,160 @@ describe('runSimulation', () => {
           Resource: 'arn:aws:s3:::ring/theone'
         }
       },
-      request: {
-        action: 's3:GetObject',
-        resource: {
-          resource: 'arn:aws:s3:::examplebucket/1234',
-          accountId: '123456789012'
-        },
-        principal: 'arn:aws:iam::123456789012:user/Alice',
-        contextVariables: {}
-      }
-    }
-
-    //When the simulation is run
-    const response = await runSimulation(simulation, {})
-
-    //Then the result should contain an error
-    const errorResponse = assertErrorResult(response)
-    expect(errorResponse.errors!.message).toEqual('policy.errors')
-    expect(errorResponse.errors!.resourcePolicyErrors!.length).toEqual(1)
-  })
-
-  it('should return session policy errors', async () => {
-    //Given a simulation with an error in a session policy
-    const simulation: Simulation = {
-      identityPolicies: [],
-      serviceControlPolicies: [],
-      resourceControlPolicies: [],
-      resourcePolicy: undefined,
-      sessionPolicy: {
+      validator: validateResourcePolicy,
+      buildSimulation: (policy) => ({
+        identityPolicies: [],
+        serviceControlPolicies: [],
+        resourceControlPolicies: [],
+        resourcePolicy: policy,
+        request: userRequest
+      }),
+      getErrors: (errors) => errors.resourcePolicyErrors,
+      expectedErrors: [invalidEffectError]
+    },
+    {
+      name: 'session policy',
+      badPolicy: {
         Statement: {
           Effect: 'Domination',
           Action: 'oneRing:PutOn',
           Resource: 'arn:aws:s3:::ring/theone'
         }
       },
-      request: {
-        action: 's3:GetObject',
-        resource: {
-          resource: 'arn:aws:s3:::examplebucket/1234',
-          accountId: '123456789012'
-        },
-        principal: 'arn:aws:iam::123456789012:role/Alice',
-        contextVariables: {}
-      }
-    }
-
-    //When the simulation is run
-    const response = await runSimulation(simulation, {})
-
-    //Then the result should contain an error
-    const errorResponse = assertErrorResult(response)
-    expect(errorResponse.errors!.message).toEqual('policy.errors')
-    expect(errorResponse.errors!.sessionPolicyErrors!.length).toEqual(1)
-  })
-
-  it('should return identity policy errors', async () => {
-    //Given a simulation with an error in an identity policy
-    const simulation: Simulation = {
-      identityPolicies: [
-        {
-          name: 'sauron',
-          policy: {
-            Statement: {
-              Effect: 'Domination',
-              Action: 'oneRing:PutOn',
-              Resource: 'arn:aws:s3:::ring/theone'
-            }
+      validator: validateIdentityPolicy,
+      buildSimulation: (policy) => ({
+        identityPolicies: [],
+        serviceControlPolicies: [],
+        resourceControlPolicies: [],
+        resourcePolicy: undefined,
+        sessionPolicy: policy,
+        request: { ...userRequest, principal: 'arn:aws:iam::123456789012:role/Alice' }
+      }),
+      getErrors: (errors) => errors.sessionPolicyErrors,
+      expectedErrors: [invalidEffectError]
+    },
+    {
+      name: 'identity policy',
+      badPolicy: {
+        Statement: {
+          Effect: 'Domination',
+          Action: 'oneRing:PutOn',
+          Resource: 'arn:aws:s3:::ring/theone'
+        }
+      },
+      validator: validateIdentityPolicy,
+      buildSimulation: (policy) => ({
+        identityPolicies: [{ name: 'sauron', policy }],
+        serviceControlPolicies: [],
+        resourceControlPolicies: [],
+        resourcePolicy: undefined,
+        request: userRequest
+      }),
+      getErrors: (errors) => errors.identityPolicyErrors?.['sauron'],
+      expectedErrors: [invalidEffectError]
+    },
+    {
+      name: 'resource control policy',
+      badPolicy: {
+        Version: '2012-10-17',
+        Statement: {
+          Effect: 'SHALL NOT PASS',
+          Action: 's3:GetObject',
+          Resource: 'arn:aws:s3:::examplebucket/1234',
+          Principal: '*'
+        }
+      },
+      validator: validateResourceControlPolicy,
+      buildSimulation: (policy) => ({
+        identityPolicies: [],
+        serviceControlPolicies: [],
+        resourceControlPolicies: [
+          {
+            orgIdentifier: 'o-123456',
+            policies: [{ name: 'Gandalf', policy }]
           }
-        }
-      ],
-      serviceControlPolicies: [],
-      resourceControlPolicies: [],
-      resourcePolicy: undefined,
-      request: {
-        action: 's3:GetObject',
-        resource: {
-          resource: 'arn:aws:s3:::examplebucket/1234',
-          accountId: '123456789012'
-        },
-        principal: 'arn:aws:iam::123456789012:user/Alice',
-        contextVariables: {}
-      }
-    }
-
-    //When the simulation is run
-    const response = await runSimulation(simulation, {})
-
-    //Then the result should contain an error
-    const errorResponse = assertErrorResult(response)
-    expect(errorResponse.errors!.message).toEqual('policy.errors')
-    expect(errorResponse.errors!.identityPolicyErrors!['sauron'].length).toEqual(1)
-  })
-
-  it('should return resource control policy errors', async () => {
-    //Given a simulation with an error in a resource control policy
-    const simulation: Simulation = {
-      identityPolicies: [],
-      serviceControlPolicies: [],
-      resourceControlPolicies: [
+        ],
+        resourcePolicy: undefined,
+        request: userRequest
+      }),
+      getErrors: (errors) => errors.resourceControlPolicyErrors?.['Gandalf'],
+      expectedErrors: [
+        invalidEffectError,
         {
-          orgIdentifier: 'o-123456',
-          policies: [
-            {
-              name: 'Gandalf',
-              policy: {
-                Version: '2012-10-17',
-                Statement: {
-                  Effect: 'SHALL NOT PASS',
-                  Action: 's3:GetObject',
-                  Resource: 'arn:aws:s3:::examplebucket/1234',
-                  Principal: '*'
-                }
-              }
-            }
-          ]
+          path: 'Statement.Effect',
+          message: 'Effect must be "Deny" in a resource control policy'
         }
-      ],
-      resourcePolicy: undefined,
-      request: {
-        action: 's3:GetObject',
-        resource: {
-          resource: 'arn:aws:s3:::examplebucket/1234',
-          accountId: '123456789012'
-        },
-        principal: 'arn:aws:iam::123456789012:user/Alice',
-        contextVariables: {}
-      }
-    }
-
-    //When the simulation is run
-    const response = await runSimulation(simulation, {})
-
-    //Then the result should contain an error
-    const errorResponse = assertErrorResult(response)
-    expect(errorResponse.errors!.message).toEqual('policy.errors')
-    expect(errorResponse.errors!.resourceControlPolicyErrors!['Gandalf'].length).toEqual(2)
-  })
-
-  it('should return permission boundary errors', async () => {
-    //Given a simulation with an error in a permission boundary
-    const simulation: Simulation = {
-      identityPolicies: [],
-      serviceControlPolicies: [],
-      resourceControlPolicies: [],
-      permissionBoundaryPolicies: [
-        {
-          name: 'permissionBoundary',
-          policy: { Statement: { Effect: 'Enable', Action: '*', Resource: '*' } }
+      ]
+    },
+    {
+      name: 'permission boundary',
+      badPolicy: { Statement: { Effect: 'Enable', Action: '*', Resource: '*' } },
+      validator: validateIdentityPolicy,
+      buildSimulation: (policy) => ({
+        identityPolicies: [],
+        serviceControlPolicies: [],
+        resourceControlPolicies: [],
+        resourcePolicy: undefined,
+        permissionBoundaryPolicies: [{ name: 'permissionBoundary', policy }],
+        request: userRequest
+      }),
+      getErrors: (errors) => errors.permissionBoundaryErrors?.['permissionBoundary'],
+      expectedErrors: [invalidEffectError]
+    },
+    {
+      name: 'VPC endpoint policy',
+      badPolicy: {
+        Statement: {
+          Effect: 'Allow',
+          Action: 's3:GetObject',
+          Resource: 'arn:aws:s3:::examplebucket/1234'
         }
-      ],
-      resourcePolicy: undefined,
-      request: {
-        action: 's3:GetObject',
-        resource: {
-          resource: 'arn:aws:s3:::examplebucket/1234',
-          accountId: '123456789012'
-        },
-        principal: 'arn:aws:iam::123456789012:user/Alice',
-        contextVariables: {}
-      }
+      },
+      validator: validateEndpointPolicy,
+      buildSimulation: (policy) => ({
+        identityPolicies: [],
+        serviceControlPolicies: [],
+        resourceControlPolicies: [],
+        resourcePolicy: undefined,
+        vpcEndpointPolicies: [{ name: 'badPolicy', policy }],
+        request: userRequest
+      }),
+      getErrors: (errors) => errors.vpcEndpointErrors?.['badPolicy'],
+      expectedErrors: [
+        { path: 'Statement', message: 'Principal is required in an endpoint policy' }
+      ]
     }
+  ]
 
-    //When the simulation is run
-    const response = await runSimulation(simulation, {})
-
-    //Then the result should contain an error
-    const errorResponse = assertErrorResult(response)
-    expect(errorResponse.errors!.message).toEqual('policy.errors')
-    expect(errorResponse.errors!.permissionBoundaryErrors!['permissionBoundary'].length).toEqual(1)
-  })
-
-  it('should return VPC Endpoint policy errors', async () => {
-    //Given a simulation with an error in a VPC Endpoint policy
-    const simulation: Simulation = {
-      identityPolicies: [],
-      serviceControlPolicies: [],
-      resourceControlPolicies: [],
-      resourcePolicy: undefined,
-      vpcEndpointPolicies: [
-        {
-          name: 'badPolicy',
-          policy: {
-            Statement: {
-              Effect: 'Allow',
-              Action: 's3:GetObject',
-              Resource: 'arn:aws:s3:::examplebucket/1234'
-            }
-          }
-        }
-      ],
-      request: {
-        action: 's3:GetObject',
-        resource: {
-          resource: 'arn:aws:s3:::examplebucket/1234',
-          accountId: '123456789012'
-        },
-        principal: 'arn:aws:iam::123456789012:user/Alice',
-        contextVariables: {}
-      }
+  const policyForms: Array<{
+    label: string
+    wrap: (policy: any, validator: (p: any) => ValidationError[]) => any
+  }> = [
+    { label: 'a raw policy document', wrap: (policy) => policy },
+    {
+      label: 'a ValidatedPolicy',
+      wrap: (policy, validator) => createValidatedPolicy(policy, validator)
     }
+  ]
 
-    //When the simulation is run
-    const response = await runSimulation(simulation, {})
+  for (const form of policyForms) {
+    describe(`when the invalid policy is ${form.label}`, () => {
+      for (const test of policyErrorCases) {
+        it(`should return ${test.name} errors`, async () => {
+          //Given a simulation with an invalid policy in the ${test.name} slot
+          const simulation = test.buildSimulation(form.wrap(test.badPolicy, test.validator))
 
-    //Then the result should contain an error
-    const errorResponse = assertErrorResult(response)
-    expect(errorResponse.errors!.message).toEqual('policy.errors')
-    expect(errorResponse.errors!.vpcEndpointErrors!['badPolicy'].length).toEqual(1)
-  })
+          //When the simulation is run
+          const response = await runSimulation(simulation, {})
+
+          //Then the result should contain the expected validation errors
+          const errorResponse = assertErrorResult(response)
+          expect(errorResponse.errors.message).toEqual('policy.errors')
+          expect(test.getErrors(errorResponse.errors)).toEqual(test.expectedErrors)
+        })
+      }
+    })
+  }
 
   it('should return an error for a mal formatted action', async () => {
     //Given a simulation with a mal formatted action
