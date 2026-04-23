@@ -1,3 +1,10 @@
+## [0.1.136](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.135...v0.1.136) (2026-04-23)
+
+
+### Bug Fixes
+
+* Support resource policies with no Principal or NotPrincipal element ([0981ef8](https://github.com/cloud-copilot/iam-simulate/commit/0981ef80d4125864c09dc4bfe7f68214332934b2))
+
 ## [0.1.135](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.134...v0.1.135) (2026-04-22)
 
 
