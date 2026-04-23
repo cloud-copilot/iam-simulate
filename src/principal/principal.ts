@@ -359,7 +359,7 @@ export function requestMatchesStatementPrincipals(
   simulationParameters: SimulationParameters
 ): {
   matches: PrincipalMatchResult
-  details: Pick<StatementExplain, 'principals' | 'notPrincipals'>
+  details: Pick<StatementExplain, 'principals' | 'notPrincipals' | 'noPrincipalElement'>
   ignoredRoleSessionName?: boolean
 } {
   if (statement.isPrincipalStatement()) {
@@ -379,5 +379,5 @@ export function requestMatchesStatementPrincipals(
     )
     return { matches, details: { notPrincipals: explains } }
   }
-  throw new Error('Statement should have Principal or NotPrincipal')
+  return { matches: 'NoMatch', details: { noPrincipalElement: true } }
 }

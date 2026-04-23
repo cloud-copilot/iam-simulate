@@ -110,6 +110,13 @@ export interface StatementExplain {
    * https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html
    */
   denyBecauseNpInRpAndPb?: boolean
+
+  /**
+   * The statement in a resource policy had neither a Principal nor a NotPrincipal
+   * element. AWS accepts this syntactically, but such a statement can never match
+   * a request, so the simulator reports it as NoMatch with this flag set.
+   */
+  noPrincipalElement?: boolean
 }
 
 /*
