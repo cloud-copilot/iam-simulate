@@ -981,7 +981,7 @@ describe('requestMatchesStatementPrincipals', () => {
     expect(result.matches).toBe('NoMatch')
   })
 
-  it('should throw an error if the statement has neither Principal nor NotPrincipal', () => {
+  it('should return NoMatch with noPrincipalElement when the statement has neither Principal nor NotPrincipal', () => {
     //Given a statement without Principal or NotPrincipal
     const policy = loadPolicy({
       Statement: [{ Effect: 'Allow' }]
@@ -998,9 +998,17 @@ describe('requestMatchesStatementPrincipals', () => {
     )
 
     //When we check if the request matches the principal
-    expect(() =>
-      requestMatchesStatementPrincipals(request, statement, defaultSimulationParameters)
-    ).toThrow('Statement should have Principal or NotPrincipal')
+    const result = requestMatchesStatementPrincipals(
+      request,
+      statement,
+      defaultSimulationParameters
+    )
+
+    //Then it should return NoMatch and flag the missing principal element
+    expect(result.matches).toBe('NoMatch')
+    expect(result.details.noPrincipalElement).toBe(true)
+    expect(result.details.principals).toBeUndefined()
+    expect(result.details.notPrincipals).toBeUndefined()
   })
 })
 

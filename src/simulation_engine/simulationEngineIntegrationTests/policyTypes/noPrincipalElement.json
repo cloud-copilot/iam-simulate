@@ -1,0 +1,152 @@
+[
+  {
+    "name": "resource policy allow without Principal produces no allow pattern",
+    "simulation": {
+      "identityPolicies": [],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::examplebucket/private/*"
+          }
+        ]
+      },
+      "request": {
+        "action": "s3:GetObject",
+        "resource": {
+          "resource": "arn:aws:s3:::examplebucket/*",
+          "accountId": "123456789012"
+        },
+        "principal": "arn:aws:iam::123456789012:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "simulationOptions": {},
+    "expected": {
+      "results": [
+        {
+          "resourceType": "object",
+          "resourcePattern": "arn:aws:s3:::examplebucket/private/*",
+          "result": "ImplicitlyDenied"
+        }
+      ],
+      "overallResult": "ImplicitlyDenied",
+      "resultType": "wildcard"
+    }
+  },
+  {
+    "name": "identity policy allow, resource policy allow without Principal",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "id-public",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::examplebucket/public/*"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::examplebucket/private/*"
+          }
+        ]
+      },
+      "request": {
+        "action": "s3:GetObject",
+        "resource": {
+          "resource": "arn:aws:s3:::examplebucket/*",
+          "accountId": "123456789012"
+        },
+        "principal": "arn:aws:iam::123456789012:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "simulationOptions": {},
+    "expected": {
+      "results": [
+        {
+          "resourceType": "object",
+          "resourcePattern": "arn:aws:s3:::examplebucket/public/*",
+          "result": "Allowed"
+        },
+        {
+          "resourceType": "object",
+          "resourcePattern": "arn:aws:s3:::examplebucket/private/*",
+          "result": "ImplicitlyDenied"
+        }
+      ],
+      "overallResult": "Allowed",
+      "resultType": "wildcard"
+    }
+  },
+  {
+    "name": "resource policy deny without Principal does not suppress identity-allowed pattern",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "id-public",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::examplebucket/public/*"
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "resourcePolicy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Deny",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::examplebucket/public/*"
+          }
+        ]
+      },
+      "request": {
+        "action": "s3:GetObject",
+        "resource": {
+          "resource": "arn:aws:s3:::examplebucket/*",
+          "accountId": "123456789012"
+        },
+        "principal": "arn:aws:iam::123456789012:user/Alice",
+        "contextVariables": {}
+      }
+    },
+    "simulationOptions": {},
+    "expected": {
+      "results": [
+        {
+          "resourceType": "object",
+          "resourcePattern": "arn:aws:s3:::examplebucket/public/*",
+          "result": "Allowed"
+        }
+      ],
+      "overallResult": "Allowed",
+      "resultType": "wildcard"
+    }
+  }
+]
