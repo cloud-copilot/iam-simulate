@@ -1,3 +1,10 @@
+## [0.1.139](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.138...v0.1.139) (2026-05-07)
+
+
+### Bug Fixes
+
+* Including NumericLessThanEquals and correcting inverted behavior in NumericGreaterThan and NumericGreaterThanEquals. ([39fdea8](https://github.com/cloud-copilot/iam-simulate/commit/39fdea870c42a64201eea36c033b9f8c6732bf97))
+
 ## [0.1.138](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.137...v0.1.138) (2026-05-03)
 
 ## [0.1.137](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.136...v0.1.137) (2026-04-26)
