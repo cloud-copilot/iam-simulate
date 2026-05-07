@@ -5,7 +5,7 @@ const numericGreaterThanEqualsTests: BaseOperatorTest[] = [
   {
     name: 'should return true if the test value is greater than the policy value',
     policyValues: ['10'],
-    testValue: '5',
+    testValue: '15',
     expected: true,
     explains: [
       {
@@ -29,7 +29,7 @@ const numericGreaterThanEqualsTests: BaseOperatorTest[] = [
   {
     name: 'should return false if the test value is less than the policy value',
     policyValues: ['10'],
-    testValue: '15',
+    testValue: '5',
     expected: false,
     explains: [
       {

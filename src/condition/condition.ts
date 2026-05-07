@@ -26,6 +26,7 @@ import { NumericEquals } from './numeric/NumericEquals.js'
 import { NumericGreaterThan } from './numeric/NumericGreaterThan.js'
 import { NumericGreaterThanEquals } from './numeric/NumericGreaterThanEquals.js'
 import { NumericLessThan } from './numeric/NumericLessThan.js'
+import { NumericLessThanEquals } from './numeric/NumericLessThanEquals.js'
 import { NumericNotEquals } from './numeric/NumericNotEquals.js'
 import { StringEquals } from './string/StringEquals.js'
 import { StringEqualsIgnoreCase } from './string/StringEqualsIgnoreCase.js'
@@ -46,7 +47,7 @@ const allOperators = [
   NumericEquals,
   NumericNotEquals,
   NumericLessThan,
-  NumericNotEquals,
+  NumericLessThanEquals,
   NumericGreaterThan,
   NumericGreaterThanEquals,
   DateEquals,
