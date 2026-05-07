@@ -6,7 +6,7 @@ export const NumericGreaterThan: BaseConditionOperator = {
   matches: (request, keyValue, policyValues) => {
     const explains = policyValues.map((policyValue) => {
       return checkIfNumeric(policyValue, keyValue, (policyNumber, testNumber) => {
-        return policyNumber > testNumber
+        return testNumber > policyNumber
       })
     })
 
