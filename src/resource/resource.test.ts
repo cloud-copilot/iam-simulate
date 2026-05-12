@@ -8,7 +8,11 @@ import type { ResourceExplain } from '../explain/statementExplain.js'
 import type { PolicyType } from '../policyType.js'
 import { AwsRequestImpl } from '../request/request.js'
 import { RequestContextImpl } from '../requestContext.js'
-import { requestMatchesNotResources, requestMatchesResources } from './resource.js'
+import {
+  requestMatchesNotResources,
+  requestMatchesResources,
+  resourcePatternOverlap
+} from './resource.js'
 
 type ResourceStatements =
   | {
@@ -93,6 +97,21 @@ const resourceTests: ResourceTest[] = [
     explains: [
       {
         resource: 'arn:???:s3:::my_corporate_bucket',
+        matches: true
+      }
+    ]
+  },
+  {
+    name: 'should match a policy resource with leading question mark wildcards against a wildcard request resource',
+    resourceStatements: ['arn:aws:s3:::??-example-bucket/data/*/_logs/*'],
+    resource: {
+      resource: 'arn:aws:s3:::ab-example-bucket/data/v1/table/_logs/*',
+      accountId: '123456789012'
+    },
+    expectMatch: true,
+    explains: [
+      {
+        resource: 'arn:aws:s3:::??-example-bucket/data/*/_logs/*',
         matches: true
       }
     ]
@@ -1876,6 +1895,32 @@ function validateExplains(expected: ResourceExplain[], actual: ResourceExplain[]
     }
   }
 }
+
+describe('resourcePatternOverlap', () => {
+  it('should treat leading question marks in policy patterns as IAM wildcards instead of regex quantifiers', () => {
+    //Given a policy resource pattern that starts with question mark wildcards
+    const policyResource = '??-example-bucket/data/v1/*/_logs/*'
+    const wildcardRequestResource = 'ab-example-bucket/data/v1/table/_logs/*'
+
+    //When the resource patterns are compared for overlap
+    const result = resourcePatternOverlap(policyResource, wildcardRequestResource)
+
+    //Then the policy pattern should be detected as a superset without throwing a SyntaxError
+    expect(result).toBe('policy_is_superset')
+  })
+
+  it('should treat question marks in request patterns as literals instead of regex quantifiers', () => {
+    //Given a wildcard request resource that contains literal question marks
+    const policyResource = 'ab-example-bucket/data/v1/table/_logs/object.json'
+    const wildcardRequestResource = '??-example-bucket/data/v1/*/_logs/*'
+
+    //When the resource patterns are compared for overlap
+    const result = resourcePatternOverlap(policyResource, wildcardRequestResource)
+
+    //Then unsupported request question marks should not create an invalid regular expression
+    expect(result).toBe('none')
+  })
+})
 
 describe('requestMatchesResources', () => {
   for (const rt of resourceTests) {
