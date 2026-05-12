@@ -71,6 +71,44 @@ function convertResourceSegmentToRegex(segment: string): RegExp {
 }
 
 /**
+ * Replace regex characters in a resource pattern with escaped versions.
+ *
+ * @param pattern the resource pattern to escape for use inside a regular expression
+ * @returns the pattern with regex metacharacters escaped
+ */
+function escapeResourcePatternRegexCharacters(pattern: string): string {
+  return pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/**
+ * Convert a request resource pattern to a regex string for overlap checks.
+ * Request resources support asterisks as wildcards, but question marks are literals.
+ *
+ * @param requestString the request resource pattern to convert
+ * @returns a regex string that matches the request resource pattern
+ */
+function requestResourcePatternToRegexString(requestString: string): string {
+  return '^' + escapeResourcePatternRegexCharacters(requestString).replace(/\\\*/g, '.*?') + '$'
+}
+
+/**
+ * Convert a policy resource pattern to a regex string for overlap checks.
+ * Policy resources support asterisks and question marks as IAM wildcards.
+ *
+ * @param policyString the policy resource pattern to convert
+ * @returns a regex string that matches the policy resource pattern
+ */
+function policyResourcePatternToRegexString(policyString: string): string {
+  return (
+    '^' +
+    escapeResourcePatternRegexCharacters(policyString)
+      .replace(/\\\?/g, '.')
+      .replace(/\\\*/g, '.*?') +
+    '$'
+  )
+}
+
+/**
  * Check if a request matches the Resource or NotResource elements of a statement.
  *
  * @param request the request to check
@@ -477,12 +515,12 @@ export function resourcePatternOverlap(
   if (policyString === requestString) {
     return 'equal'
   }
-  const requestPattern = '^' + requestString.replace(/\*/g, '.*?') + '$'
+  const requestPattern = requestResourcePatternToRegexString(requestString)
   if (policyString.match(requestPattern)) {
     return 'policy_is_subset'
   }
 
-  const policyPattern = '^' + policyString.replace(/\?/g, '.').replace(/\*/g, '.*?') + '$'
+  const policyPattern = policyResourcePatternToRegexString(policyString)
   if (requestString.match(policyPattern)) {
     return 'policy_is_superset'
   }
