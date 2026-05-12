@@ -1,3 +1,10 @@
+## [0.1.142](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.141...v0.1.142) (2026-05-12)
+
+
+### Bug Fixes
+
+* escape resource overlap regex patterns ([1cb684b](https://github.com/cloud-copilot/iam-simulate/commit/1cb684b26c9608c47c6272d50b9a5c16757890c3))
+
 ## [0.1.141](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.140...v0.1.141) (2026-05-10)
 
 ## [0.1.140](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.139...v0.1.140) (2026-05-10)
