@@ -506,12 +506,12 @@ function singleResourceMatchesRequest(
  *
  * @param policyString the policy string to use
  * @param requestString the request string to compare to the policy string
- * @returns 'equal' if the strings are equal, 'subset' if the policy string is a subset of the request string, 'superset' if the policy string is a superset of the request string, or 'none' if there is no overlap
+ * @returns 'equal' if the strings are equal, 'subset' if the policy string is a subset of the request string, 'superset' if the policy string is a superset of the request string, 'overlap' if the strings have a non-empty intersection but neither contains the other, or 'none' if there is no overlap
  */
 export function resourcePatternOverlap(
   policyString: string,
   requestString: string
-): 'equal' | 'policy_is_subset' | 'policy_is_superset' | 'none' {
+): 'equal' | 'policy_is_subset' | 'policy_is_superset' | 'overlap' | 'none' {
   if (policyString === requestString) {
     return 'equal'
   }
@@ -525,5 +525,134 @@ export function resourcePatternOverlap(
     return 'policy_is_superset'
   }
 
+  if (resourcePatternsIntersect(policyString, requestString)) {
+    return 'overlap'
+  }
+
   return 'none'
+}
+
+/**
+ * Checks whether a policy resource pattern and request resource pattern share
+ * at least one concrete resource string.
+ *
+ * Policy patterns use IAM `*` and `?` wildcards. Request patterns only treat
+ * `*` as a wildcard; `?` remains literal to match the existing request
+ * wildcard semantics in this module.
+ *
+ * @param policyString the policy-side resource pattern segment to compare
+ * @param requestString the request-side resource pattern segment to compare
+ * @returns true when the patterns have a non-empty intersection
+ */
+function resourcePatternsIntersect(policyString: string, requestString: string): boolean {
+  const policyPattern = [...policyString]
+  const requestPattern = [...requestString]
+  const visited = new Set<string>()
+  const queue: Array<[number, number]> = [[0, 0]]
+  const key = (policyIndex: number, requestIndex: number) => `${policyIndex},${requestIndex}`
+
+  while (queue.length > 0) {
+    const [policyIndex, requestIndex] = queue.shift()!
+    const stateKey = key(policyIndex, requestIndex)
+    if (visited.has(stateKey)) {
+      continue
+    }
+    visited.add(stateKey)
+
+    if (policyIndex === policyPattern.length && requestIndex === requestPattern.length) {
+      return true
+    }
+
+    const policyToken = tokenAt(policyPattern, policyIndex)
+    const requestToken = tokenAt(requestPattern, requestIndex)
+
+    if (policyToken === '*') {
+      queue.push([policyIndex + 1, requestIndex])
+    }
+    if (requestToken === '*') {
+      queue.push([policyIndex, requestIndex + 1])
+    }
+
+    if (resourcePatternTokensCanConsumeSameCharacter(policyToken, requestToken)) {
+      const nextPolicyIndexes = nextResourcePatternIndexesAfterOneCharacter(
+        policyPattern,
+        policyIndex,
+        true
+      )
+      const nextRequestIndexes = nextResourcePatternIndexesAfterOneCharacter(
+        requestPattern,
+        requestIndex,
+        false
+      )
+      for (const nextPolicyIndex of nextPolicyIndexes) {
+        for (const nextRequestIndex of nextRequestIndexes) {
+          queue.push([nextPolicyIndex, nextRequestIndex])
+        }
+      }
+    }
+  }
+
+  return false
+}
+
+/**
+ * Reads a token from a pattern, returning null at the end of the pattern.
+ *
+ * @param pattern the pattern characters
+ * @param index the index to read
+ * @returns the token at the index, or null when the index is past the end
+ */
+function tokenAt(pattern: string[], index: number): string | null {
+  return index < pattern.length ? pattern[index] : null
+}
+
+/**
+ * Determines whether policy and request pattern tokens can match the same next
+ * concrete character under their respective wildcard semantics.
+ *
+ * @param policyToken token from the policy pattern, where `*` and `?` are wildcards
+ * @param requestToken token from the request pattern, where only `*` is a wildcard
+ * @returns true if both tokens can consume the same concrete character
+ */
+function resourcePatternTokensCanConsumeSameCharacter(
+  policyToken: string | null,
+  requestToken: string | null
+): boolean {
+  if (policyToken === null || requestToken === null) {
+    return false
+  }
+
+  const policyWildcard = policyToken === '*' || policyToken === '?'
+  const requestWildcard = requestToken === '*'
+  if (!policyWildcard && !requestWildcard) {
+    return policyToken === requestToken
+  }
+
+  return true
+}
+
+/**
+ * Returns possible next indexes after consuming one concrete character from a pattern.
+ *
+ * @param pattern the pattern characters
+ * @param index current pattern index
+ * @param questionMarkIsWildcard whether `?` should be treated as a one-character wildcard
+ * @returns possible next indexes after one concrete character is consumed
+ */
+function nextResourcePatternIndexesAfterOneCharacter(
+  pattern: string[],
+  index: number,
+  questionMarkIsWildcard: boolean
+): number[] {
+  const token = tokenAt(pattern, index)
+  if (token === null) {
+    return []
+  }
+  if (token === '*') {
+    return [index]
+  }
+  if (token === '?' && questionMarkIsWildcard) {
+    return [index + 1]
+  }
+  return [index + 1]
 }
