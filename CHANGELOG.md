@@ -1,3 +1,10 @@
+## [0.1.147](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.146...v0.1.147) (2026-06-15)
+
+
+### Bug Fixes
+
+* handle wildcard resource intersections ([52030b6](https://github.com/cloud-copilot/iam-simulate/commit/52030b6fa95010da3b0cc78663de7ddff5a8a317))
+
 ## [0.1.146](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.145...v0.1.146) (2026-06-13)
 
 ## [0.1.145](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.144...v0.1.145) (2026-06-06)
