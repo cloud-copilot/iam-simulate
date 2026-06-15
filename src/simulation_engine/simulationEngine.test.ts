@@ -119,7 +119,9 @@ vi.mocked(iamConditionKeyExists).mockImplementation(async (service, key) => {
 vi.mocked(iamActionExists).mockImplementation(async (service, action) => {
   return (
     (service === 's3' &&
-      ['GetObjects', 'GetObject', 'ListAllMyBuckets', 'ListBucket'].includes(action)) ||
+      ['GetObjects', 'GetObject', 'PutObject', 'ListAllMyBuckets', 'ListBucket'].includes(
+        action
+      )) ||
     (service === 'ssm' && ['GetParameter', 'DescribeParameters'].includes(action))
   )
 })
@@ -161,12 +163,12 @@ vi.mocked(getGlobalConditionKeyByName).mockImplementation((key) => {
 })
 
 vi.mocked(iamActionDetails).mockImplementation(async (service, actionKey) => {
-  if (actionKey === 'GetObject') {
+  if (actionKey === 'GetObject' || actionKey === 'PutObject') {
     return {
-      accessLevel: 'Read',
+      accessLevel: actionKey === 'GetObject' ? 'Read' : 'Write',
       conditionKeys: ['s3:RequestObjectTagKeys', 's3:ResourceAccount'],
-      description: 'Grants permission to retrieve objects from Amazon S3 buckets',
-      name: 'GetObject',
+      description: `Grants permission to ${actionKey === 'GetObject' ? 'retrieve' : 'write'} objects in Amazon S3 buckets`,
+      name: actionKey,
       resourceTypes: [
         {
           name: 'object',
@@ -1378,6 +1380,163 @@ describe('runSimulation', () => {
     //Then there should be no errors
     //And the ignored context keys should be empty
     expect(result.ignoredContextKeys).toEqual([])
+  })
+
+  it.each([
+    {
+      name: 'AWSLogs prefix under any bucket',
+      action: 's3:GetObject',
+      identityResource: 'arn:aws:s3:::*/AWSLogs/*',
+      resourcePolicyAction: 's3:GetObject',
+      exampleConcreteResource: 'arn:aws:s3:::example-bucket/AWSLogs/test.log'
+    },
+    {
+      name: 'nested AWSLogs prefix under any bucket',
+      action: 's3:GetObject',
+      identityResource: 'arn:aws:s3:::*/*/AWSLogs/*',
+      resourcePolicyAction: 's3:GetObject',
+      exampleConcreteResource: 'arn:aws:s3:::example-bucket/prefix/AWSLogs/test.log'
+    },
+    {
+      name: 'lowercase ISO extension under any bucket',
+      action: 's3:GetObject',
+      identityResource: 'arn:aws:s3:::*/*.iso',
+      resourcePolicyAction: 's3:GetObject',
+      exampleConcreteResource: 'arn:aws:s3:::example-bucket/image.iso'
+    },
+    {
+      name: 'service-generated prefix under any bucket',
+      action: 's3:PutObject',
+      identityResource: 'arn:aws:s3:::*/generated-prefix-*',
+      resourcePolicyAction: 's3:PutObject',
+      exampleConcreteResource: 'arn:aws:s3:::example-bucket/generated-prefix-123'
+    }
+  ])(
+    'should allow a cross-account wildcard request when the identity and resource policy patterns overlap for $name',
+    async ({ action, identityResource, resourcePolicyAction, exampleConcreteResource }) => {
+      //Given a cross-account S3 object request where the identity and resource policy resource patterns overlap
+      const simulation: Simulation = {
+        identityPolicies: [
+          {
+            name: 'identityPolicy',
+            policy: {
+              Version: '2012-10-17',
+              Statement: [
+                {
+                  Effect: 'Allow',
+                  Action: action,
+                  Resource: identityResource
+                }
+              ]
+            }
+          }
+        ],
+        serviceControlPolicies: [],
+        resourceControlPolicies: [],
+        resourcePolicy: {
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Effect: 'Allow',
+              Principal: { AWS: 'arn:aws:iam::111111111111:root' },
+              Action: resourcePolicyAction,
+              Resource: 'arn:aws:s3:::example-bucket/*'
+            }
+          ]
+        },
+        request: {
+          action,
+          resource: {
+            resource: 'arn:aws:s3:::example-bucket/*',
+            accountId: '222222222222'
+          },
+          principal: 'arn:aws:iam::111111111111:role/ExampleRole',
+          contextVariables: {}
+        }
+      }
+
+      const concreteSimulation: Simulation = {
+        ...simulation,
+        request: {
+          ...simulation.request,
+          resource: {
+            ...simulation.request.resource,
+            resource: exampleConcreteResource
+          }
+        }
+      }
+
+      //When the wildcard and concrete simulations are run
+      const response = await runSimulation(simulation, {})
+      const concreteResponse = await runSimulation(concreteSimulation, {})
+
+      //Then a concrete resource in the intersection should already be allowed
+      expect(concreteResponse.resultType).toEqual('single')
+      if (concreteResponse.resultType !== 'single') {
+        throw new Error('Expected single result')
+      }
+      expect(concreteResponse.overallResult).toEqual('Allowed')
+
+      //And the overlapping subset should make the wildcard request allowed too
+      expect(response.resultType).toEqual('wildcard')
+      if (response.resultType !== 'wildcard') {
+        throw new Error('Expected wildcard result')
+      }
+      expect(response.overallResult).toEqual('Allowed')
+    }
+  )
+
+  it('should keep a cross-account wildcard request denied when identity and resource policy patterns do not overlap', async () => {
+    //Given a cross-account S3 object request where identity and resource policy patterns are disjoint
+    const simulation: Simulation = {
+      identityPolicies: [
+        {
+          name: 'identityPolicy',
+          policy: {
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Effect: 'Allow',
+                Action: 's3:GetObject',
+                Resource: 'arn:aws:s3:::other-bucket/*'
+              }
+            ]
+          }
+        }
+      ],
+      serviceControlPolicies: [],
+      resourceControlPolicies: [],
+      resourcePolicy: {
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Effect: 'Allow',
+            Principal: { AWS: 'arn:aws:iam::111111111111:root' },
+            Action: 's3:GetObject',
+            Resource: 'arn:aws:s3:::example-bucket/*'
+          }
+        ]
+      },
+      request: {
+        action: 's3:GetObject',
+        resource: {
+          resource: 'arn:aws:s3:::example-bucket/*',
+          accountId: '222222222222'
+        },
+        principal: 'arn:aws:iam::111111111111:role/ExampleRole',
+        contextVariables: {}
+      }
+    }
+
+    //When the wildcard simulation is run
+    const response = await runSimulation(simulation, {})
+
+    //Then no synthesized candidate should make the disjoint request allowed
+    expect(response.resultType).toEqual('wildcard')
+    if (response.resultType !== 'wildcard') {
+      throw new Error('Expected wildcard result')
+    }
+    expect(response.overallResult).toEqual('ImplicitlyDenied')
   })
 
   it('should return not allowed without erroring when an identity policy has a CloudFormation Sub resource string', async () => {

@@ -1,0 +1,267 @@
+[
+  {
+    "name": "Cross-account Allow Resource wildcard intersection: AWSLogs prefix overlaps bucket wildcard",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::example-bucket/*",
+        "accountId": "222222222222"
+      },
+      "principal": "arn:aws:iam::111111111111:role/ExampleRole"
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::*/AWSLogs/*"
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "arn:aws:iam::111111111111:root"
+          },
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::example-bucket/*"
+        }
+      ]
+    },
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Cross-account Allow Resource wildcard intersection: nested AWSLogs prefix overlaps bucket wildcard",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::example-bucket/*",
+        "accountId": "222222222222"
+      },
+      "principal": "arn:aws:iam::111111111111:role/ExampleRole"
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::*/*/AWSLogs/*"
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "arn:aws:iam::111111111111:root"
+          },
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::example-bucket/*"
+        }
+      ]
+    },
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Cross-account Allow Resource wildcard intersection: object extension pattern overlaps bucket wildcard",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::example-bucket/*",
+        "accountId": "222222222222"
+      },
+      "principal": "arn:aws:iam::111111111111:role/ExampleRole"
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": ["arn:aws:s3:::*/*.iso", "arn:aws:s3:::*/*.ISO"]
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "arn:aws:iam::111111111111:root"
+          },
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::example-bucket/*"
+        }
+      ]
+    },
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Cross-account Allow Resource wildcard intersection: generated prefix overlaps bucket wildcard",
+    "request": {
+      "action": "s3:PutObject",
+      "resource": {
+        "resource": "arn:aws:s3:::example-bucket/*",
+        "accountId": "222222222222"
+      },
+      "principal": "arn:aws:iam::111111111111:role/ExampleRole"
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": ["s3:GetObject", "s3:PutObject"],
+            "Resource": "arn:aws:s3:::*/generated-prefix-*"
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "arn:aws:iam::111111111111:root"
+          },
+          "Action": ["s3:GetObject", "s3:PutObject"],
+          "Resource": "arn:aws:s3:::example-bucket/*"
+        }
+      ]
+    },
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Cross-account Allow Resource wildcard intersection: global S3 resource wildcard overlaps bucket object wildcard",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::example-bucket/*",
+        "accountId": "222222222222"
+      },
+      "principal": "arn:aws:iam::111111111111:role/ExampleRole"
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::*"
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "arn:aws:iam::111111111111:root"
+          },
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::example-bucket/*"
+        }
+      ]
+    },
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Cross-account Allow Resource wildcard intersection: disjoint identity pattern remains denied",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::example-bucket/*",
+        "accountId": "222222222222"
+      },
+      "principal": "arn:aws:iam::111111111111:role/ExampleRole"
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::other-bucket/*"
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "arn:aws:iam::111111111111:root"
+          },
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::example-bucket/*"
+        }
+      ]
+    },
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Deny Resource wildcard partial overlap does not deny the entire wildcard request",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::example-bucket/*",
+        "accountId": "111111111111"
+      },
+      "principal": "arn:aws:iam::111111111111:role/ExampleRole"
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::example-bucket/*"
+          },
+          {
+            "Effect": "Deny",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::*/AWSLogs/*"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  }
+]

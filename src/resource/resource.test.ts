@@ -1909,6 +1909,18 @@ describe('resourcePatternOverlap', () => {
     expect(result).toBe('policy_is_superset')
   })
 
+  it('should detect non-empty intersections where neither wildcard pattern contains the other', () => {
+    //Given policy and request resource patterns that overlap on some concrete resources
+    const policyResource = 'arn:aws:s3:::example-bucket/*'
+    const wildcardRequestResource = 'arn:aws:s3:::*/AWSLogs/*'
+
+    //When the resource patterns are compared for overlap
+    const result = resourcePatternOverlap(policyResource, wildcardRequestResource)
+
+    //Then the partial intersection should be detected
+    expect(result).toBe('overlap')
+  })
+
   it('should treat question marks in request patterns as literals instead of regex quantifiers', () => {
     //Given a wildcard request resource that contains literal question marks
     const policyResource = 'ab-example-bucket/data/v1/table/_logs/object.json'
