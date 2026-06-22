@@ -1,7 +1,7 @@
 import { type Policy, type Statement } from '@cloud-copilot/iam-policy'
 import { requestMatchesStatementActions } from '../action/action.js'
 import { type ConditionMatchResult, requestMatchesConditions } from '../condition/condition.js'
-import { StrictContextKeys } from '../context_keys/strictContextKeys.js'
+import { DiscoveryContextKeyConstraints } from '../context_keys/discoveryContextKeyConstraints.js'
 import {
   type EvaluationResult,
   type IdentityAnalysis,
@@ -55,10 +55,10 @@ export interface SimulationParameters {
   simulationMode: SimulationMode
 
   /**
-   * Condition keys that should be evaluated strictly in the simulation. Used only in Discovery mode.
-   * In Strict mode, all condition keys are evaluated strictly
+   * Discovery-only knowledge constraints for context keys. In Strict mode,
+   * all condition keys are evaluated against the concrete request context.
    */
-  strictConditionKeys: StrictContextKeys
+  discoveryContextKeyConstraints: DiscoveryContextKeyConstraints
 }
 
 /**

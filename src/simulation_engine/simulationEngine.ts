@@ -12,7 +12,7 @@ import {
 import { isAssumedRoleArn, isFederatedUserArn, isIamRoleArn } from '@cloud-copilot/iam-utils'
 import { isConditionKeyArray } from '../context_keys/contextKeyTypes.js'
 import { normalizeContextKeyCase, typeForContextKey } from '../context_keys/contextKeys.js'
-import { StrictContextKeys } from '../context_keys/strictContextKeys.js'
+import { DiscoveryContextKeyConstraints } from '../context_keys/discoveryContextKeyConstraints.js'
 import {
   authorize,
   type ControlPolicies,
@@ -422,10 +422,10 @@ export async function runSimulation(
 
   // For each resource type, find the resource patterns, for each pattern, run a simulation
 
-  const strictConditionKeys =
+  const discoveryContextKeyConstraints =
     simulationMode === 'Discovery'
-      ? new StrictContextKeys(simulationOptions.strictConditionKeys || [])
-      : new StrictContextKeys([])
+      ? new DiscoveryContextKeyConstraints(simulationOptions.discoveryContextKeyConstraints || [])
+      : new DiscoveryContextKeyConstraints([])
 
   const curriedAuthorize = (
     curriedResourceString: string,
@@ -451,7 +451,7 @@ export async function runSimulation(
       vpcEndpointPolicies,
       simulationParameters: {
         simulationMode: simulationMode,
-        strictConditionKeys: strictConditionKeys
+        discoveryContextKeyConstraints
       }
     })
 

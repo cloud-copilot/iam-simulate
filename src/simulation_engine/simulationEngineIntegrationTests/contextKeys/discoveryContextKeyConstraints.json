@@ -1,0 +1,94 @@
+[
+  {
+    "name": "single resource ignores Allow condition with known presence and unknown value",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "source-account-allow",
+          "policy": {
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::example-bucket/object.txt",
+                "Condition": { "StringEquals": { "aws:SourceAccount": "111111111111" } }
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "request": {
+        "action": "s3:GetObject",
+        "resource": {
+          "resource": "arn:aws:s3:::example-bucket/object.txt",
+          "accountId": "123456789012"
+        },
+        "principal": "arn:aws:iam::123456789012:user/Alice",
+        "contextVariables": { "aws:SourceAccount": "000000000000" }
+      }
+    },
+    "simulationOptions": {
+      "simulationMode": "Discovery",
+      "discoveryContextKeyConstraints": [
+        { "keyName": "aws:SourceAccount", "presenceIsKnown": true, "valueIsKnown": false }
+      ]
+    },
+    "expected": {
+      "resultType": "single",
+      "overallResult": "Allowed",
+      "results": []
+    }
+  },
+  {
+    "name": "wildcard resource ignores Deny condition with known presence and unknown value",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "source-account-deny",
+          "policy": {
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::example-bucket/*"
+              },
+              {
+                "Effect": "Deny",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::example-bucket/*",
+                "Condition": { "StringEquals": { "aws:SourceAccount": "111111111111" } }
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "request": {
+        "action": "s3:GetObject",
+        "resource": { "resource": "arn:aws:s3:::example-bucket/*", "accountId": "123456789012" },
+        "principal": "arn:aws:iam::123456789012:user/Alice",
+        "contextVariables": { "aws:SourceAccount": "000000000000" }
+      }
+    },
+    "simulationOptions": {
+      "simulationMode": "Discovery",
+      "discoveryContextKeyConstraints": [
+        { "keyName": "aws:SourceAccount", "presenceIsKnown": true, "valueIsKnown": false }
+      ]
+    },
+    "expected": {
+      "resultType": "wildcard",
+      "overallResult": "Allowed",
+      "results": [
+        {
+          "resourceType": "object",
+          "resourcePattern": "arn:aws:s3:::example-bucket/*",
+          "result": "Allowed"
+        }
+      ]
+    }
+  }
+]

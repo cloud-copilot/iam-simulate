@@ -11,6 +11,7 @@ export {
   type BaseConditionKeyType,
   type ConditionKeyType
 } from './context_keys/contextKeyTypes.js'
+export type { DiscoveryContextKeyConstraint } from './context_keys/discoveryContextKeyConstraints.js'
 export { findContextKeys } from './context_keys/findContextKeys.js'
 export type { SimulationMode } from './core_engine/CoreSimulatorEngine.js'
 export type {

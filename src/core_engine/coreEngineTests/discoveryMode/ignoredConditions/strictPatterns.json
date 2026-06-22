@@ -31,7 +31,13 @@
     ],
     "simulation": {
       "mode": "Discovery",
-      "strictConditionKeys": ["/aws:PrincipalTag\/.*/"]
+      "discoveryContextKeyConstraints": [
+        {
+          "keyName": "/aws:PrincipalTag/.*/",
+          "presenceIsKnown": true,
+          "valueIsKnown": true
+        }
+      ]
     },
     "expected": {
       "response": "ImplicitlyDenied"
@@ -69,14 +75,24 @@
     ],
     "simulation": {
       "mode": "Discovery",
-      "strictConditionKeys": ["aws:PrincipalTag/Department"]
+      "discoveryContextKeyConstraints": [
+        {
+          "keyName": "aws:PrincipalTag/Department",
+          "presenceIsKnown": true,
+          "valueIsKnown": true
+        }
+      ]
     },
     "expected": {
       "response": "Allowed",
       "ignoredConditions": {
         "identity": {
           "allow": [
-            { "op": "StringEquals", "key": "aws:PrincipalTag/Team", "values": ["Accounting"] }
+            {
+              "op": "StringEquals",
+              "key": "aws:PrincipalTag/Team",
+              "values": ["Accounting"]
+            }
           ]
         }
       }
