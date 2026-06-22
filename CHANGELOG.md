@@ -1,3 +1,10 @@
+## [0.1.149](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.148...v0.1.149) (2026-06-22)
+
+
+### Bug Fixes
+
+* add discovery context key constraints ([9fe24a6](https://github.com/cloud-copilot/iam-simulate/commit/9fe24a624111def55854c22c26c8f5899f8b44a2))
+
 ## [0.1.148](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.147...v0.1.148) (2026-06-20)
 
 ## [0.1.147](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.146...v0.1.147) (2026-06-15)
