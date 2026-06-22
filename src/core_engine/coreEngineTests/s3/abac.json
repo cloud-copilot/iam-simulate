@@ -536,7 +536,13 @@
     },
     "simulation": {
       "mode": "Discovery",
-      "strictConditionKeys": ["/aws:ResourceTag\/.*/"]
+      "discoveryContextKeyConstraints": [
+        {
+          "keyName": "/aws:ResourceTag/.*/",
+          "presenceIsKnown": true,
+          "valueIsKnown": true
+        }
+      ]
     }
   }
 ]

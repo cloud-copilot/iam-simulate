@@ -1,5 +1,9 @@
 import { type Condition, loadPolicy } from '@cloud-copilot/iam-policy'
 import { describe, expect, it } from 'vitest'
+import {
+  DiscoveryContextKeyConstraints,
+  type DiscoveryContextKeyConstraint
+} from '../context_keys/discoveryContextKeyConstraints.js'
 import type { SimulationParameters } from '../core_engine/CoreSimulatorEngine.js'
 import { AwsRequestImpl } from '../request/request.js'
 import { RequestContextImpl } from '../requestContext.js'
@@ -7,7 +11,7 @@ import { requestMatchesConditions, singleConditionMatchesRequest } from './condi
 
 const defaultSimulationParameters: SimulationParameters = {
   simulationMode: 'Strict',
-  strictConditionKeys: new Set()
+  discoveryContextKeyConstraints: new DiscoveryContextKeyConstraints([])
 }
 
 const discoverySimulationParameters: Pick<SimulationParameters, 'simulationMode'> = {
@@ -1390,7 +1394,7 @@ describe('forAnyValueMatch', () => {
 })
 
 describe('requestMatchesConditions - Discovery simulationMode (with loadPolicy)', () => {
-  it('ignores non-matching condition not in strictConditionKeys', () => {
+  it('ignores non-matching condition not in discoveryContextKeyConstraints', () => {
     // Given a condition for username
     const policy = loadPolicy({
       Version: '2012-10-17',
@@ -1418,7 +1422,9 @@ describe('requestMatchesConditions - Discovery simulationMode (with loadPolicy)'
     //And simulation parameters with Discovery mode set
     const simParams = {
       ...discoverySimulationParameters,
-      strictConditionKeys: new Set(['aws:userid'])
+      discoveryContextKeyConstraints: new DiscoveryContextKeyConstraints([
+        { keyName: 'aws:userid', presenceIsKnown: true, valueIsKnown: true }
+      ])
     }
 
     // When checking if the request matches the conditions
@@ -1432,7 +1438,7 @@ describe('requestMatchesConditions - Discovery simulationMode (with loadPolicy)'
     expect(result.ignoredConditions![0].conditionKey()).toBe('aws:username')
   })
 
-  it('does not ignore non-matching condition in strictConditionKeys', () => {
+  it('does not ignore non-matching condition in discoveryContextKeyConstraints', () => {
     // Given a condition for username
     const policy = loadPolicy({
       Version: '2012-10-17',
@@ -1457,10 +1463,12 @@ describe('requestMatchesConditions - Discovery simulationMode (with loadPolicy)'
       new RequestContextImpl({ 'aws:username': 'alice' })
     )
 
-    //And simulation parameters with Discovery mode set and strictConditionKeys including username
+    //And simulation parameters with Discovery mode set and discoveryContextKeyConstraints including username
     const simParams = {
       ...discoverySimulationParameters,
-      strictConditionKeys: new Set(['aws:username'])
+      discoveryContextKeyConstraints: new DiscoveryContextKeyConstraints([
+        { keyName: 'aws:username', presenceIsKnown: true, valueIsKnown: true }
+      ])
     }
 
     // When checking if the request matches the conditions
@@ -1499,7 +1507,9 @@ describe('requestMatchesConditions - Discovery simulationMode (with loadPolicy)'
     )
     const simParams = {
       ...discoverySimulationParameters,
-      strictConditionKeys: new Set(['aws:username'])
+      discoveryContextKeyConstraints: new DiscoveryContextKeyConstraints([
+        { keyName: 'aws:username', presenceIsKnown: true, valueIsKnown: true }
+      ])
     }
 
     // When checking if the request matches the conditions
@@ -1512,7 +1522,7 @@ describe('requestMatchesConditions - Discovery simulationMode (with loadPolicy)'
     expect(result.ignoredConditions).toBeUndefined()
   })
 
-  it('returns multiple ignored conditions if multiple non-strict keys do not match', () => {
+  it('returns multiple ignored conditions if multiple unconstrained keys do not match', () => {
     // Given a policy with multiple conditions
     const policy = loadPolicy({
       Version: '2012-10-17',
@@ -1540,10 +1550,12 @@ describe('requestMatchesConditions - Discovery simulationMode (with loadPolicy)'
       new RequestContextImpl({ 'aws:username': 'alice', 'aws:userid': '456' })
     )
 
-    //And simulation parameters with Discovery mode set and strictConditionKeys including neither
+    //And simulation parameters with Discovery mode set and discoveryContextKeyConstraints including neither
     const simParams = {
       ...discoverySimulationParameters,
-      strictConditionKeys: new Set(['aws:accountid'])
+      discoveryContextKeyConstraints: new DiscoveryContextKeyConstraints([
+        { keyName: 'aws:accountid', presenceIsKnown: true, valueIsKnown: true }
+      ])
     }
 
     // When checking if the request matches the conditions
@@ -1560,7 +1572,7 @@ describe('requestMatchesConditions - Discovery simulationMode (with loadPolicy)'
     ])
   })
 
-  it('evaluates strictConditionKeys as normal even if other keys are ignored', () => {
+  it('evaluates discoveryContextKeyConstraints as normal even if other keys are ignored', () => {
     // Given a policy with multiple conditions
     const policy = loadPolicy({
       Version: '2012-10-17',
@@ -1588,10 +1600,12 @@ describe('requestMatchesConditions - Discovery simulationMode (with loadPolicy)'
       new RequestContextImpl({ 'aws:username': 'alice', 'aws:userid': '456' })
     )
 
-    //And simulation parameters with Discovery mode set and strictConditionKeys including aws:userid
+    //And simulation parameters with Discovery mode set and discoveryContextKeyConstraints including aws:userid
     const simParams = {
       ...discoverySimulationParameters,
-      strictConditionKeys: new Set(['aws:userid'])
+      discoveryContextKeyConstraints: new DiscoveryContextKeyConstraints([
+        { keyName: 'aws:userid', presenceIsKnown: true, valueIsKnown: true }
+      ])
     }
 
     // When checking if the request matches the conditions
@@ -1600,7 +1614,7 @@ describe('requestMatchesConditions - Discovery simulationMode (with loadPolicy)'
     // Then it should not match
     expect(result.matches).toBe('NoMatch')
 
-    // Since a strict condition key does not match, the ignored conditions are not returned
+    // Since a fully constrained condition key does not match, the ignored conditions are not returned
     expect(result.ignoredConditions).toBeUndefined()
   })
 })
@@ -1632,10 +1646,12 @@ describe('requestMatchesConditions - Discovery simulationMode with Deny statemen
       '',
       new RequestContextImpl({ 'aws:username': 'alice', 'aws:userid': '456' })
     )
-    // And simulation parameters with Discovery mode set and strictConditionKeys including neither
+    // And simulation parameters with Discovery mode set and discoveryContextKeyConstraints including neither
     const simParams = {
       ...discoverySimulationParameters,
-      strictConditionKeys: new Set(['aws:accountid'])
+      discoveryContextKeyConstraints: new DiscoveryContextKeyConstraints([
+        { keyName: 'aws:accountid', presenceIsKnown: true, valueIsKnown: true }
+      ])
     }
     // When checking if the request matches the conditions for a Deny statement
     const result = requestMatchesConditions(req, cond, 'Deny', simParams)
@@ -1671,16 +1687,18 @@ describe('requestMatchesConditions - Discovery simulationMode with Deny statemen
       '',
       new RequestContextImpl({ 'aws:username': 'alice', 'aws:userid': '456' })
     )
-    // And simulation parameters with Discovery mode set and strictConditionKeys including aws:userid
+    // And simulation parameters with Discovery mode set and discoveryContextKeyConstraints including aws:userid
     const simParams = {
       ...discoverySimulationParameters,
-      strictConditionKeys: new Set(['aws:userid'])
+      discoveryContextKeyConstraints: new DiscoveryContextKeyConstraints([
+        { keyName: 'aws:userid', presenceIsKnown: true, valueIsKnown: true }
+      ])
     }
     // When checking if the request matches the conditions for a Deny statement
     const result = requestMatchesConditions(req, cond, 'Deny', simParams)
-    // Then it should not match (Deny enforced if strict key does not match)
+    // Then it should not match (Deny enforced if constrained key does not match)
     expect(result.matches).toBe('NoMatch')
-    // And the ignored conditions should contain only the non-strict aws:username condition
+    // And the ignored conditions should be empty because it was NoMatch
     expect(result.ignoredConditions).toBeUndefined()
   })
 
@@ -1708,10 +1726,10 @@ describe('requestMatchesConditions - Discovery simulationMode with Deny statemen
       '',
       new RequestContextImpl({ 'aws:username': 'alice' })
     )
-    // And simulation parameters with Discovery mode set and strictConditionKeys including aws:username
+    // And simulation parameters with Discovery mode set and discoveryContextKeyConstraints including aws:username
     const simParams = {
       ...discoverySimulationParameters,
-      strictConditionKeys: new Set([])
+      discoveryContextKeyConstraints: new DiscoveryContextKeyConstraints([])
     }
     // When checking if the request matches the conditions for a Deny statement
     const result = requestMatchesConditions(req, cond, 'Deny', simParams)
@@ -1748,7 +1766,9 @@ describe('requestMatchesConditions - Discovery simulationMode with Deny statemen
     // And simulation parameters with Discovery mode set
     const simParams = {
       ...discoverySimulationParameters,
-      strictConditionKeys: new Set(['aws:username'])
+      discoveryContextKeyConstraints: new DiscoveryContextKeyConstraints([
+        { keyName: 'aws:username', presenceIsKnown: true, valueIsKnown: true }
+      ])
     }
     // When checking if the request matches the conditions for a Deny statement
     const result = requestMatchesConditions(req, cond, 'Deny', simParams)
@@ -1756,5 +1776,1075 @@ describe('requestMatchesConditions - Discovery simulationMode with Deny statemen
     expect(result.matches).toBe('Match')
     // And there should be no ignored conditions
     expect(result.ignoredConditions).toBeUndefined()
+  })
+})
+
+describe('requestMatchesConditions - Discovery context key constraints', () => {
+  function conditionsFor(effect: 'Allow' | 'Deny', condition: any): Condition[] {
+    const policy = loadPolicy({
+      Version: '2012-10-17',
+      Statement: [
+        {
+          Effect: effect,
+          Action: 's3:GetObject',
+          Resource: '*',
+          Condition: condition
+        }
+      ]
+    })
+    return policy.statements()[0].conditions()
+  }
+
+  function discoveryWithConstraint(
+    keyName: string,
+    presenceIsKnown: true,
+    valueIsKnown: true
+  ): SimulationParameters
+  function discoveryWithConstraint(
+    keyName: string,
+    presenceIsKnown: true,
+    valueIsKnown: false
+  ): SimulationParameters
+  function discoveryWithConstraint(
+    keyName: string,
+    presenceIsKnown: false,
+    valueIsKnown: false
+  ): SimulationParameters
+  function discoveryWithConstraint(
+    keyName: string,
+    presenceIsKnown: boolean,
+    valueIsKnown: boolean
+  ): SimulationParameters {
+    const constraint: DiscoveryContextKeyConstraint = valueIsKnown
+      ? { keyName, presenceIsKnown: true, valueIsKnown: true }
+      : presenceIsKnown
+        ? { keyName, presenceIsKnown: true, valueIsKnown: false }
+        : { keyName, presenceIsKnown: false, valueIsKnown: false }
+
+    return {
+      simulationMode: 'Discovery',
+      discoveryContextKeyConstraints: new DiscoveryContextKeyConstraints([constraint])
+    }
+  }
+
+  it('should evaluate Null false from known presence even when value is unknown', () => {
+    //Given a present SourceAccount key whose value is not known
+    const req = new AwsRequestImpl(
+      '',
+      { resource: '', accountId: '' },
+      '',
+      new RequestContextImpl({ 'aws:SourceAccount': 'placeholder' })
+    )
+    const cond = conditionsFor('Allow', { Null: { 'aws:SourceAccount': 'false' } })
+
+    //When checking conditions in Discovery mode
+    const result = requestMatchesConditions(
+      req,
+      cond,
+      'Allow',
+      discoveryWithConstraint('aws:SourceAccount', true, false)
+    )
+
+    //Then presence should be evaluated as known
+    expect(result.matches).toBe('Match')
+    expect(result.ignoredConditions).toBeUndefined()
+  })
+
+  it('should evaluate Null false from known presence when value is not present', () => {
+    //Given a present SourceAccount key whose value is not known
+    const req = new AwsRequestImpl(
+      '',
+      { resource: '', accountId: '' },
+      '',
+      new RequestContextImpl({})
+    )
+    const cond = conditionsFor('Allow', { Null: { 'aws:SourceAccount': 'false' } })
+
+    //When checking conditions in Discovery mode
+    const result = requestMatchesConditions(
+      req,
+      cond,
+      'Allow',
+      discoveryWithConstraint('aws:SourceAccount', true, false)
+    )
+
+    //Then presence should be evaluated as known
+    expect(result.matches).toBe('NoMatch')
+    expect(result.ignoredConditions).toBeUndefined()
+  })
+
+  it('should not ignore Null true when presence is known and the key is present', () => {
+    //Given a present SourceAccount key whose value is not known
+    const req = new AwsRequestImpl(
+      '',
+      { resource: '', accountId: '' },
+      '',
+      new RequestContextImpl({ 'aws:SourceAccount': 'placeholder' })
+    )
+    const cond = conditionsFor('Allow', { Null: { 'aws:SourceAccount': 'true' } })
+
+    //When checking conditions in Discovery mode
+    const result = requestMatchesConditions(
+      req,
+      cond,
+      'Allow',
+      discoveryWithConstraint('aws:SourceAccount', true, false)
+    )
+
+    //Then the known presence mismatch should deny the statement
+    expect(result.matches).toBe('NoMatch')
+    expect(result.ignoredConditions).toBeUndefined()
+  })
+
+  it('should not ignore Null true when presence is known and the key is absent', () => {
+    //Given a present SourceAccount key whose value is not known
+    const req = new AwsRequestImpl(
+      '',
+      { resource: '', accountId: '' },
+      '',
+      new RequestContextImpl({})
+    )
+    const cond = conditionsFor('Allow', { Null: { 'aws:SourceAccount': 'true' } })
+
+    //When checking conditions in Discovery mode
+    const result = requestMatchesConditions(
+      req,
+      cond,
+      'Allow',
+      discoveryWithConstraint('aws:SourceAccount', true, false)
+    )
+
+    //Then the known presence mismatch should deny the statement
+    expect(result.matches).toBe('Match')
+    expect(result.ignoredConditions).toBeUndefined()
+  })
+
+  it('should not report Allow value comparisons as ignored when value the same', () => {
+    //Given a present SourceAccount key with a non-authoritative placeholder value
+    const req = new AwsRequestImpl(
+      '',
+      { resource: '', accountId: '' },
+      '',
+      new RequestContextImpl({ 'aws:SourceAccount': '111111111111' })
+    )
+    const cond = conditionsFor('Allow', { StringEquals: { 'aws:SourceAccount': '111111111111' } })
+
+    //When checking an Allow condition in Discovery mode
+    const result = requestMatchesConditions(
+      req,
+      cond,
+      'Allow',
+      discoveryWithConstraint('aws:SourceAccount', true, false)
+    )
+
+    //Then the statement should match without any ignored conditions
+    expect(result.matches).toBe('Match')
+    expect(result.ignoredConditions).toBeUndefined()
+  })
+
+  it('should report Allow value comparisons as ignored when value is unknown and different', () => {
+    //Given a present SourceAccount key with a non-authoritative placeholder value
+    const req = new AwsRequestImpl(
+      '',
+      { resource: '', accountId: '' },
+      '',
+      new RequestContextImpl({ 'aws:SourceAccount': '000000000000' })
+    )
+    const cond = conditionsFor('Allow', { StringEquals: { 'aws:SourceAccount': '111111111111' } })
+
+    //When checking an Allow condition in Discovery mode
+    const result = requestMatchesConditions(
+      req,
+      cond,
+      'Allow',
+      discoveryWithConstraint('aws:SourceAccount', true, false)
+    )
+
+    //Then the statement should match with an ignored condition
+    expect(result.matches).toBe('Match')
+    expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:SourceAccount'])
+  })
+
+  it('should report Deny value comparisons as ignored when value is unknown', () => {
+    //Given a present SourceAccount key with a non-authoritative placeholder value
+    const req = new AwsRequestImpl(
+      '',
+      { resource: '', accountId: '' },
+      '',
+      new RequestContextImpl({ 'aws:SourceAccount': '000000000000' })
+    )
+    const cond = conditionsFor('Deny', { StringEquals: { 'aws:SourceAccount': '111111111111' } })
+
+    //When checking a Deny condition in Discovery mode
+    const result = requestMatchesConditions(
+      req,
+      cond,
+      'Deny',
+      discoveryWithConstraint('aws:SourceAccount', true, false)
+    )
+
+    //Then the possible deny should not definitively match but should be reported
+    expect(result.matches).toBe('NoMatch')
+    expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:SourceAccount'])
+  })
+
+  it('should report set-operator conditions as ignored when array value is unknown', () => {
+    //Given a present SourceOrgPaths key with a non-authoritative placeholder value
+    const req = new AwsRequestImpl(
+      '',
+      { resource: '', accountId: '' },
+      '',
+      new RequestContextImpl({ 'aws:SourceOrgPaths': ['o-example/r-root/ou-placeholder/'] })
+    )
+    const cond = conditionsFor('Allow', {
+      'ForAnyValue:StringEquals': {
+        'aws:SourceOrgPaths': 'o-example/r-root/ou-target/'
+      }
+    })
+
+    //When checking an Allow condition in Discovery mode
+    const result = requestMatchesConditions(
+      req,
+      cond,
+      'Allow',
+      discoveryWithConstraint('aws:SourceOrgPaths', true, false)
+    )
+
+    //Then the value-dependent set operator should be reported as ignored
+    expect(result.matches).toBe('Match')
+    expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:SourceOrgPaths'])
+  })
+
+  it('should treat policy values that reference unknown-value keys as unknown', () => {
+    //Given a known s3 prefix and unknown SourceAccount value used as a policy variable
+    const req = new AwsRequestImpl(
+      '',
+      { resource: '', accountId: '' },
+      '',
+      new RequestContextImpl({ 's3:prefix': '111111111111', 'aws:SourceAccount': '000000000000' })
+    )
+    const cond = conditionsFor('Allow', { StringEquals: { 's3:prefix': '${aws:SourceAccount}' } })
+
+    //When checking the condition in Discovery mode
+    const result = requestMatchesConditions(
+      req,
+      cond,
+      'Allow',
+      discoveryWithConstraint('aws:SourceAccount', true, false)
+    )
+
+    //Then the condition should be reported as ignored instead of using the placeholder value
+    expect(result.matches).toBe('Match')
+    expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['s3:prefix'])
+  })
+
+  describe('presence-sensitive operator coverage', () => {
+    function requestWithContext(context: Record<string, string | string[]>): AwsRequestImpl {
+      return new AwsRequestImpl(
+        '',
+        { resource: '', accountId: '' },
+        '',
+        new RequestContextImpl(context)
+      )
+    }
+
+    it('should definitively match Null true when presence is known and the key is absent', () => {
+      //Given an absent SourceAccount key whose absence is authoritative
+      const req = requestWithContext({})
+      const cond = conditionsFor('Allow', { Null: { 'aws:SourceAccount': 'true' } })
+
+      //When checking the condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Allow',
+        discoveryWithConstraint('aws:SourceAccount', true, false)
+      )
+
+      //Then Null true should match because absence is known
+      expect(result.matches).toBe('Match')
+      expect(result.ignoredConditions).toBeUndefined()
+    })
+
+    it('should definitively not match Null false when presence is known and the key is absent', () => {
+      //Given an absent SourceAccount key whose absence is authoritative
+      const req = requestWithContext({})
+      const cond = conditionsFor('Allow', { Null: { 'aws:SourceAccount': 'false' } })
+
+      //When checking the condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Allow',
+        discoveryWithConstraint('aws:SourceAccount', true, false)
+      )
+
+      //Then Null false should not match because absence is known
+      expect(result.matches).toBe('NoMatch')
+      expect(result.ignoredConditions).toBeUndefined()
+    })
+
+    it('should not report Null true as ignored when presence is unknown and the key is absent but the condition matches', () => {
+      //Given an absent SourceAccount key whose absence is not authoritative
+      const req = requestWithContext({})
+      const cond = conditionsFor('Allow', { Null: { 'aws:SourceAccount': 'true' } })
+
+      //When checking the condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Allow',
+        discoveryWithConstraint('aws:SourceAccount', false, false)
+      )
+
+      //Then the matching Allow condition should not need to be ignored
+      expect(result.matches).toBe('Match')
+      expect(result.ignoredConditions).toBeUndefined()
+    })
+
+    it('should not report Null false as ignored when presence is unknown and the key is present but the condition matches', () => {
+      //Given a present SourceAccount key whose presence is not authoritative
+      const req = requestWithContext({ 'aws:SourceAccount': '000000000000' })
+      const cond = conditionsFor('Allow', { Null: { 'aws:SourceAccount': 'false' } })
+
+      //When checking the condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Allow',
+        discoveryWithConstraint('aws:SourceAccount', false, false)
+      )
+
+      //Then the matching Allow condition should not need to be ignored
+      expect(result.matches).toBe('Match')
+      expect(result.ignoredConditions).toBeUndefined()
+    })
+
+    it('should definitively match StringEqualsIfExists when presence is known and the key is absent', () => {
+      //Given an absent SourceAccount key whose absence is authoritative
+      const req = requestWithContext({})
+      const cond = conditionsFor('Allow', {
+        StringEqualsIfExists: { 'aws:SourceAccount': '111111111111' }
+      })
+
+      //When checking the condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Allow',
+        discoveryWithConstraint('aws:SourceAccount', true, false)
+      )
+
+      //Then IfExists should match because the key is definitively absent
+      expect(result.matches).toBe('Match')
+      expect(result.ignoredConditions).toBeUndefined()
+      expect(result.details.conditions?.[0].matchedBecauseMissing).toBe(true)
+    })
+
+    it('should not report StringEqualsIfExists as ignored when presence is unknown and the key is absent but the condition matches', () => {
+      //Given an absent SourceAccount key whose absence is not authoritative
+      const req = requestWithContext({})
+      const cond = conditionsFor('Allow', {
+        StringEqualsIfExists: { 'aws:SourceAccount': '111111111111' }
+      })
+
+      //When checking the condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Allow',
+        discoveryWithConstraint('aws:SourceAccount', false, false)
+      )
+
+      //Then the matching Allow condition should not need to be ignored
+      expect(result.matches).toBe('Match')
+      expect(result.ignoredConditions).toBeUndefined()
+    })
+
+    it('should report StringEqualsIfExists as ignored when presence is known but the present value is unknown', () => {
+      //Given a present SourceAccount key with a non-authoritative value
+      const req = requestWithContext({ 'aws:SourceAccount': '000000000000' })
+      const cond = conditionsFor('Allow', {
+        StringEqualsIfExists: { 'aws:SourceAccount': '111111111111' }
+      })
+
+      //When checking the condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Allow',
+        discoveryWithConstraint('aws:SourceAccount', true, false)
+      )
+
+      //Then the operator requires the unknown concrete value
+      expect(result.matches).toBe('Match')
+      expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:SourceAccount'])
+    })
+
+    it('should definitively match StringNotEqualsIfExists when presence is known and the key is absent', () => {
+      //Given an absent SourceAccount key whose absence is authoritative
+      const req = requestWithContext({})
+      const cond = conditionsFor('Allow', {
+        StringNotEqualsIfExists: { 'aws:SourceAccount': '111111111111' }
+      })
+
+      //When checking the condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Allow',
+        discoveryWithConstraint('aws:SourceAccount', true, false)
+      )
+
+      //Then IfExists should match because the key is definitively absent
+      expect(result.matches).toBe('Match')
+      expect(result.ignoredConditions).toBeUndefined()
+      expect(result.details.conditions?.[0].matchedBecauseMissing).toBe(true)
+    })
+
+    it('should not report StringNotEqualsIfExists as ignored when presence is unknown and the key is absent but the condition matches', () => {
+      //Given an absent SourceAccount key whose absence is not authoritative
+      const req = requestWithContext({})
+      const cond = conditionsFor('Allow', {
+        StringNotEqualsIfExists: { 'aws:SourceAccount': '111111111111' }
+      })
+
+      //When checking the condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Allow',
+        discoveryWithConstraint('aws:SourceAccount', false, false)
+      )
+
+      //Then the matching Allow condition should not need to be ignored
+      expect(result.matches).toBe('Match')
+      expect(result.ignoredConditions).toBeUndefined()
+    })
+
+    it('should definitively not match StringEquals when presence is known and the key is absent', () => {
+      //Given an absent SourceAccount key whose absence is authoritative
+      const req = requestWithContext({})
+      const cond = conditionsFor('Allow', { StringEquals: { 'aws:SourceAccount': '111111111111' } })
+
+      //When checking the condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Allow',
+        discoveryWithConstraint('aws:SourceAccount', true, false)
+      )
+
+      //Then the missing key should be a definitive no-match
+      expect(result.matches).toBe('NoMatch')
+      expect(result.ignoredConditions).toBeUndefined()
+      expect(result.details.conditions?.[0].failedBecauseMissing).toBe(true)
+    })
+
+    it('should report StringEquals as ignored when presence is unknown and the key is absent', () => {
+      //Given an absent SourceAccount key whose absence is not authoritative
+      const req = requestWithContext({})
+      const cond = conditionsFor('Allow', { StringEquals: { 'aws:SourceAccount': '111111111111' } })
+
+      //When checking the condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Allow',
+        discoveryWithConstraint('aws:SourceAccount', false, false)
+      )
+
+      //Then the condition should be conditional on the key's possible presence
+      expect(result.matches).toBe('Match')
+      expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:SourceAccount'])
+    })
+
+    it('should definitively match ForAllValues when presence is known and the key is absent', () => {
+      //Given an absent SourceOrgPaths key whose absence is authoritative
+      const req = requestWithContext({})
+      const cond = conditionsFor('Allow', {
+        'ForAllValues:StringEquals': { 'aws:SourceOrgPaths': 'o-example/r-root/ou-target/' }
+      })
+
+      //When checking the condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Allow',
+        discoveryWithConstraint('aws:SourceOrgPaths', true, false)
+      )
+
+      //Then ForAllValues should match because the key is definitively absent
+      expect(result.matches).toBe('Match')
+      expect(result.ignoredConditions).toBeUndefined()
+      expect(result.details.conditions?.[0].matchedBecauseMissing).toBe(true)
+    })
+
+    it('should not report ForAllValues as ignored when presence is unknown and the key is absent but the condition matches', () => {
+      //Given an absent SourceOrgPaths key whose absence is not authoritative
+      const req = requestWithContext({})
+      const cond = conditionsFor('Allow', {
+        'ForAllValues:StringEquals': { 'aws:SourceOrgPaths': 'o-example/r-root/ou-target/' }
+      })
+
+      //When checking the condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Allow',
+        discoveryWithConstraint('aws:SourceOrgPaths', false, false)
+      )
+
+      //Then the matching Allow condition should not need to be ignored
+      expect(result.matches).toBe('Match')
+      expect(result.ignoredConditions).toBeUndefined()
+    })
+
+    it('should report ForAllValues as ignored when presence is known but the present value is unknown', () => {
+      //Given a present SourceOrgPaths key with a non-authoritative array value
+      const req = requestWithContext({
+        'aws:SourceOrgPaths': ['o-example/r-root/ou-placeholder/']
+      })
+      const cond = conditionsFor('Allow', {
+        'ForAllValues:StringEquals': { 'aws:SourceOrgPaths': 'o-example/r-root/ou-target/' }
+      })
+
+      //When checking the condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Allow',
+        discoveryWithConstraint('aws:SourceOrgPaths', true, false)
+      )
+
+      //Then the set operator requires the unknown concrete value
+      expect(result.matches).toBe('Match')
+      expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:SourceOrgPaths'])
+    })
+
+    it('should definitively not match ForAnyValue when presence is known and the key is absent', () => {
+      //Given an absent SourceOrgPaths key whose absence is authoritative
+      const req = requestWithContext({})
+      const cond = conditionsFor('Allow', {
+        'ForAnyValue:StringEquals': { 'aws:SourceOrgPaths': 'o-example/r-root/ou-target/' }
+      })
+
+      //When checking the condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Allow',
+        discoveryWithConstraint('aws:SourceOrgPaths', true, false)
+      )
+
+      //Then ForAnyValue should not match because the key is definitively absent
+      expect(result.matches).toBe('NoMatch')
+      expect(result.ignoredConditions).toBeUndefined()
+      expect(result.details.conditions?.[0].failedBecauseMissing).toBe(true)
+    })
+
+    it('should match ForAnyValue when presence is known and the value matches', () => {
+      //Given an absent SourceOrgPaths key whose absence is authoritative
+      const req = requestWithContext({ 'aws:SourceOrgPaths': ['o-example/r-root/ou-target/'] })
+      const cond = conditionsFor('Allow', {
+        'ForAnyValue:StringEquals': { 'aws:SourceOrgPaths': 'o-example/r-root/ou-target/' }
+      })
+
+      //When checking the condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Allow',
+        discoveryWithConstraint('aws:SourceOrgPaths', true, false)
+      )
+
+      //Then ForAnyValue should not match because the key is definitively absent
+      expect(result.matches).toBe('Match')
+      expect(result.ignoredConditions).toBeUndefined()
+    })
+
+    it('should report ForAnyValue as ignored when presence is unknown and the key is absent', () => {
+      //Given an absent SourceOrgPaths key whose absence is not authoritative
+      const req = requestWithContext({})
+      const cond = conditionsFor('Allow', {
+        'ForAnyValue:StringEquals': { 'aws:SourceOrgPaths': 'o-example/r-root/ou-target/' }
+      })
+
+      //When checking the condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Allow',
+        discoveryWithConstraint('aws:SourceOrgPaths', false, false)
+      )
+
+      //Then ForAnyValue cannot definitively rely on the missing key
+      expect(result.matches).toBe('Match')
+      expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:SourceOrgPaths'])
+    })
+
+    it('should not match Deny ForAnyValue when presence is known and the key is absent', () => {
+      //Given an absent SourceOrgPaths key whose absence is authoritative
+      const req = requestWithContext({})
+      const cond = conditionsFor('Deny', {
+        'ForAnyValue:StringEquals': { 'aws:SourceOrgPaths': 'o-example/r-root/ou-target/' }
+      })
+
+      //When checking the Deny condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Deny',
+        discoveryWithConstraint('aws:SourceOrgPaths', true, false)
+      )
+
+      //Then ForAnyValue should not deny because the key is definitively absent
+      expect(result.matches).toBe('NoMatch')
+      expect(result.ignoredConditions).toBeUndefined()
+      expect(result.details.conditions?.[0].failedBecauseMissing).toBe(true)
+    })
+
+    it('should report Deny ForAnyValue as ignored when presence is unknown and the key is absent', () => {
+      //Given an absent SourceOrgPaths key whose absence is not authoritative
+      const req = requestWithContext({})
+      const cond = conditionsFor('Deny', {
+        'ForAnyValue:StringEquals': { 'aws:SourceOrgPaths': 'o-example/r-root/ou-target/' }
+      })
+
+      //When checking the Deny condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Deny',
+        discoveryWithConstraint('aws:SourceOrgPaths', false, false)
+      )
+
+      //Then the possible Deny should be reported but not definitively match
+      expect(result.matches).toBe('NoMatch')
+      expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:SourceOrgPaths'])
+    })
+
+    it('should match Deny ForAnyValue when presence is known and the value matches', () => {
+      //Given a present SourceOrgPaths key whose matching value is authoritative
+      const req = requestWithContext({ 'aws:SourceOrgPaths': ['o-example/r-root/ou-target/'] })
+      const cond = conditionsFor('Deny', {
+        'ForAnyValue:StringEquals': { 'aws:SourceOrgPaths': 'o-example/r-root/ou-target/' }
+      })
+
+      //When checking the Deny condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Deny',
+        discoveryWithConstraint('aws:SourceOrgPaths', true, true)
+      )
+
+      //Then the Deny condition should definitively match
+      expect(result.matches).toBe('Match')
+      expect(result.ignoredConditions).toBeUndefined()
+    })
+
+    it('should not match Deny ForAnyValue when presence is known and the value does not match', () => {
+      //Given a present SourceOrgPaths key whose non-matching value is authoritative
+      const req = requestWithContext({ 'aws:SourceOrgPaths': ['o-example/r-root/ou-other/'] })
+      const cond = conditionsFor('Deny', {
+        'ForAnyValue:StringEquals': { 'aws:SourceOrgPaths': 'o-example/r-root/ou-target/' }
+      })
+
+      //When checking the Deny condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Deny',
+        discoveryWithConstraint('aws:SourceOrgPaths', true, true)
+      )
+
+      //Then the Deny condition should definitively not match
+      expect(result.matches).toBe('NoMatch')
+      expect(result.ignoredConditions).toBeUndefined()
+    })
+
+    it('should report Deny ForAnyValue as ignored when presence is known but the present value is unknown and different', () => {
+      //Given a present SourceOrgPaths key with a non-authoritative value
+      const req = requestWithContext({ 'aws:SourceOrgPaths': ['o-example/r-root/ou-placeholder/'] })
+      const cond = conditionsFor('Deny', {
+        'ForAnyValue:StringEquals': { 'aws:SourceOrgPaths': 'o-example/r-root/ou-target/' }
+      })
+
+      //When checking the Deny condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Deny',
+        discoveryWithConstraint('aws:SourceOrgPaths', true, false)
+      )
+
+      //Then the possible Deny should be reported but not definitively match
+      expect(result.matches).toBe('NoMatch')
+      expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:SourceOrgPaths'])
+    })
+
+    it('should report Deny ForAnyValue as ignored when presence is known but the present value is unknown and the same', () => {
+      //Given a present SourceOrgPaths key with a non-authoritative value
+      const req = requestWithContext({ 'aws:SourceOrgPaths': ['o-example/r-root/ou-target/'] })
+      const cond = conditionsFor('Deny', {
+        'ForAnyValue:StringEquals': { 'aws:SourceOrgPaths': 'o-example/r-root/ou-target/' }
+      })
+
+      //When checking the Deny condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Deny',
+        discoveryWithConstraint('aws:SourceOrgPaths', true, false)
+      )
+
+      //Then the possible Deny should be reported but not definitively match
+      expect(result.matches).toBe('NoMatch')
+      expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:SourceOrgPaths'])
+    })
+
+    it('should match Deny ForAllValues when presence is known and the key is absent', () => {
+      //Given an absent SourceOrgPaths key whose absence is authoritative
+      const req = requestWithContext({})
+      const cond = conditionsFor('Deny', {
+        'ForAllValues:StringEquals': { 'aws:SourceOrgPaths': 'o-example/r-root/ou-target/' }
+      })
+
+      //When checking the Deny condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Deny',
+        discoveryWithConstraint('aws:SourceOrgPaths', true, false)
+      )
+
+      //Then ForAllValues should deny because missing keys match this operator
+      expect(result.matches).toBe('Match')
+      expect(result.ignoredConditions).toBeUndefined()
+      expect(result.details.conditions?.[0].matchedBecauseMissing).toBe(true)
+    })
+
+    it('should report Deny ForAllValues as ignored when presence is unknown and the key is absent', () => {
+      //Given an absent SourceOrgPaths key whose absence is not authoritative
+      const req = requestWithContext({})
+      const cond = conditionsFor('Deny', {
+        'ForAllValues:StringEquals': { 'aws:SourceOrgPaths': 'o-example/r-root/ou-target/' }
+      })
+
+      //When checking the Deny condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Deny',
+        discoveryWithConstraint('aws:SourceOrgPaths', false, false)
+      )
+
+      //Then the possible Deny should be reported but not definitively match
+      expect(result.matches).toBe('NoMatch')
+      expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:SourceOrgPaths'])
+    })
+
+    it('should match Deny ForAllValues when presence is known and all values match', () => {
+      //Given a present SourceOrgPaths key whose matching value is authoritative
+      const req = requestWithContext({ 'aws:SourceOrgPaths': ['o-example/r-root/ou-target/'] })
+      const cond = conditionsFor('Deny', {
+        'ForAllValues:StringEquals': { 'aws:SourceOrgPaths': 'o-example/r-root/ou-target/' }
+      })
+
+      //When checking the Deny condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Deny',
+        discoveryWithConstraint('aws:SourceOrgPaths', true, true)
+      )
+
+      //Then the Deny condition should definitively match
+      expect(result.matches).toBe('Match')
+      expect(result.ignoredConditions).toBeUndefined()
+    })
+
+    it('should not match Deny ForAllValues when presence is known and a value does not match', () => {
+      //Given a present SourceOrgPaths key whose non-matching value is authoritative
+      const req = requestWithContext({ 'aws:SourceOrgPaths': ['o-example/r-root/ou-other/'] })
+      const cond = conditionsFor('Deny', {
+        'ForAllValues:StringEquals': { 'aws:SourceOrgPaths': 'o-example/r-root/ou-target/' }
+      })
+
+      //When checking the Deny condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Deny',
+        discoveryWithConstraint('aws:SourceOrgPaths', true, true)
+      )
+
+      //Then the Deny condition should definitively not match
+      expect(result.matches).toBe('NoMatch')
+      expect(result.ignoredConditions).toBeUndefined()
+    })
+
+    it('should report Deny ForAllValues as ignored when presence is known but the present value is unknown', () => {
+      //Given a present SourceOrgPaths key with a non-authoritative value
+      const req = requestWithContext({ 'aws:SourceOrgPaths': ['o-example/r-root/ou-placeholder/'] })
+      const cond = conditionsFor('Deny', {
+        'ForAllValues:StringEquals': { 'aws:SourceOrgPaths': 'o-example/r-root/ou-target/' }
+      })
+
+      //When checking the Deny condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Deny',
+        discoveryWithConstraint('aws:SourceOrgPaths', true, false)
+      )
+
+      //Then the possible Deny should be reported but not definitively match
+      expect(result.matches).toBe('NoMatch')
+      expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:SourceOrgPaths'])
+    })
+
+    it('should match Deny StringNotEquals when presence is known and the key is absent', () => {
+      //Given an absent SourceAccount key whose absence is authoritative
+      const req = requestWithContext({})
+      const cond = conditionsFor('Deny', {
+        StringNotEquals: { 'aws:SourceAccount': '111111111111' }
+      })
+
+      //When checking the Deny condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Deny',
+        discoveryWithConstraint('aws:SourceAccount', true, false)
+      )
+
+      //Then the negative condition should definitively match because the key is missing
+      expect(result.matches).toBe('Match')
+      expect(result.ignoredConditions).toBeUndefined()
+      expect(result.details.conditions?.[0].matchedBecauseMissing).toBe(true)
+    })
+
+    it('should report Deny StringNotEquals as ignored when presence is unknown and the key is absent', () => {
+      //Given an absent SourceAccount key whose absence is not authoritative
+      const req = requestWithContext({})
+      const cond = conditionsFor('Deny', {
+        StringNotEquals: { 'aws:SourceAccount': '111111111111' }
+      })
+
+      //When checking the Deny condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Deny',
+        discoveryWithConstraint('aws:SourceAccount', false, false)
+      )
+
+      //Then the possible Deny should be reported but not definitively match
+      expect(result.matches).toBe('NoMatch')
+      expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:SourceAccount'])
+    })
+
+    it('should not match Deny StringNotEquals when presence is known and the value is the same', () => {
+      //Given a present SourceAccount key whose matching value is authoritative
+      const req = requestWithContext({ 'aws:SourceAccount': '111111111111' })
+      const cond = conditionsFor('Deny', {
+        StringNotEquals: { 'aws:SourceAccount': '111111111111' }
+      })
+
+      //When checking the Deny condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Deny',
+        discoveryWithConstraint('aws:SourceAccount', true, true)
+      )
+
+      //Then the negative Deny condition should definitively not match
+      expect(result.matches).toBe('NoMatch')
+      expect(result.ignoredConditions).toBeUndefined()
+    })
+
+    it('should match Deny StringNotEquals when presence is known and the value is different', () => {
+      //Given a present SourceAccount key whose different value is authoritative
+      const req = requestWithContext({ 'aws:SourceAccount': '000000000000' })
+      const cond = conditionsFor('Deny', {
+        StringNotEquals: { 'aws:SourceAccount': '111111111111' }
+      })
+
+      //When checking the Deny condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Deny',
+        discoveryWithConstraint('aws:SourceAccount', true, true)
+      )
+
+      //Then the negative Deny condition should definitively match
+      expect(result.matches).toBe('Match')
+      expect(result.ignoredConditions).toBeUndefined()
+    })
+
+    it('should report Deny StringNotEquals as ignored when the unknown value is the same', () => {
+      //Given a present SourceAccount key with a matching but non-authoritative value
+      const req = requestWithContext({ 'aws:SourceAccount': '111111111111' })
+      const cond = conditionsFor('Deny', {
+        StringNotEquals: { 'aws:SourceAccount': '111111111111' }
+      })
+
+      //When checking the Deny condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Deny',
+        discoveryWithConstraint('aws:SourceAccount', true, false)
+      )
+
+      //Then the possible Deny should be reported but not definitively match
+      expect(result.matches).toBe('NoMatch')
+      expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:SourceAccount'])
+    })
+
+    it('should report Deny StringNotEquals as ignored when the unknown value is different', () => {
+      //Given a present SourceAccount key with a different but non-authoritative value
+      const req = requestWithContext({ 'aws:SourceAccount': '000000000000' })
+      const cond = conditionsFor('Deny', {
+        StringNotEquals: { 'aws:SourceAccount': '111111111111' }
+      })
+
+      //When checking the Deny condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Deny',
+        discoveryWithConstraint('aws:SourceAccount', true, false)
+      )
+
+      //Then the possible Deny should be reported but not definitively match
+      expect(result.matches).toBe('NoMatch')
+      expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:SourceAccount'])
+    })
+
+    it('should match Deny StringNotEqualsIfExists when presence is known and the key is absent', () => {
+      //Given an absent SourceAccount key whose absence is authoritative
+      const req = requestWithContext({})
+      const cond = conditionsFor('Deny', {
+        StringNotEqualsIfExists: { 'aws:SourceAccount': '111111111111' }
+      })
+
+      //When checking the Deny condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Deny',
+        discoveryWithConstraint('aws:SourceAccount', true, false)
+      )
+
+      //Then IfExists should definitively match because the key is missing
+      expect(result.matches).toBe('Match')
+      expect(result.ignoredConditions).toBeUndefined()
+      expect(result.details.conditions?.[0].matchedBecauseMissing).toBe(true)
+    })
+
+    it('should report Deny StringNotEqualsIfExists as ignored when presence is unknown and the key is absent', () => {
+      //Given an absent SourceAccount key whose absence is not authoritative
+      const req = requestWithContext({})
+      const cond = conditionsFor('Deny', {
+        StringNotEqualsIfExists: { 'aws:SourceAccount': '111111111111' }
+      })
+
+      //When checking the Deny condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Deny',
+        discoveryWithConstraint('aws:SourceAccount', false, false)
+      )
+
+      //Then the possible Deny should be reported but not definitively match
+      expect(result.matches).toBe('NoMatch')
+      expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:SourceAccount'])
+    })
+
+    it('should not match Deny StringNotEqualsIfExists when presence is known and the value is the same', () => {
+      //Given a present SourceAccount key whose matching value is authoritative
+      const req = requestWithContext({ 'aws:SourceAccount': '111111111111' })
+      const cond = conditionsFor('Deny', {
+        StringNotEqualsIfExists: { 'aws:SourceAccount': '111111111111' }
+      })
+
+      //When checking the Deny condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Deny',
+        discoveryWithConstraint('aws:SourceAccount', true, true)
+      )
+
+      //Then the negative Deny condition should definitively not match
+      expect(result.matches).toBe('NoMatch')
+      expect(result.ignoredConditions).toBeUndefined()
+    })
+
+    it('should match Deny StringNotEqualsIfExists when presence is known and the value is different', () => {
+      //Given a present SourceAccount key whose different value is authoritative
+      const req = requestWithContext({ 'aws:SourceAccount': '000000000000' })
+      const cond = conditionsFor('Deny', {
+        StringNotEqualsIfExists: { 'aws:SourceAccount': '111111111111' }
+      })
+
+      //When checking the Deny condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Deny',
+        discoveryWithConstraint('aws:SourceAccount', true, true)
+      )
+
+      //Then the negative Deny condition should definitively match
+      expect(result.matches).toBe('Match')
+      expect(result.ignoredConditions).toBeUndefined()
+    })
+
+    it('should report Deny StringNotEqualsIfExists as ignored when the unknown value is the same', () => {
+      //Given a present SourceAccount key with a matching but non-authoritative value
+      const req = requestWithContext({ 'aws:SourceAccount': '111111111111' })
+      const cond = conditionsFor('Deny', {
+        StringNotEqualsIfExists: { 'aws:SourceAccount': '111111111111' }
+      })
+
+      //When checking the Deny condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Deny',
+        discoveryWithConstraint('aws:SourceAccount', true, false)
+      )
+
+      //Then the possible Deny should be reported but not definitively match
+      expect(result.matches).toBe('NoMatch')
+      expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:SourceAccount'])
+    })
+
+    it('should report Deny StringNotEqualsIfExists as ignored when the unknown value is different', () => {
+      //Given a present SourceAccount key with a different but non-authoritative value
+      const req = requestWithContext({ 'aws:SourceAccount': '000000000000' })
+      const cond = conditionsFor('Deny', {
+        StringNotEqualsIfExists: { 'aws:SourceAccount': '111111111111' }
+      })
+
+      //When checking the Deny condition in Discovery mode
+      const result = requestMatchesConditions(
+        req,
+        cond,
+        'Deny',
+        discoveryWithConstraint('aws:SourceAccount', true, false)
+      )
+
+      //Then the possible Deny should be reported but not definitively match
+      expect(result.matches).toBe('NoMatch')
+      expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:SourceAccount'])
+    })
   })
 })

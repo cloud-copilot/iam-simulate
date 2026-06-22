@@ -14,17 +14,17 @@ import {
   requestMatchesStatementPrincipals,
   userArnFromFederatedUserArn
 } from './principal.js'
-import { StrictContextKeys } from '../context_keys/strictContextKeys.js'
+import { DiscoveryContextKeyConstraints } from '../context_keys/discoveryContextKeyConstraints.js'
 
 const defaultResource = { accountId: '', resource: '' }
 const defaultSimulationParameters: SimulationParameters = {
   simulationMode: 'Strict',
-  strictConditionKeys: new StrictContextKeys([])
+  discoveryContextKeyConstraints: new DiscoveryContextKeyConstraints([])
 }
 
 const discoverySimulationParameters: SimulationParameters = {
   simulationMode: 'Discovery',
-  strictConditionKeys: new StrictContextKeys([])
+  discoveryContextKeyConstraints: new DiscoveryContextKeyConstraints([])
 }
 
 describe('userArnFromFederatedUserArn', () => {
@@ -600,7 +600,7 @@ describe('requestMatchesPrincipalStatement', () => {
       )
       const strictParams: SimulationParameters = {
         simulationMode: 'Strict',
-        strictConditionKeys: new StrictContextKeys([])
+        discoveryContextKeyConstraints: new DiscoveryContextKeyConstraints([])
       }
       // When we check if the request matches the principal statement
       const result = requestMatchesPrincipalStatement(

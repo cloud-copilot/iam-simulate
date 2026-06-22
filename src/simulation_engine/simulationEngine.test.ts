@@ -1263,7 +1263,9 @@ describe('runSimulation', () => {
     //When the simulation is run with strict keys
     const response = await runSimulation(simulation, {
       simulationMode: 'Discovery',
-      strictConditionKeys: ['aws:SourceVpc']
+      discoveryContextKeyConstraints: [
+        { keyName: 'aws:SourceVpc', presenceIsKnown: true, valueIsKnown: true }
+      ]
     })
     expect(response.resultType).toEqual('single')
     if (response.resultType !== 'single') {

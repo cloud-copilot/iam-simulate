@@ -65,7 +65,13 @@
       "response": "Allowed",
       "ignoredConditions": {
         "rcp": {
-          "deny": [{ "key": "aws:Username", "op": "StringEquals", "values": ["test-user"] }]
+          "deny": [
+            {
+              "key": "aws:Username",
+              "op": "StringEquals",
+              "values": ["test-user"]
+            }
+          ]
         }
       }
     }
@@ -131,7 +137,13 @@
     ],
     "simulation": {
       "mode": "Discovery",
-      "strictConditionKeys": ["aws:username"]
+      "discoveryContextKeyConstraints": [
+        {
+          "keyName": "aws:username",
+          "presenceIsKnown": true,
+          "valueIsKnown": true
+        }
+      ]
     },
     "expected": {
       "response": "ExplicitlyDenied",
