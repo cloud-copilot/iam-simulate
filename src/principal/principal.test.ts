@@ -439,6 +439,125 @@ describe('requestMatchesPrincipalStatement', () => {
       expect(result.explain.matches).toBe('SessionRoleMatch')
     })
 
+    it('role arn with a path matches an assumed-role session for the role name', () => {
+      //Given a policy principal statement for a role with a path
+      const policy = loadPolicy({
+        Statement: [{ Principal: { AWS: 'arn:aws:iam::555555555555:role/org/team/super-admin' } }]
+      })
+
+      const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0]
+
+      //And a request with an assumed-role session for that role name
+      const request = new AwsRequestImpl(
+        'arn:aws:sts::555555555555:assumed-role/super-admin/session-name',
+        defaultResource,
+        's3:GetBucket',
+        new RequestContextImpl({})
+      )
+
+      //When we check if the request matches the principal statement
+      const result = requestMatchesPrincipalStatement(
+        request,
+        principalStatement,
+        defaultSimulationParameters,
+        'Allow'
+      )
+
+      //Then it should match the role for the session
+      expect(result.explain.matches).toBe('SessionRoleMatch')
+      expect(result.explain.principal).toBe('arn:aws:iam::555555555555:role/org/team/super-admin')
+      expect(result.explain.roleForSessionArn).toBe(
+        'arn:aws:iam::555555555555:role/org/team/super-admin'
+      )
+    })
+
+    it('role arn with a path matches an assumed-role session for the role name ignoring case', () => {
+      //Given a policy principal statement for a role with uppercase characters in the name
+      const policy = loadPolicy({
+        Statement: [{ Principal: { AWS: 'arn:aws:iam::555555555555:role/team/Super-Admin' } }]
+      })
+
+      const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0]
+
+      //And a request with an assumed-role session for that role name using different casing
+      const request = new AwsRequestImpl(
+        'arn:aws:sts::555555555555:assumed-role/super-admin/session-name',
+        defaultResource,
+        's3:GetBucket',
+        new RequestContextImpl({})
+      )
+
+      //When we check if the request matches the principal statement
+      const result = requestMatchesPrincipalStatement(
+        request,
+        principalStatement,
+        defaultSimulationParameters,
+        'Allow'
+      )
+
+      //Then it should match the role for the session
+      expect(result.explain.matches).toBe('SessionRoleMatch')
+      expect(result.explain.roleForSessionArn).toBe(
+        'arn:aws:iam::555555555555:role/team/Super-Admin'
+      )
+    })
+
+    it('role arn with a path does not match a session for a different role name', () => {
+      //Given a policy principal statement for a role with a path
+      const policy = loadPolicy({
+        Statement: [{ Principal: { AWS: 'arn:aws:iam::555555555555:role/team/super-admin' } }]
+      })
+
+      const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0]
+
+      //And a request with an assumed-role session for a different role name
+      const request = new AwsRequestImpl(
+        'arn:aws:sts::555555555555:assumed-role/normie-admin/session-name',
+        defaultResource,
+        's3:GetBucket',
+        new RequestContextImpl({})
+      )
+
+      //When we check if the request matches the principal statement
+      const result = requestMatchesPrincipalStatement(
+        request,
+        principalStatement,
+        defaultSimulationParameters,
+        'Allow'
+      )
+
+      //Then it should not match
+      expect(result.explain.matches).toBe('NoMatch')
+    })
+
+    it('role arn with a path does not match a session from a different account', () => {
+      //Given a policy principal statement for a role with a path
+      const policy = loadPolicy({
+        Statement: [{ Principal: { AWS: 'arn:aws:iam::555555555555:role/team/super-admin' } }]
+      })
+
+      const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0]
+
+      //And a request with an assumed-role session for the same role name in a different account
+      const request = new AwsRequestImpl(
+        'arn:aws:sts::444444444444:assumed-role/super-admin/session-name',
+        defaultResource,
+        's3:GetBucket',
+        new RequestContextImpl({})
+      )
+
+      //When we check if the request matches the principal statement
+      const result = requestMatchesPrincipalStatement(
+        request,
+        principalStatement,
+        defaultSimulationParameters,
+        'Allow'
+      )
+
+      //Then it should not match
+      expect(result.explain.matches).toBe('NoMatch')
+    })
+
     it('neither session nor role arn matches', () => {
       //Given a policy principal statement
       const policy = loadPolicy({
