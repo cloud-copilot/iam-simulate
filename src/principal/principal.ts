@@ -2,7 +2,9 @@ import { type Principal, type Statement } from '@cloud-copilot/iam-policy'
 import {
   convertAssumedRoleArnToRoleArn,
   isAssumedRoleArn,
-  isFederatedUserArn
+  isFederatedUserArn,
+  isIamRoleArn,
+  splitArnParts
 } from '@cloud-copilot/iam-utils'
 import { type SimulationParameters } from '../core_engine/CoreSimulatorEngine.js'
 import { type PrincipalExplain, type StatementExplain } from '../explain/statementExplain.js'
@@ -259,13 +261,12 @@ export function requestMatchesPrincipalStatement(
   if (principalStatement.isAwsPrincipal()) {
     if (isAssumedRoleArn(request.principal.value())) {
       const sessionArn = request.principal.value()
-      const roleArn = convertAssumedRoleArnToRoleArn(sessionArn)
-      if (principalStatement.arn() === roleArn) {
+      if (roleArnMatchesAssumedRoleSession(principalStatement.arn(), sessionArn)) {
         return {
           explain: {
             matches: 'SessionRoleMatch',
             principal: principalStatement.value(),
-            roleForSessionArn: roleArn
+            roleForSessionArn: principalStatement.arn()
           }
         }
       }
@@ -344,6 +345,72 @@ export function userArnFromFederatedUserArn(federatedUserArn: string): string {
   const resource = stsParts.at(-1)!
   const username = resource.slice(resource.indexOf('/') + 1)
   return `arn:${stsParts[1]}:iam::${stsParts[4]}:user/${username}`
+}
+
+/**
+ * Get the final segment from a slash-delimited path.
+ *
+ * @param path the slash-delimited path to inspect
+ * @returns the final path segment, or undefined if the path is undefined or empty
+ */
+function lastPathSegment(path: string | undefined): string | undefined {
+  if (!path) {
+    return undefined
+  }
+
+  const lastSlashIndex = path.lastIndexOf('/')
+  if (lastSlashIndex === -1) {
+    return path
+  }
+  return path.slice(lastSlashIndex + 1)
+}
+
+/**
+ * Get the first segment from a slash-delimited path.
+ *
+ * @param path the slash-delimited path to inspect
+ * @returns the first path segment, or undefined if the path is undefined, empty, or has no slash
+ */
+function firstPathSegment(path: string | undefined): string | undefined {
+  if (!path) {
+    return undefined
+  }
+
+  const firstSlashIndex = path.indexOf('/')
+  if (firstSlashIndex === -1) {
+    return undefined
+  }
+  return path.slice(0, firstSlashIndex)
+}
+
+/**
+ * Check whether an IAM role ARN represents the role for an assumed-role session ARN.
+ *
+ * @param roleArn the IAM role ARN to compare
+ * @param sessionArn the assumed-role session ARN to compare
+ * @returns true if the role ARN and session ARN have the same partition, account, and role name
+ */
+function roleArnMatchesAssumedRoleSession(roleArn: string, sessionArn: string): boolean {
+  if (!isIamRoleArn(roleArn) || !isAssumedRoleArn(sessionArn)) {
+    return false
+  }
+
+  const roleArnParts = splitArnParts(roleArn)
+  const sessionArnParts = splitArnParts(sessionArn)
+  if (
+    roleArnParts.partition !== sessionArnParts.partition ||
+    roleArnParts.accountId !== sessionArnParts.accountId
+  ) {
+    return false
+  }
+
+  const roleName = lastPathSegment(roleArnParts.resourcePath)
+  const sessionRoleName = firstPathSegment(sessionArnParts.resourcePath)
+  if (!roleName || !sessionRoleName) {
+    return false
+  }
+
+  return roleName.localeCompare(sessionRoleName, 'en', { sensitivity: 'base' }) === 0
 }
 
 /**
