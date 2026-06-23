@@ -5,6 +5,15 @@
 
 * add discovery context key constraints ([9fe24a6](https://github.com/cloud-copilot/iam-simulate/commit/9fe24a624111def55854c22c26c8f5899f8b44a2))
 * Fix guarddog PR check ([757e70d](https://github.com/cloud-copilot/iam-simulate/commit/757e70d71eeb0b0138ade4072d912bb2e4735c6d))
+* GuardDog version in PR check ([5d68ccb](https://github.com/cloud-copilot/iam-simulate/commit/5d68ccb90533895769313e6cf06d27df91755780))
+
+## [0.1.149](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.148...v0.1.149) (2026-06-23)
+
+
+### Bug Fixes
+
+* add discovery context key constraints ([9fe24a6](https://github.com/cloud-copilot/iam-simulate/commit/9fe24a624111def55854c22c26c8f5899f8b44a2))
+* Fix guarddog PR check ([757e70d](https://github.com/cloud-copilot/iam-simulate/commit/757e70d71eeb0b0138ade4072d912bb2e4735c6d))
 
 ## [0.1.149](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.148...v0.1.149) (2026-06-22)
 
