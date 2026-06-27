@@ -1,3 +1,15 @@
+## [0.1.149](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.148...v0.1.149) (2026-06-27)
+
+
+### Bug Fixes
+
+* add discovery context key constraints ([9fe24a6](https://github.com/cloud-copilot/iam-simulate/commit/9fe24a624111def55854c22c26c8f5899f8b44a2))
+* Fix guarddog PR check ([757e70d](https://github.com/cloud-copilot/iam-simulate/commit/757e70d71eeb0b0138ade4072d912bb2e4735c6d))
+* GuardDog version in PR check ([5d68ccb](https://github.com/cloud-copilot/iam-simulate/commit/5d68ccb90533895769313e6cf06d27df91755780))
+* match pathed role principals to role sessions ([f9c528d](https://github.com/cloud-copilot/iam-simulate/commit/f9c528dd918586da81eb2770bf8fb6d84cb33156))
+* Pin guarddog version ([4bf6cf4](https://github.com/cloud-copilot/iam-simulate/commit/4bf6cf466d6ff6f0e6bd54f5923aea6f1bda49e1))
+* update dependency action reference ([347a67d](https://github.com/cloud-copilot/iam-simulate/commit/347a67dda3fe22827f95359250db2cddb7b050f0))
+
 ## [0.1.149](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.148...v0.1.149) (2026-06-23)
 
 
