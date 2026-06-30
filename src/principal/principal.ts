@@ -307,13 +307,19 @@ export function requestMatchesPrincipalStatement(
       simulationParameters.simulationMode === 'Discovery' &&
       isAssumedRoleArn(principalStatement.arn())
     ) {
-      const principalRoleArn = convertAssumedRoleArnToRoleArn(principalStatement.arn())
-      let requestRoleArn = request.principal.value()
-      if (isAssumedRoleArn(requestRoleArn)) {
-        requestRoleArn = convertAssumedRoleArnToRoleArn(requestRoleArn)
+      const requestRoleArn = request.principal.value()
+      let roleMatchesSession = false
+      if (isIamRoleArn(requestRoleArn)) {
+        roleMatchesSession = roleArnMatchesAssumedRoleSession(
+          requestRoleArn,
+          principalStatement.arn()
+        )
+      } else if (isAssumedRoleArn(requestRoleArn)) {
+        const principalRoleArn = convertAssumedRoleArnToRoleArn(principalStatement.arn())
+        roleMatchesSession = principalRoleArn === convertAssumedRoleArnToRoleArn(requestRoleArn)
       }
 
-      if (principalRoleArn === requestRoleArn) {
+      if (roleMatchesSession) {
         const discoveryMatch = allowOrDeny === 'Allow' ? 'Match' : 'NoMatch'
         return {
           explain: {
