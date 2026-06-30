@@ -736,14 +736,14 @@ describe('requestMatchesPrincipalStatement', () => {
 
   describe('Discovery simulationMode - session ARN in policy, role ARN in request', () => {
     it('should return Match and ignoredRoleSessionName when requested role matches policy assumed role session', () => {
-      // Given a policy with an assumed-role session ARN principal
+      //Given a policy with an assumed-role session ARN principal
       const policy = loadPolicy({
         Statement: [
           { Principal: { AWS: 'arn:aws:sts::555555555555:assumed-role/role-name/session-a' } }
         ]
       })
       const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0]
-      // And a request with the matching role ARN
+      //And a request with the matching role ARN
       const request = new AwsRequestImpl(
         'arn:aws:iam::555555555555:role/role-name',
         defaultResource,
@@ -751,7 +751,7 @@ describe('requestMatchesPrincipalStatement', () => {
         new RequestContextImpl({})
       )
 
-      // When we check if the request matches the principal statement
+      //When we check if the request matches the principal statement
       const result = requestMatchesPrincipalStatement(
         request,
         principalStatement,
@@ -759,7 +759,65 @@ describe('requestMatchesPrincipalStatement', () => {
         'Allow'
       )
 
-      // Then it should return Match and ignoredRoleSessionName true
+      //Then it should return Match and ignoredRoleSessionName true
+      expect(result.explain.matches).toBe('Match')
+      expect(result.ignoredRoleSessionName).toBe(true)
+    })
+
+    it('should return Match and ignoredRoleSessionName when requested role with path matches policy assumed role session', () => {
+      //Given a policy with an assumed-role session ARN principal
+      const policy = loadPolicy({
+        Statement: [
+          { Principal: { AWS: 'arn:aws:sts::555555555555:assumed-role/role-name/session-a' } }
+        ]
+      })
+      const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0]
+      //And a request with the matching role ARN under a path
+      const request = new AwsRequestImpl(
+        'arn:aws:iam::555555555555:role/team/role-name',
+        defaultResource,
+        's3:GetBucket',
+        new RequestContextImpl({})
+      )
+
+      //When we check if the request matches the principal statement
+      const result = requestMatchesPrincipalStatement(
+        request,
+        principalStatement,
+        discoverySimulationParameters,
+        'Allow'
+      )
+
+      //Then it should return Match and ignoredRoleSessionName true
+      expect(result.explain.matches).toBe('Match')
+      expect(result.ignoredRoleSessionName).toBe(true)
+    })
+
+    it('should return Match and ignoredRoleSessionName when requested role with multiple path levels matches policy assumed role session', () => {
+      //Given a policy with an assumed-role session ARN principal
+      const policy = loadPolicy({
+        Statement: [
+          { Principal: { AWS: 'arn:aws:sts::555555555555:assumed-role/role-name/session-a' } }
+        ]
+      })
+      const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0]
+      //And a request with the matching role ARN under multiple path levels
+      const request = new AwsRequestImpl(
+        'arn:aws:iam::555555555555:role/org/team/role-name',
+        defaultResource,
+        's3:GetBucket',
+        new RequestContextImpl({})
+      )
+
+      //When we check if the request matches the principal statement
+      const result = requestMatchesPrincipalStatement(
+        request,
+        principalStatement,
+        discoverySimulationParameters,
+        'Allow'
+      )
+
+      //Then it should return Match and ignoredRoleSessionName true
       expect(result.explain.matches).toBe('Match')
       expect(result.ignoredRoleSessionName).toBe(true)
     })
