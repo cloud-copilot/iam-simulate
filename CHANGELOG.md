@@ -1,3 +1,10 @@
+## [0.1.151](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.150...v0.1.151) (2026-06-30)
+
+
+### Bug Fixes
+
+* match pathed role requests to session principals ([ddfedf2](https://github.com/cloud-copilot/iam-simulate/commit/ddfedf2870238becd3602350638714eb3c47bb02))
+
 ## [0.1.150](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.149...v0.1.150) (2026-06-27)
 
 
