@@ -162,16 +162,13 @@ export interface WildcardResourceSimulationResults {
  * Discriminated by the `resultType` field.
  */
 export type RunSimulationResults =
-  | ErrorSimulationResult
-  | SingleResourceSimulationResult
-  | WildcardResourceSimulationResults
+  ErrorSimulationResult | SingleResourceSimulationResult | WildcardResourceSimulationResults
 
 /**
  * Union type representing successful simulation results (excluding error cases).
  */
 export type SuccessfulRunSimulationResults =
-  | SingleResourceSimulationResult
-  | WildcardResourceSimulationResults
+  SingleResourceSimulationResult | WildcardResourceSimulationResults
 
 /**
  * Discriminant type for the different kinds of simulation results.

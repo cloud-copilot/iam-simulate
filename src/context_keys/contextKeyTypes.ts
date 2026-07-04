@@ -1,11 +1,5 @@
 export type BaseConditionKeyType =
-  | 'String'
-  | 'ARN'
-  | 'Numeric'
-  | 'Bool'
-  | 'Date'
-  | 'IPAddress'
-  | 'Binary'
+  'String' | 'ARN' | 'Numeric' | 'Bool' | 'Date' | 'IPAddress' | 'Binary'
 export type ArrayConditionKeyType = `ArrayOf${BaseConditionKeyType}`
 export type ConditionKeyType = BaseConditionKeyType | ArrayConditionKeyType
 

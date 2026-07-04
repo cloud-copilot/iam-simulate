@@ -1,9 +1,5 @@
 export type ExplainPrincipalMatch =
-  | 'Match'
-  | 'NoMatch'
-  | 'AccountLevelMatch'
-  | 'SessionRoleMatch'
-  | 'SessionUserMatch'
+  'Match' | 'NoMatch' | 'AccountLevelMatch' | 'SessionRoleMatch' | 'SessionUserMatch'
 
 export interface ActionExplain {
   action: string
