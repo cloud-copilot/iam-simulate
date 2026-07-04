@@ -28,11 +28,7 @@ IAM Identity Center principals // Ignore this for now.
 */
 
 export type PrincipalMatchResult =
-  | 'Match'
-  | 'NoMatch'
-  | 'AccountLevelMatch'
-  | 'SessionRoleMatch'
-  | 'SessionUserMatch'
+  'Match' | 'NoMatch' | 'AccountLevelMatch' | 'SessionRoleMatch' | 'SessionUserMatch'
 
 /**
  * Check to see if a request matches a Principal element in an IAM policy statement
