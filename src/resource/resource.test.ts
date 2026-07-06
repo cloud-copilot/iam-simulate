@@ -128,7 +128,8 @@ const resourceTests: ResourceTest[] = [
       {
         resource: 'arn:aws:s3:::my_corporate_bucket',
         matches: false,
-        errors: ['Service does not match']
+        errors: ['Service does not match'],
+        mismatchReason: 'serviceMismatch'
       }
     ]
   },
@@ -1893,6 +1894,11 @@ function validateExplains(expected: ResourceExplain[], actual: ResourceExplain[]
     } else {
       expect(found?.errors, `${explain.resource} errors`).toBeUndefined()
     }
+    if (explain.mismatchReason) {
+      expect(found?.mismatchReason, `${explain.resource} mismatch reason`).toBe(
+        explain.mismatchReason
+      )
+    }
   }
 }
 
@@ -2021,6 +2027,23 @@ const notResourceTests: ResourceTest[] = [
       },
       {
         resource: 'arn:aws:s3:::different_bucket',
+        matches: true
+      }
+    ]
+  },
+  {
+    name: 'SCP Deny NotResource should match a request for a different service full ARN',
+    policyType: 'scp',
+    effect: 'Deny',
+    notResourceStatements: ['arn:aws:iam::aws:policy/*'],
+    resource: {
+      resource: 'arn:aws:s3:::example-bucket/example-object.txt',
+      accountId: '123456789012'
+    },
+    expectMatch: true,
+    explains: [
+      {
+        resource: 'arn:aws:iam::aws:policy/*',
         matches: true
       }
     ]
