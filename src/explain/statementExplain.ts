@@ -10,10 +10,45 @@ export interface ActionExplain {
   matches: boolean
 }
 
+/**
+ * Known reasons that a policy resource can fail to match a request resource.
+ *
+ * The `invertible` flag records whether the mismatch definitively proves that
+ * the request is outside a `NotResource` set. Non-invertible reasons indicate
+ * invalid policy syntax or unavailable input rather than a definitive mismatch.
+ */
+export const resourceMismatchReasons = {
+  invalidPolicyResourceArn: { invertible: false },
+  requestMissingResource: { invertible: false },
+  unresolvablePolicyVariable: { invertible: false },
+  shortArnNoMatch: { invertible: true },
+  // Expanded short ARN mismatches preserve existing conservative behavior and are not inverted.
+  shortArnExpandedMismatch: { invertible: false },
+  wildcardOnlyActionSpecificResource: { invertible: true },
+  requestAllResourcesSpecificNotResource: { invertible: true },
+  requestAllResourcesDenySpecificResource: { invertible: true },
+  resourcePatternMismatch: { invertible: true },
+  partitionMismatch: { invertible: true },
+  serviceMismatch: { invertible: true },
+  regionMismatch: { invertible: true },
+  accountMismatch: { invertible: true },
+  productMismatch: { invertible: true },
+  resourceIdMismatch: { invertible: true }
+} as const
+
+/**
+ * A machine-readable key explaining why a policy resource did not match a request resource.
+ */
+export type ResourceMismatchReason = keyof typeof resourceMismatchReasons
+
 export interface ResourceExplain {
   resource: string
   resolvedValue?: string
   errors?: string[]
+  /**
+   * Machine-readable reason for a non-match, when the resource did not match.
+   */
+  mismatchReason?: ResourceMismatchReason
   matches: boolean
 }
 

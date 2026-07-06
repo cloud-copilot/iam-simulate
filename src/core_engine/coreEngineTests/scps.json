@@ -340,5 +340,396 @@
       "response": "ExplicitlyDenied",
       "blockedBy": ["scp"]
     }
+  },
+  {
+    "name": "SCP Deny with NotResource and StringNotEqualsIfExists does not deny when ResourceOrgID matches",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::example-bucket/example-object.txt",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:ResourceOrgID": "o-exampleorg"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::example-bucket/*"
+          }
+        ]
+      }
+    ],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-example",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              },
+              {
+                "Effect": "Deny",
+                "Action": "*",
+                "NotResource": ["arn:aws:iam::aws:policy/*"],
+                "Condition": {
+                  "StringNotEqualsIfExists": {
+                    "aws:ResourceOrgID": "o-exampleorg"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "SCP Deny with NotResource and StringNotEqualsIfExists denies when ResourceOrgID differs",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::example-bucket/example-object.txt",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:ResourceOrgID": "o-otherorg"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::example-bucket/*"
+          }
+        ]
+      }
+    ],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-example",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              },
+              {
+                "Effect": "Deny",
+                "Action": "*",
+                "NotResource": ["arn:aws:iam::aws:policy/*"],
+                "Condition": {
+                  "StringNotEqualsIfExists": {
+                    "aws:ResourceOrgID": "o-exampleorg"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["scp"]
+    }
+  },
+  {
+    "name": "SCP Deny with NotResource and StringNotEqualsIfExists denies when ResourceOrgID is missing",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::example-bucket/example-object.txt",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::example-bucket/*"
+          }
+        ]
+      }
+    ],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-example",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              },
+              {
+                "Effect": "Deny",
+                "Action": "*",
+                "NotResource": ["arn:aws:iam::aws:policy/*"],
+                "Condition": {
+                  "StringNotEqualsIfExists": {
+                    "aws:ResourceOrgID": "o-exampleorg"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["scp"]
+    }
+  },
+  {
+    "name": "SCP Deny with NotResource and StringNotEqualsIfExists does not deny excluded IAM policy when ResourceOrgID differs",
+    "request": {
+      "action": "iam:GetPolicy",
+      "resource": {
+        "resource": "arn:aws:iam::aws:policy/ReadOnlyAccess",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:ResourceOrgID": "o-otherorg"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "iam:GetPolicy",
+            "Resource": "arn:aws:iam::aws:policy/*"
+          }
+        ]
+      }
+    ],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-example",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              },
+              {
+                "Effect": "Deny",
+                "Action": "*",
+                "NotResource": ["arn:aws:iam::aws:policy/*"],
+                "Condition": {
+                  "StringNotEqualsIfExists": {
+                    "aws:ResourceOrgID": "o-exampleorg"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "SCP Deny with NotResource and StringNotEqualsIfExists does not deny excluded IAM policy when ResourceOrgID is missing",
+    "request": {
+      "action": "iam:GetPolicy",
+      "resource": {
+        "resource": "arn:aws:iam::aws:policy/ReadOnlyAccess",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "iam:GetPolicy",
+            "Resource": "arn:aws:iam::aws:policy/*"
+          }
+        ]
+      }
+    ],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-example",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              },
+              {
+                "Effect": "Deny",
+                "Action": "*",
+                "NotResource": ["arn:aws:iam::aws:policy/*"],
+                "Condition": {
+                  "StringNotEqualsIfExists": {
+                    "aws:ResourceOrgID": "o-exampleorg"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "SCP Deny with multiple NotResources does not deny when one NotResource matches",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::example-bucket/example-object.txt",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:ResourceOrgID": "o-otherorg"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::example-bucket/*"
+          }
+        ]
+      }
+    ],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-example",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              },
+              {
+                "Effect": "Deny",
+                "Action": "*",
+                "NotResource": ["arn:aws:iam::aws:policy/*", "arn:aws:s3:::example-bucket/*"],
+                "Condition": {
+                  "StringNotEqualsIfExists": {
+                    "aws:ResourceOrgID": "o-exampleorg"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "SCP Deny with same-service NotResource and StringNotEqualsIfExists denies when resource differs",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::example-bucket/example-object.txt",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:ResourceOrgID": "o-otherorg"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::example-bucket/*"
+          }
+        ]
+      }
+    ],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-example",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+              },
+              {
+                "Effect": "Deny",
+                "Action": "*",
+                "NotResource": ["arn:aws:s3:::allowed-bucket/*"],
+                "Condition": {
+                  "StringNotEqualsIfExists": {
+                    "aws:ResourceOrgID": "o-exampleorg"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["scp"]
+    }
   }
 ]

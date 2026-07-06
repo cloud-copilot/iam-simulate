@@ -1,5 +1,9 @@
 import { type Resource, type Statement } from '@cloud-copilot/iam-policy'
-import { type ResourceExplain, type StatementExplain } from '../explain/statementExplain.js'
+import {
+  type ResourceExplain,
+  resourceMismatchReasons,
+  type StatementExplain
+} from '../explain/statementExplain.js'
 import { type PolicyType } from '../policyType.js'
 import { type AwsRequest } from '../request/request.js'
 import { convertIamString, getResourceSegments } from '../util.js'
@@ -198,13 +202,36 @@ export function requestMatchesNotResources(
       effect,
       policyType
     )
-    if (!explain.errors) {
+    if (shouldInvertNotResourceExplain(explain)) {
       explain.matches = !explain.matches
+      delete explain.errors
+      delete explain.mismatchReason
     }
     return explain
   })
   const matches = !explains.some((explain) => !explain.matches)
   return { matches, explains }
+}
+
+/**
+ * Determine whether a Resource match explain can be inverted for NotResource matching.
+ *
+ * The resource mismatch reason registry owns the decision about which mismatches
+ * definitively prove the request is outside the NotResource set and can be inverted.
+ *
+ * @param explain the Resource matching explain to inspect
+ * @returns true when the explain should be inverted for NotResource semantics
+ */
+function shouldInvertNotResourceExplain(explain: ResourceExplain): boolean {
+  if (explain.matches) {
+    return true
+  }
+
+  if (!explain.mismatchReason) {
+    throw new Error(`Non-matching resource explain is missing mismatchReason: ${explain.resource}`)
+  }
+
+  return resourceMismatchReasons[explain.mismatchReason].invertible
 }
 
 /*
@@ -283,14 +310,16 @@ function singleResourceMatchesRequest(
       return {
         resource: policyResource.value(),
         matches: false,
-        errors: ['Policy resource ARN is not valid for this policy type']
+        errors: ['Policy resource ARN is not valid for this policy type'],
+        mismatchReason: 'invalidPolicyResourceArn'
       }
     }
 
     if (behavior === 'noMatch') {
       return {
         resource: policyResource.value(),
-        matches: false
+        matches: false,
+        mismatchReason: 'shortArnNoMatch'
       }
     }
 
@@ -308,6 +337,9 @@ function singleResourceMatchesRequest(
     )
     // Preserve the original (unexpanded) resource value in the explain
     result.resource = policyResource.value()
+    if (!result.matches && result.mismatchReason) {
+      result.mismatchReason = 'shortArnExpandedMismatch'
+    }
     return result
   }
 
@@ -318,7 +350,8 @@ function singleResourceMatchesRequest(
     if (request.wildcardOnlyAction) {
       return {
         resource: policyResource.value(),
-        matches: false
+        matches: false,
+        mismatchReason: 'wildcardOnlyActionSpecificResource'
       }
     }
 
@@ -330,13 +363,15 @@ function singleResourceMatchesRequest(
     } else if (effect === 'Allow' && resourceType === 'NotResource') {
       return {
         resource: policyResource.value(),
-        matches: false // This gets inverted in the caller
+        matches: false, // This gets inverted in the caller
+        mismatchReason: 'requestAllResourcesSpecificNotResource'
       }
     } else if (effect === 'Deny' && resourceType === 'Resource') {
       // This is a Deny statement that is not all resources, so it's not a match
       return {
         resource: policyResource.value(),
-        matches: false
+        matches: false,
+        mismatchReason: 'requestAllResourcesDenySpecificResource'
       }
     } else if (effect === 'Deny' && resourceType === 'NotResource') {
       return {
@@ -368,7 +403,8 @@ function singleResourceMatchesRequest(
       if (overlaps.some((o) => o === 'none' || o === 'policy_is_subset')) {
         return {
           resource: policyResource.value(),
-          matches: false
+          matches: false,
+          mismatchReason: 'resourcePatternMismatch'
         }
       }
     } else if (resourceType === 'NotResource' && effect === 'Allow') {
@@ -389,7 +425,8 @@ function singleResourceMatchesRequest(
         return {
           resource: policyResource.value(),
           // This gets inverted in the caller
-          matches: false
+          matches: false,
+          mismatchReason: 'resourcePatternMismatch'
         }
       }
     } else if (resourceType === 'NotResource' && effect === 'Deny') {
@@ -404,7 +441,8 @@ function singleResourceMatchesRequest(
         return {
           resource: policyResource.value(),
           // This gets inverted in the caller
-          matches: false
+          matches: false,
+          mismatchReason: 'resourcePatternMismatch'
         }
       } else {
         return {
@@ -423,7 +461,8 @@ function singleResourceMatchesRequest(
       return {
         resource: policyResource.value(),
         matches: false,
-        errors: ['Request does not have a resource']
+        errors: ['Request does not have a resource'],
+        mismatchReason: 'requestMissingResource'
       }
     }
 
@@ -432,7 +471,8 @@ function singleResourceMatchesRequest(
       return {
         resource: policyResource.value(),
         matches: false,
-        errors: ['Partition does not match']
+        errors: ['Partition does not match'],
+        mismatchReason: 'partitionMismatch'
       }
     }
 
@@ -440,7 +480,8 @@ function singleResourceMatchesRequest(
       return {
         resource: policyResource.value(),
         matches: false,
-        errors: ['Service does not match']
+        errors: ['Service does not match'],
+        mismatchReason: 'serviceMismatch'
       }
     }
 
@@ -448,7 +489,8 @@ function singleResourceMatchesRequest(
       return {
         resource: policyResource.value(),
         matches: false,
-        errors: ['Region does not match']
+        errors: ['Region does not match'],
+        mismatchReason: 'regionMismatch'
       }
     }
 
@@ -456,7 +498,8 @@ function singleResourceMatchesRequest(
       return {
         resource: policyResource.value(),
         matches: false,
-        errors: ['Account does not match']
+        errors: ['Account does not match'],
+        mismatchReason: 'accountMismatch'
       }
     }
 
@@ -466,7 +509,8 @@ function singleResourceMatchesRequest(
       return {
         resource: policyResource.value(),
         matches: false,
-        errors: ['Product does not match']
+        errors: ['Product does not match'],
+        mismatchReason: 'productMismatch'
       }
     }
 
@@ -482,10 +526,12 @@ function singleResourceMatchesRequest(
     const resolvedValue = resolvedResource === policyResource.value() ? undefined : resolvedResource
 
     if (!pattern.test(requestResourceId)) {
+      const mismatchReason = errors?.length ? 'unresolvablePolicyVariable' : 'resourceIdMismatch'
       return {
         resource: policyResource.value(),
         matches: false,
         errors,
+        mismatchReason,
         resolvedValue
       }
     }
