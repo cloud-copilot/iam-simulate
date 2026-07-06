@@ -1,3 +1,10 @@
+## [0.1.153](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.152...v0.1.153) (2026-07-06)
+
+
+### Bug Fixes
+
+* evaluate scp notresource resource org conditions ([96e5ec7](https://github.com/cloud-copilot/iam-simulate/commit/96e5ec7ebb76cd52a77ace18e41a968ce81ea8bc))
+
 ## [0.1.152](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.151...v0.1.152) (2026-07-04)
 
 ## [0.1.151](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.150...v0.1.151) (2026-06-30)
