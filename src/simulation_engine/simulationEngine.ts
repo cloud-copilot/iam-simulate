@@ -29,7 +29,11 @@ import { calculateOverallResult } from './overallResult.js'
 import { getMatchingResourceStringsForPolicies } from './policyResources.js'
 import { expandShortArn } from '../util/resourceStrings.js'
 import { getResourceTypesForAction } from './resourceTypes.js'
-import { type Simulation } from './simulation.js'
+import {
+  isAnonymousRequestPrincipal,
+  isSimulationRequestPrincipal,
+  type Simulation
+} from './simulation.js'
 import { type SimulationOptions } from './simulationOptions.js'
 
 const DEFAULT_RCP = {
@@ -55,6 +59,7 @@ export interface SimulationErrors {
   permissionBoundaryErrors?: Record<string, ValidationError[]>
   resourcePolicyErrors?: ValidationError[]
   vpcEndpointErrors?: Record<string, ValidationError[]>
+  anonymousRequestErrors?: string[]
   message: string
 }
 
@@ -194,6 +199,29 @@ function validateOrReuse(
 }
 
 /**
+ * Finds principal-side policy inputs that are invalid for anonymous requests.
+ *
+ * @param simulation the simulation input to validate.
+ * @returns anonymous request validation error message identifiers.
+ */
+function anonymousRequestValidationErrors(simulation: Simulation): string[] {
+  const errors: string[] = []
+  if (simulation.sessionPolicy) {
+    errors.push('anonymous.sessionPolicy.invalid')
+  }
+  if (simulation.identityPolicies.length > 0) {
+    errors.push('anonymous.identityPolicies.invalid')
+  }
+  if ((simulation.permissionBoundaryPolicies?.length ?? 0) > 0) {
+    errors.push('anonymous.permissionBoundaryPolicies.invalid')
+  }
+  if (simulation.serviceControlPolicies.length > 0) {
+    errors.push('anonymous.serviceControlPolicies.invalid')
+  }
+  return errors
+}
+
+/**
  * Run a simulation with validation
  *
  * @param simulation The simulation to run
@@ -208,11 +236,35 @@ export async function runSimulation(
   const resourceArn = simulation.request.resource.resource
   const resourceHasWildcard = resourceArn.includes('*')
 
+  if (!isSimulationRequestPrincipal(principal)) {
+    return {
+      resultType: 'error',
+      errors: {
+        message: 'invalid.principal'
+      }
+    }
+  }
+
+  if (isAnonymousRequestPrincipal(principal)) {
+    const anonymousRequestErrors = anonymousRequestValidationErrors(simulation)
+    if (anonymousRequestErrors.length > 0) {
+      return {
+        resultType: 'error',
+        errors: {
+          anonymousRequestErrors,
+          message:
+            anonymousRequestErrors.length === 1
+              ? anonymousRequestErrors[0]
+              : 'anonymous.policies.invalid'
+        }
+      }
+    }
+  }
+
   if (simulation.sessionPolicy) {
     if (
-      !isIamRoleArn(principal) &&
-      !isAssumedRoleArn(principal) &&
-      !isFederatedUserArn(principal)
+      typeof principal !== 'string' ||
+      (!isIamRoleArn(principal) && !isAssumedRoleArn(principal) && !isFederatedUserArn(principal))
     ) {
       return {
         resultType: 'error',
