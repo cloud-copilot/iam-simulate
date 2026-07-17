@@ -1,6 +1,7 @@
 import { type ContextKey, type RequestContext } from '../requestContext.js'
+import { type SimulationRequestPrincipal } from '../simulation_engine/simulation.js'
 import { type RequestAction, RequestActionImpl } from './requestAction.js'
-import { type RequestPrincipal, RequestPrincipalImpl } from './requestPrincipal.js'
+import { requestPrincipalFromInput, type RequestPrincipal } from './requestPrincipal.js'
 import { type RequestResource, ResourceRequestImpl } from './requestResource.js'
 
 /**
@@ -52,15 +53,17 @@ export interface AwsRequest {
 
 export class AwsRequestImpl implements AwsRequest {
   public readonly wildcardOnlyAction: boolean
+  private readonly requestPrincipal: RequestPrincipal
 
   constructor(
-    public readonly principalString: string,
+    public readonly principalInput: SimulationRequestPrincipal,
     public readonly resourceIdentifier: { resource: string; accountId: string },
     public readonly actionString: string,
     public readonly context: RequestContext,
     wildcardOnlyAction?: boolean
   ) {
     this.wildcardOnlyAction = wildcardOnlyAction ?? false
+    this.requestPrincipal = requestPrincipalFromInput(this.principalInput)
   }
 
   get action(): RequestAction {
@@ -75,7 +78,7 @@ export class AwsRequestImpl implements AwsRequest {
   }
 
   get principal(): RequestPrincipal {
-    return new RequestPrincipalImpl(this.principalString)
+    return this.requestPrincipal
   }
 
   public contextKeyExists(key: string): boolean {

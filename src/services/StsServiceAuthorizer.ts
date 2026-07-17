@@ -8,7 +8,10 @@ import { type ServiceAuthorizationRequest } from './ServiceAuthorizer.js'
  */
 export class StsServiceAuthorizer extends DefaultServiceAuthorizer {
   public override authorize(request: ServiceAuthorizationRequest): RequestAnalysis {
-    if (request.request.action.value().toLowerCase() === 'sts:getcalleridentity') {
+    if (
+      request.request.action.value().toLowerCase() === 'sts:getcalleridentity' &&
+      request.request.principal.isAuthenticated()
+    ) {
       return {
         result: 'Allowed',
         sameAccount: true

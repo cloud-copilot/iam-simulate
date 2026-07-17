@@ -1,4 +1,50 @@
 /**
+ * Explicit marker for an unsigned anonymous request.
+ */
+export interface AnonymousRequestPrincipal {
+  type: 'Anonymous'
+}
+
+/**
+ * Principal value for a simulation request.
+ */
+export type SimulationRequestPrincipal = string | AnonymousRequestPrincipal
+
+/**
+ * Convenience value for anonymous simulations.
+ */
+export const anonymousPrincipal: AnonymousRequestPrincipal = { type: 'Anonymous' }
+
+/**
+ * Checks whether a value is the anonymous request-principal marker.
+ *
+ * This guard intentionally accepts only the exact public anonymous shape so unsupported object fields
+ * cannot be confused with future principal variants.
+ *
+ * @param value the value to check.
+ * @returns true if the value is an anonymous request principal.
+ */
+export function isAnonymousRequestPrincipal(value: unknown): value is AnonymousRequestPrincipal {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.keys(value).length === 1 &&
+    (value as { type?: unknown }).type === 'Anonymous'
+  )
+}
+
+/**
+ * Checks whether a value is a supported simulation request principal.
+ *
+ * @param value the value to check.
+ * @returns true if the value is a string principal or the anonymous marker.
+ */
+export function isSimulationRequestPrincipal(value: unknown): value is SimulationRequestPrincipal {
+  return typeof value === 'string' || isAnonymousRequestPrincipal(value)
+}
+
+/**
  * Represents the policies attached to an OU, or account
  */
 export interface SimulationOrgPolicies {
@@ -16,7 +62,7 @@ export interface SimulationIdentityPolicy {
 
 export interface Simulation {
   request: {
-    principal: string
+    principal: SimulationRequestPrincipal
     action: string
     resource: {
       resource: string

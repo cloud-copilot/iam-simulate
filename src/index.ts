@@ -31,10 +31,15 @@ export type {
   StatementExplain
 } from './explain/statementExplain.js'
 export { allowedContextKeysForRequest } from './simulation_engine/contextKeys.js'
-export type {
-  Simulation,
-  SimulationIdentityPolicy,
-  SimulationOrgPolicies
+export {
+  anonymousPrincipal,
+  isAnonymousRequestPrincipal,
+  isSimulationRequestPrincipal,
+  type AnonymousRequestPrincipal,
+  type Simulation,
+  type SimulationIdentityPolicy,
+  type SimulationOrgPolicies,
+  type SimulationRequestPrincipal
 } from './simulation_engine/simulation.js'
 export { runSimulation } from './simulation_engine/simulationEngine.js'
 export type {

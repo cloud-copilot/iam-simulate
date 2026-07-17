@@ -52,6 +52,133 @@ describe('userArnFromFederatedUserArn', () => {
 })
 
 describe('requestMatchesPrincipalStatement', () => {
+  describe('anonymous principal', () => {
+    it('should return Match for wildcard principal', () => {
+      //Given a wildcard policy principal statement
+      const policy = loadPolicy({
+        Statement: [{ Principal: '*' }]
+      })
+      const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0]
+      const request = new AwsRequestImpl(
+        { type: 'Anonymous' },
+        defaultResource,
+        's3:GetObject',
+        new RequestContextImpl({})
+      )
+
+      //When we check if the request matches the principal statement
+      const result = requestMatchesPrincipalStatement(
+        request,
+        principalStatement,
+        defaultSimulationParameters,
+        'Allow'
+      )
+
+      //Then the anonymous request matches the wildcard principal
+      expect(result.explain.matches).toEqual('Match')
+    })
+
+    it('should return NoMatch for specific AWS principal', () => {
+      //Given a specific AWS policy principal statement
+      const policy = loadPolicy({
+        Statement: [{ Principal: { AWS: 'arn:aws:iam::123456789012:user/Alice' } }]
+      })
+      const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0]
+      const request = new AwsRequestImpl(
+        { type: 'Anonymous' },
+        defaultResource,
+        's3:GetObject',
+        new RequestContextImpl({})
+      )
+
+      //When we check if the request matches the principal statement
+      const result = requestMatchesPrincipalStatement(
+        request,
+        principalStatement,
+        defaultSimulationParameters,
+        'Allow'
+      )
+
+      //Then the anonymous request does not match the specific principal
+      expect(result.explain.matches).toEqual('NoMatch')
+    })
+
+    it('should return NoMatch for account principal', () => {
+      //Given an account policy principal statement
+      const policy = loadPolicy({
+        Statement: [{ Principal: { AWS: '123456789012' } }]
+      })
+      const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0]
+      const request = new AwsRequestImpl(
+        { type: 'Anonymous' },
+        defaultResource,
+        's3:GetObject',
+        new RequestContextImpl({})
+      )
+
+      //When we check if the request matches the principal statement
+      const result = requestMatchesPrincipalStatement(
+        request,
+        principalStatement,
+        defaultSimulationParameters,
+        'Allow'
+      )
+
+      //Then the anonymous request does not match an account principal
+      expect(result.explain.matches).toEqual('NoMatch')
+    })
+
+    it('should return NoMatch for service principal', () => {
+      //Given a service policy principal statement
+      const policy = loadPolicy({
+        Statement: [{ Principal: { Service: 'anonymous' } }]
+      })
+      const principalStatement = (policy.statements()[0] as PrincipalStatement).principals()[0]
+      const request = new AwsRequestImpl(
+        { type: 'Anonymous' },
+        defaultResource,
+        's3:GetObject',
+        new RequestContextImpl({})
+      )
+
+      //When we check if the request matches the principal statement
+      const result = requestMatchesPrincipalStatement(
+        request,
+        principalStatement,
+        defaultSimulationParameters,
+        'Allow'
+      )
+
+      //Then the anonymous display value is not used for service-principal matching
+      expect(result.explain.matches).toEqual('NoMatch')
+    })
+
+    it('should return NoMatch for wildcard NotPrincipal', () => {
+      //Given a wildcard NotPrincipal statement
+      const policy = loadPolicy({
+        Statement: [{ NotPrincipal: '*' }]
+      })
+      const notPrincipals = (policy.statements()[0] as NotPrincipalStatement).notPrincipals()
+      const request = new AwsRequestImpl(
+        { type: 'Anonymous' },
+        defaultResource,
+        's3:GetObject',
+        new RequestContextImpl({})
+      )
+
+      //When we check if the request matches the NotPrincipal statement
+      const result = requestMatchesNotPrincipal(
+        request,
+        notPrincipals,
+        defaultSimulationParameters,
+        'Allow'
+      )
+
+      //Then the anonymous request is excluded by wildcard NotPrincipal
+      expect(result.matches).toEqual('NoMatch')
+    })
+  })
+
   describe('service principal', () => {
     it('should return Match for matching service principal', () => {
       //Given a policy principal statement

@@ -11,6 +11,7 @@ import {
   type RequestAnalysis,
   type ResourceAnalysis
 } from '../evaluate.js'
+import { assertAuthenticatedRequestPrincipal } from '../request/requestPrincipal.js'
 import { type RequestResource } from '../request/requestResource.js'
 import { type ServiceAuthorizationRequest, type ServiceAuthorizer } from './ServiceAuthorizer.js'
 
@@ -101,9 +102,12 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     const permissionBoundaryResult = request.permissionBoundaryAnalysis?.result
     const endpointPolicyResult = request.endpointAnalysis?.result
 
-    const principalAccount = request.request.principal.accountId()
+    const requestPrincipal = request.request.principal
+    const principalAccount = requestPrincipal.isAuthenticated()
+      ? requestPrincipal.accountId()
+      : undefined
     const resourceAccount = request.request.resource?.accountId()
-    const sameAccount = principalAccount === resourceAccount
+    const sameAccount = principalAccount !== undefined && principalAccount === resourceAccount
 
     const baseResult: Pick<
       RequestAnalysis,
@@ -126,6 +130,11 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
       permissionBoundaryAnalysis: request.permissionBoundaryAnalysis,
       endpointAnalysis: request.endpointAnalysis
     }
+
+    if (requestPrincipal.isAnonymous()) {
+      return this.authorizeAnonymousRequest(request, baseResult)
+    }
+    assertAuthenticatedRequestPrincipal(requestPrincipal)
 
     const coreResult = this.initialEvaluationResult(request)
     const blockedByLog = new BlockedByLog(coreResult)
@@ -167,7 +176,7 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
          * The request is allowed: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html
          */
         if (resourcePolicyResult === 'Allowed') {
-          const principal = request.request.principal.value()
+          const principal = requestPrincipal.value()
           if (
             isAssumedRoleArn(principal) ||
             isIamUserArn(principal) ||
@@ -231,6 +240,75 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
   }
 
   /**
+   * Authorize an anonymous request after all policy analysis has been completed.
+   *
+   * @param request the service authorization request containing all analyses.
+   * @param baseResult the common request-analysis fields to include in the result.
+   * @returns the anonymous request authorization result.
+   */
+  private authorizeAnonymousRequest(
+    request: ServiceAuthorizationRequest,
+    baseResult: Pick<
+      RequestAnalysis,
+      | 'sameAccount'
+      | 'scpAnalysis'
+      | 'rcpAnalysis'
+      | 'resourceAnalysis'
+      | 'sessionAnalysis'
+      | 'identityAnalysis'
+      | 'permissionBoundaryAnalysis'
+      | 'endpointAnalysis'
+      | 'blockedBy'
+    >
+  ): RequestAnalysis {
+    const endpointPolicyResult = request.endpointAnalysis?.result
+    const coreResult = this.anonymousInitialEvaluationResult(request)
+    const blockedByLog = new BlockedByLog(coreResult)
+
+    if (request.rcpAnalysis.ouAnalysis.length > 0) {
+      blockedByLog.add('rcp', request.rcpAnalysis.result)
+    }
+
+    if (
+      endpointPolicyResult === 'ExplicitlyDenied' ||
+      endpointPolicyResult === 'ImplicitlyDenied'
+    ) {
+      blockedByLog.add('vpce', endpointPolicyResult)
+    }
+
+    const blockedReasons = blockedByLog.getBlockedBy()
+    if (blockedReasons.length !== 0) {
+      baseResult.blockedBy = blockedReasons
+    }
+
+    return {
+      result: blockedByLog.getResult(),
+      ...baseResult,
+      sameAccount: false
+    }
+  }
+
+  /**
+   * Evaluates whether an anonymous request has the resource-side grant required to be allowed.
+   *
+   * @param request the service authorization request containing all analyses.
+   * @returns the core anonymous result before applicable resource-side guardrails are applied.
+   */
+  private anonymousInitialEvaluationResult(request: ServiceAuthorizationRequest): EvaluationResult {
+    const resourcePolicyResult = request.resourceAnalysis?.result
+    if (resourcePolicyResult === 'Allowed') {
+      return 'Allowed'
+    }
+    if (
+      resourcePolicyResult === 'ExplicitlyDenied' ||
+      resourcePolicyResult === 'DeniedForAccount'
+    ) {
+      return 'ExplicitlyDenied'
+    }
+    return 'ImplicitlyDenied'
+  }
+
+  /**
    * Determines if the service trusts the principal's Account's IAM policies
    *
    * @param sameAccount - If the principal and resource are in the same account
@@ -271,16 +349,24 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     const identityStatementResult = request.identityAnalysis.result
     const resourcePolicyResult = request.resourceAnalysis?.result
 
-    const principalAccount = request.request.principal.accountId()
+    const requestPrincipal = request.request.principal
+    const principalAccount = requestPrincipal.isAuthenticated()
+      ? requestPrincipal.accountId()
+      : undefined
     const resourceAccount = request.request.resource?.accountId()
-    const sameAccount = principalAccount === resourceAccount
+    const sameAccount = principalAccount !== undefined && principalAccount === resourceAccount
+
+    if (requestPrincipal.isAnonymous()) {
+      return this.anonymousInitialEvaluationResult(request)
+    }
+    assertAuthenticatedRequestPrincipal(requestPrincipal)
 
     if (sessionResult && sessionResult !== 'Allowed') {
       return sessionResult
     }
 
     // Service Principals
-    if (isServicePrincipal(request.request.principal.value())) {
+    if (isServicePrincipal(requestPrincipal.value())) {
       // Service principals are allowed if the resource policy allows them
       if (resourcePolicyResult === 'Allowed') {
         return 'Allowed'

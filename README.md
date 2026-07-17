@@ -39,7 +39,42 @@ It will also return "explains" for each statement that was evaluated, detailing 
 - Session Policies
 - Validation of Global Condition Keys for each action
 - Automatically populating context keys from the request such as `aws:PrincipalServiceName`
-- Support for anonymous requests
+
+### Anonymous Requests
+
+Use `anonymousPrincipal` to simulate unsigned requests, such as public S3 object access granted by a bucket policy. Anonymous requests do not have identity policies, session policies, permission boundaries, or SCPs; those principal-side policy inputs are rejected by `runSimulation`.
+
+```typescript
+import { anonymousPrincipal, runSimulation, type Simulation } from '@cloud-copilot/iam-simulate'
+
+const simulation: Simulation = {
+  request: {
+    principal: anonymousPrincipal,
+    action: 's3:GetObject',
+    resource: {
+      resource: 'arn:aws:s3:::public-bucket/file.txt',
+      accountId: '123456789012'
+    },
+    contextVariables: {}
+  },
+  identityPolicies: [],
+  serviceControlPolicies: [],
+  resourceControlPolicies: [],
+  resourcePolicy: {
+    Version: '2012-10-17',
+    Statement: [
+      {
+        Effect: 'Allow',
+        Principal: '*',
+        Action: 's3:GetObject',
+        Resource: 'arn:aws:s3:::public-bucket/*'
+      }
+    ]
+  }
+}
+
+const response = await runSimulation(simulation, {})
+```
 
 ## Installation
 

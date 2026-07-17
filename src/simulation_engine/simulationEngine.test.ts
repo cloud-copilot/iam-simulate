@@ -21,6 +21,7 @@ import {
   type ValidationError
 } from '@cloud-copilot/iam-policy'
 import { describe, expect, it, vi } from 'vitest'
+import { anonymousPrincipal } from '../index.js'
 import type { Simulation } from './simulation.js'
 import { normalizeSimulationParameters, runSimulation } from './simulationEngine.js'
 import type {
@@ -1539,6 +1540,207 @@ describe('runSimulation', () => {
       throw new Error('Expected wildcard result')
     }
     expect(response.overallResult).toEqual('ImplicitlyDenied')
+  })
+
+  describe('anonymous requests', () => {
+    const anonymousPublicSimulation = (): Simulation => ({
+      identityPolicies: [],
+      serviceControlPolicies: [],
+      resourceControlPolicies: [],
+      resourcePolicy: {
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Effect: 'Allow',
+            Principal: '*',
+            Action: 's3:GetObject',
+            Resource: 'arn:aws:s3:::examplebucket/*'
+          }
+        ]
+      },
+      request: {
+        action: 's3:GetObject',
+        resource: {
+          resource: 'arn:aws:s3:::examplebucket/1234',
+          accountId: '123456789012'
+        },
+        principal: { type: 'Anonymous' },
+        contextVariables: {}
+      }
+    })
+
+    it('allows an anonymous request with a public resource policy and no RCP', async () => {
+      //Given an anonymous request with a public resource policy
+      const simulation = anonymousPublicSimulation()
+
+      //When the simulation is run
+      const response = await runSimulation(simulation, {})
+
+      //Then the request is allowed
+      expect(response.resultType).toEqual('single')
+      if (response.resultType !== 'single') {
+        throw new Error('Expected single result')
+      }
+      expect(response.overallResult).toEqual('Allowed')
+      expect(response.result.analysis.sameAccount).toEqual(false)
+    })
+
+    it('allows an anonymous request using the exported anonymousPrincipal constant', async () => {
+      //Given an anonymous request using the exported convenience constant
+      const simulation = anonymousPublicSimulation()
+      simulation.request.principal = anonymousPrincipal
+
+      //When the simulation is run
+      const response = await runSimulation(simulation, {})
+
+      //Then the request is allowed
+      expect(response.resultType).toEqual('single')
+      if (response.resultType !== 'single') {
+        throw new Error('Expected single result')
+      }
+      expect(response.overallResult).toEqual('Allowed')
+    })
+
+    it('does not include resource policy in blockedBy for anonymous resource-policy explicit deny', async () => {
+      //Given an anonymous request with a resource-policy explicit deny
+      const simulation = anonymousPublicSimulation()
+      simulation.resourcePolicy = {
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Effect: 'Deny',
+            Principal: '*',
+            Action: 's3:GetObject',
+            Resource: 'arn:aws:s3:::examplebucket/*'
+          }
+        ]
+      }
+
+      //When the simulation is run
+      const response = await runSimulation(simulation, {})
+
+      //Then the resource policy is the core decision, not a blockedBy guardrail
+      expect(response.resultType).toEqual('single')
+      if (response.resultType !== 'single') {
+        throw new Error('Expected single result')
+      }
+      expect(response.overallResult).toEqual('ExplicitlyDenied')
+      expect(response.result.analysis.blockedBy).toBeUndefined()
+    })
+
+    it('implicitly denies an anonymous request without a resource policy', async () => {
+      //Given an anonymous request without a resource policy
+      const simulation = anonymousPublicSimulation()
+      simulation.resourcePolicy = undefined
+
+      //When the simulation is run
+      const response = await runSimulation(simulation, {})
+
+      //Then the request is implicitly denied
+      expect(response.resultType).toEqual('single')
+      if (response.resultType !== 'single') {
+        throw new Error('Expected single result')
+      }
+      expect(response.overallResult).toEqual('ImplicitlyDenied')
+    })
+
+    it('rejects anonymous requests with a session policy', async () => {
+      //Given an anonymous request with a session policy
+      const simulation = anonymousPublicSimulation()
+      simulation.sessionPolicy = { Statement: [{ Effect: 'Allow', Action: '*', Resource: '*' }] }
+
+      //When the simulation is run
+      const response = await runSimulation(simulation, {})
+
+      //Then the request is rejected before authorization
+      const errorResponse = assertErrorResult(response)
+      expect(errorResponse.errors.message).toEqual('anonymous.sessionPolicy.invalid')
+      expect(errorResponse.errors.anonymousRequestErrors).toEqual([
+        'anonymous.sessionPolicy.invalid'
+      ])
+    })
+
+    it('rejects anonymous requests with identity policies', async () => {
+      //Given an anonymous request with an identity policy
+      const simulation = anonymousPublicSimulation()
+      simulation.identityPolicies = [
+        {
+          name: 'IdentityPolicy',
+          policy: { Statement: [{ Effect: 'Allow', Action: '*', Resource: '*' }] }
+        }
+      ]
+
+      //When the simulation is run
+      const response = await runSimulation(simulation, {})
+
+      //Then the request is rejected before authorization
+      const errorResponse = assertErrorResult(response)
+      expect(errorResponse.errors.message).toEqual('anonymous.identityPolicies.invalid')
+    })
+
+    it('rejects anonymous requests with permission boundaries', async () => {
+      //Given an anonymous request with a permission boundary
+      const simulation = anonymousPublicSimulation()
+      simulation.permissionBoundaryPolicies = [
+        {
+          name: 'Boundary',
+          policy: { Statement: [{ Effect: 'Allow', Action: '*', Resource: '*' }] }
+        }
+      ]
+
+      //When the simulation is run
+      const response = await runSimulation(simulation, {})
+
+      //Then the request is rejected before authorization
+      const errorResponse = assertErrorResult(response)
+      expect(errorResponse.errors.message).toEqual('anonymous.permissionBoundaryPolicies.invalid')
+    })
+
+    it('rejects anonymous requests with service control policies', async () => {
+      //Given an anonymous request with an SCP
+      const simulation = anonymousPublicSimulation()
+      simulation.serviceControlPolicies = [
+        {
+          orgIdentifier: 'o-123',
+          policies: [
+            { name: 'Scp', policy: { Statement: [{ Effect: 'Deny', Action: '*', Resource: '*' }] } }
+          ]
+        }
+      ]
+
+      //When the simulation is run
+      const response = await runSimulation(simulation, {})
+
+      //Then the request is rejected before authorization
+      const errorResponse = assertErrorResult(response)
+      expect(errorResponse.errors.message).toEqual('anonymous.serviceControlPolicies.invalid')
+    })
+
+    it('rejects malformed object principals', async () => {
+      //Given a malformed object principal
+      const simulation = anonymousPublicSimulation()
+      simulation.request.principal = { type: 'User' } as any
+
+      //When the simulation is run
+      const response = await runSimulation(simulation, {})
+
+      //Then the request is rejected before authorization
+      const errorResponse = assertErrorResult(response)
+      expect(errorResponse.errors.message).toEqual('invalid.principal')
+    })
+
+    it('rejects anonymous principals with extra fields', async () => {
+      //Given an anonymous object principal with unsupported fields
+      const simulation = anonymousPublicSimulation()
+      simulation.request.principal = { type: 'Anonymous', accountId: '123456789012' } as any
+
+      //When the simulation is run
+      const response = await runSimulation(simulation, {})
+
+      //Then the request is rejected before authorization
+      const errorResponse = assertErrorResult(response)
+      expect(errorResponse.errors.message).toEqual('invalid.principal')
+    })
   })
 
   it('should return not allowed without erroring when an identity policy has a CloudFormation Sub resource string', async () => {

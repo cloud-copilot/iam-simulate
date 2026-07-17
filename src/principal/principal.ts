@@ -9,6 +9,7 @@ import {
 import { type SimulationParameters } from '../core_engine/CoreSimulatorEngine.js'
 import { type PrincipalExplain, type StatementExplain } from '../explain/statementExplain.js'
 import { type AwsRequest } from '../request/request.js'
+import { assertAuthenticatedRequestPrincipal } from '../request/requestPrincipal.js'
 
 interface PrincipalAnalysis {
   explain: PrincipalExplain
@@ -177,8 +178,19 @@ export function requestMatchesPrincipalStatement(
   simulationParameters: SimulationParameters,
   allowOrDeny: 'Allow' | 'Deny'
 ): PrincipalAnalysis {
+  const requestPrincipal = request.principal
+  if (requestPrincipal.isAnonymous()) {
+    return {
+      explain: {
+        matches: principalStatement.isWildcardPrincipal() ? 'Match' : 'NoMatch',
+        principal: principalStatement.value()
+      }
+    }
+  }
+  assertAuthenticatedRequestPrincipal(requestPrincipal)
+
   if (principalStatement.isServicePrincipal()) {
-    if (principalStatement.service() === request.principal.value()) {
+    if (principalStatement.service() === requestPrincipal.value()) {
       return {
         explain: {
           matches: 'Match',
@@ -195,7 +207,7 @@ export function requestMatchesPrincipalStatement(
   }
 
   if (principalStatement.isCanonicalUserPrincipal()) {
-    if (principalStatement.canonicalUser() === request.principal.value()) {
+    if (principalStatement.canonicalUser() === requestPrincipal.value()) {
       return {
         explain: {
           matches: 'Match',
@@ -212,7 +224,7 @@ export function requestMatchesPrincipalStatement(
   }
 
   if (principalStatement.isFederatedPrincipal()) {
-    if (principalStatement.federated() === request.principal.value()) {
+    if (principalStatement.federated() === requestPrincipal.value()) {
       return {
         explain: {
           matches: 'Match',
@@ -238,7 +250,7 @@ export function requestMatchesPrincipalStatement(
   }
 
   if (principalStatement.isAccountPrincipal()) {
-    if (principalStatement.accountId() === request.principal.accountId()) {
+    if (principalStatement.accountId() === requestPrincipal.accountId()) {
       return {
         explain: {
           matches: 'AccountLevelMatch',
@@ -255,8 +267,8 @@ export function requestMatchesPrincipalStatement(
   }
 
   if (principalStatement.isAwsPrincipal()) {
-    if (isAssumedRoleArn(request.principal.value())) {
-      const sessionArn = request.principal.value()
+    if (isAssumedRoleArn(requestPrincipal.value())) {
+      const sessionArn = requestPrincipal.value()
       if (roleArnMatchesAssumedRoleSession(principalStatement.arn(), sessionArn)) {
         return {
           explain: {
@@ -266,8 +278,8 @@ export function requestMatchesPrincipalStatement(
           }
         }
       }
-    } else if (isFederatedUserArn(request.principal.value())) {
-      const sessionArn = request.principal.value()
+    } else if (isFederatedUserArn(requestPrincipal.value())) {
+      const sessionArn = requestPrincipal.value()
       const userArn = userArnFromFederatedUserArn(sessionArn)
       if (principalStatement.arn() === userArn) {
         return {
@@ -280,7 +292,7 @@ export function requestMatchesPrincipalStatement(
       }
     }
 
-    if (principalStatement.arn() === request.principal.value()) {
+    if (principalStatement.arn() === requestPrincipal.value()) {
       return {
         explain: {
           matches: 'Match',
@@ -303,7 +315,7 @@ export function requestMatchesPrincipalStatement(
       simulationParameters.simulationMode === 'Discovery' &&
       isAssumedRoleArn(principalStatement.arn())
     ) {
-      const requestRoleArn = request.principal.value()
+      const requestRoleArn = requestPrincipal.value()
       let roleMatchesSession = false
       if (isIamRoleArn(requestRoleArn)) {
         roleMatchesSession = roleArnMatchesAssumedRoleSession(
