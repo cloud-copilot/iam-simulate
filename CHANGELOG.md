@@ -1,3 +1,10 @@
+## [0.1.155](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.154...v0.1.155) (2026-07-17)
+
+
+### Features
+
+* add anonymous request support ([9fdeee1](https://github.com/cloud-copilot/iam-simulate/commit/9fdeee1fcbb2c1097d1195d1d6fabb802ed9bf01))
+
 ## [0.1.154](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.153...v0.1.154) (2026-07-11)
 
 ## [0.1.153](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.152...v0.1.153) (2026-07-06)
