@@ -72,6 +72,11 @@ export function runUnsafeSimulation(
     simulationParameters: {
       simulationMode: 'Strict',
       discoveryContextKeyConstraints: new DiscoveryContextKeyConstraints([])
+    },
+    serviceSettings: {
+      s3: {
+        blockPublicAccess: simulation.additionalSettings?.s3?.blockPublicAccess
+      }
     }
   })
 

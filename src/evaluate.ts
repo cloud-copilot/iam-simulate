@@ -9,7 +9,7 @@ export type ResourceEvaluationResult =
   | 'DeniedForAccount'
   | 'ImplicitlyDenied'
 
-export type BlockedReason = 'scp' | 'rcp' | 'vpce' | 'identity' | 'resource' | 'pb'
+export type BlockedReason = 'scp' | 'rcp' | 'vpce' | 'identity' | 'resource' | 'pb' | 's3-bpa'
 
 export interface IdentityAnalysis {
   result: EvaluationResult

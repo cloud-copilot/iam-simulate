@@ -1601,6 +1601,27 @@ describe('runSimulation', () => {
       expect(response.overallResult).toEqual('Allowed')
     })
 
+    it('blocks an anonymous S3 request when block public access is enabled', async () => {
+      //Given an anonymous request with a public bucket policy and S3 BPA enabled
+      const simulation = anonymousPublicSimulation()
+      simulation.additionalSettings = {
+        s3: {
+          blockPublicAccess: true
+        }
+      }
+
+      //When the simulation is run
+      const response = await runSimulation(simulation, {})
+
+      //Then the request is blocked by S3 BPA
+      expect(response.resultType).toEqual('single')
+      if (response.resultType !== 'single') {
+        throw new Error('Expected single result')
+      }
+      expect(response.overallResult).toEqual('ExplicitlyDenied')
+      expect(response.result.analysis.blockedBy).toEqual(['s3-bpa'])
+    })
+
     it('does not include resource policy in blockedBy for anonymous resource-policy explicit deny', async () => {
       //Given an anonymous request with a resource-policy explicit deny
       const simulation = anonymousPublicSimulation()

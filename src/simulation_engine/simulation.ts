@@ -119,6 +119,12 @@ export interface Simulation {
        * If an S3 bucket request, whether ABAC is enabled on the bucket
        */
       bucketAbacEnabled?: boolean
+
+      /**
+       * Caller-supplied effective S3 Block Public Access setting for RestrictPublicBuckets.
+       * iam-simulate does not determine this value from AWS; callers must provide it.
+       */
+      blockPublicAccess?: boolean
     }
   }
 }
