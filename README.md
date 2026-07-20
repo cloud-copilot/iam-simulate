@@ -76,6 +76,23 @@ const simulation: Simulation = {
 const response = await runSimulation(simulation, {})
 ```
 
+### S3 Block Public Access
+
+For S3 requests, callers can provide the effective `RestrictPublicBuckets` setting with `additionalSettings.s3.blockPublicAccess`. iam-simulate does not fetch or determine this setting; provide `true` only when S3 Block Public Access should apply for the bucket/account being simulated.
+
+```typescript
+const simulation: Simulation = {
+  // request and policies...
+  additionalSettings: {
+    s3: {
+      blockPublicAccess: true
+    }
+  }
+}
+```
+
+When enabled, public S3 bucket policies can block anonymous and cross-account access with `blockedBy: ['s3-bpa']`.
+
 ## Installation
 
 ```bash

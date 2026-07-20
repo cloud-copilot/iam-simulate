@@ -501,6 +501,11 @@ export async function runSimulation(
       simulationParameters: {
         simulationMode: simulationMode,
         discoveryContextKeyConstraints
+      },
+      serviceSettings: {
+        s3: {
+          blockPublicAccess: simulation.additionalSettings?.s3?.blockPublicAccess
+        }
       }
     })
 

@@ -24,7 +24,8 @@ import { requestMatchesStatementResources } from '../resource/resource.js'
 import { DefaultServiceAuthorizer } from '../services/DefaultServiceAuthorizer.js'
 import { IamServiceAuthorizer } from '../services/IamServiceAuthorizer.js'
 import { KmsServiceAuthorizer } from '../services/KmsServiceAuthorizer.js'
-import { type ServiceAuthorizer } from '../services/ServiceAuthorizer.js'
+import { type ServiceAuthorizer, type ServiceSettings } from '../services/ServiceAuthorizer.js'
+import { S3ServiceAuthorizer } from '../services/s3/S3ServiceAuthorizer.js'
 import { StsServiceAuthorizer } from '../services/StsServiceAuthorizer.js'
 import {
   identityStatementAllows,
@@ -126,12 +127,18 @@ export interface AuthorizationRequest {
    * The simulation parameters for the request.
    */
   simulationParameters: SimulationParameters
+
+  /**
+   * Caller-supplied service-specific settings that affect authorization.
+   */
+  serviceSettings?: ServiceSettings
 }
 
 const serviceEngines: Record<string, new () => ServiceAuthorizer> = {
   kms: KmsServiceAuthorizer,
   sts: StsServiceAuthorizer,
-  iam: IamServiceAuthorizer
+  iam: IamServiceAuthorizer,
+  s3: S3ServiceAuthorizer
 }
 
 /**
@@ -204,9 +211,11 @@ export function authorize(request: AuthorizationRequest): RequestAnalysis {
     scpAnalysis,
     rcpAnalysis,
     resourceAnalysis,
+    resourcePolicy: request.resourcePolicy,
     permissionBoundaryAnalysis,
     endpointAnalysis,
-    simulationParameters
+    simulationParameters,
+    serviceSettings: request.serviceSettings
   })
 
   if (simulationParameters.simulationMode === 'Discovery') {
