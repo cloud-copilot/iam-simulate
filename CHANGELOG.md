@@ -1,3 +1,10 @@
+## [0.1.157](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.156...v0.1.157) (2026-07-20)
+
+
+### Features
+
+* add S3 Block Public Access support ([0c53350](https://github.com/cloud-copilot/iam-simulate/commit/0c5335064bcac424a97a6c7bcede5d3f5ac3338c))
+
 ## [0.1.156](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.155...v0.1.156) (2026-07-18)
 
 ## [0.1.155](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.154...v0.1.155) (2026-07-17)
