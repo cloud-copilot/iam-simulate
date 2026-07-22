@@ -40,70 +40,7 @@ export function convertIamString(
   const options = { ...defaultStringReplaceOptions, ...replaceOptions }
 
   const errors: string[] = []
-  const newValue = value.replaceAll(/(\$\{.*?\})|(\*)|(\?)/gi, (match, args) => {
-    if (match == '?') {
-      return replacementValue(match, '\\?', '.', options)
-      // return '.'
-    } else if (match == '*') {
-      return replacementValue(match, '\\*', '.*?', options)
-      // return ".*?"
-    } else if (match == '${*}') {
-      return replacementValue(match, '\\$\\{\\*\\}', '\\*', options)
-      // return "\\*"
-    } else if (match == '${?}') {
-      return replacementValue(match, '\\$\\{\\?\\}', '\\?', options)
-      // return "\\?"
-    } else if (match == '${$}') {
-      return replacementValue(match, '\\$\\{\\$\\}', '\\$', options)
-      // return "\\$"
-    }
-    //
-    //This means it'a a variable
-    const inTheBrackets = match.slice(2, -1)
-
-    let defaultValue = undefined
-    const defaultParts = inTheBrackets.split(', ')
-    if (defaultParts.length == 2) {
-      const segmentAfterComma = defaultParts.at(1)
-      if (segmentAfterComma?.startsWith("'") && segmentAfterComma.endsWith("'")) {
-        defaultValue = segmentAfterComma.slice(1, -1)
-      }
-    }
-    const variableName = defaultParts.at(0)!.trim()
-
-    const { value: requestValue, error: requestValueError } = getContextSingleValue(
-      request,
-      variableName
-    )
-
-    if (requestValue) {
-      //TODO: Maybe escape the * in the resolved value to ${*}
-      return options.convertToRegex ? escapeRegexCharacters(requestValue) : requestValue
-    } else if (defaultValue) {
-      /*
-        TODO: What happens in a request if a multi value context key is used in a string and there
-        is a default value? Will it use the default value or will it fail the condition test?
-      */
-      //TODO: Maybe escape the * in the resolved value to ${*}
-      return options.convertToRegex ? escapeRegexCharacters(defaultValue) : defaultValue
-    } else {
-      if (requestValueError == 'missing') {
-        errors.push(
-          `{${variableName}} not found in request context, and no default value provided. This will never match`
-        )
-      } else if (requestValueError == 'multivalue') {
-        errors.push(
-          `{${variableName}} is a multi value context key, and cannot be used for replacement. This will never match`
-        )
-      }
-      /*
-      https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html#policy-vars-no-value
-      */
-      return match
-    }
-
-    throw new Error('This should never happen')
-  })
+  const newValue = replaceIamStringTokens(value, request, options, errors)
 
   if (!options.convertToRegex) {
     return newValue
@@ -117,13 +54,182 @@ export function convertIamString(
 }
 
 /**
+ * Replace IAM wildcard and variable tokens while escaping literal spans for regex conversion.
+ *
+ * @param value the IAM string value to convert
+ * @param request the request context used to resolve policy variables
+ * @param options controls wildcard replacement and regex conversion behavior
+ * @param errors collects variable resolution errors that make the value unable to match
+ * @returns the converted IAM string or regex source fragment
+ */
+function replaceIamStringTokens(
+  value: string,
+  request: AwsRequest,
+  options: StringReplaceOptions,
+  errors: string[]
+): string {
+  let newValue = ''
+  let literalStart = 0
+  let index = 0
+
+  while (index < value.length) {
+    const character = value[index]
+
+    if (character == '*' || character == '?') {
+      newValue += replaceLiteralSpan(value.slice(literalStart, index), options)
+      newValue += replaceIamStringToken(character, request, options, errors)
+      index++
+      literalStart = index
+    } else if (character == '$' && value[index + 1] == '{') {
+      const variableEndIndex = value.indexOf('}', index + 2)
+
+      if (variableEndIndex == -1) {
+        index++
+      } else {
+        newValue += replaceLiteralSpan(value.slice(literalStart, index), options)
+        newValue += replaceIamStringToken(
+          value.slice(index, variableEndIndex + 1),
+          request,
+          options,
+          errors
+        )
+        index = variableEndIndex + 1
+        literalStart = index
+      }
+    } else {
+      index++
+    }
+  }
+
+  newValue += replaceLiteralSpan(value.slice(literalStart), options)
+  return newValue
+}
+
+/**
+ * Escape a literal IAM string span when producing a regular expression.
+ *
+ * @param literal the literal IAM string span outside wildcard and variable tokens
+ * @param options controls whether regex conversion is enabled
+ * @returns the literal span escaped for regex conversion, or unchanged for raw string conversion
+ */
+function replaceLiteralSpan(literal: string, options: StringReplaceOptions): string {
+  return options.convertToRegex ? escapeRegexCharacters(literal) : literal
+}
+
+/**
+ * Replace a single IAM string token with its regex or raw string representation.
+ *
+ * @param match the IAM token to replace
+ * @param request the request context used to resolve policy variables
+ * @param options controls wildcard replacement and regex conversion behavior
+ * @param errors collects variable resolution errors that make the value unable to match
+ * @returns the token replacement value
+ */
+function replaceIamStringToken(
+  match: string,
+  request: AwsRequest,
+  options: StringReplaceOptions,
+  errors: string[]
+): string {
+  if (match == '?') {
+    return replacementValue(match, '\\?', '.', options)
+  } else if (match == '*') {
+    return replacementValue(match, '\\*', '.*?', options)
+  } else if (match == '${*}') {
+    return replacementValue(match, '\\$\\{\\*\\}', '\\*', options)
+  } else if (match == '${?}') {
+    return replacementValue(match, '\\$\\{\\?\\}', '\\?', options)
+  } else if (match == '${$}') {
+    return replacementValue(match, '\\$\\{\\$\\}', '\\$', options)
+  }
+
+  //This means it's a variable
+  const inTheBrackets = match.slice(2, -1)
+
+  let defaultValue = undefined
+  const defaultParts = inTheBrackets.split(', ')
+  if (defaultParts.length == 2) {
+    const segmentAfterComma = defaultParts.at(1)
+    if (segmentAfterComma?.startsWith("'") && segmentAfterComma.endsWith("'")) {
+      defaultValue = segmentAfterComma.slice(1, -1)
+    }
+  }
+  const variableName = defaultParts.at(0)!.trim()
+
+  const { value: requestValue, error: requestValueError } = getContextSingleValue(
+    request,
+    variableName
+  )
+
+  if (requestValue) {
+    //TODO: Maybe escape the * in the resolved value to ${*}
+    return options.convertToRegex ? escapeRegexCharacters(requestValue) : requestValue
+  } else if (defaultValue) {
+    /*
+      TODO: What happens in a request if a multi value context key is used in a string and there
+      is a default value? Will it use the default value or will it fail the condition test?
+    */
+    //TODO: Maybe escape the * in the resolved value to ${*}
+    return options.convertToRegex ? escapeRegexCharacters(defaultValue) : defaultValue
+  } else {
+    if (requestValueError == 'missing') {
+      errors.push(
+        `{${variableName}} not found in request context, and no default value provided. This will never match`
+      )
+    } else if (requestValueError == 'multivalue') {
+      errors.push(
+        `{${variableName}} is a multi value context key, and cannot be used for replacement. This will never match`
+      )
+    }
+    /*
+    https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html#policy-vars-no-value
+    */
+    return match
+  }
+}
+
+/**
  * Replace regex characters in a string with their escaped versions
  *
  * @param str the string to escape regex characters in
  * @returns the string with regex characters escaped
  */
 function escapeRegexCharacters(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  let escaped = ''
+
+  for (const character of str) {
+    if (isRegexMetacharacter(character)) {
+      escaped += '\\'
+    }
+    escaped += character
+  }
+
+  return escaped
+}
+
+/**
+ * Check if a character has special meaning in a regular expression pattern.
+ *
+ * @param character the character to check
+ * @returns whether the character must be escaped for literal regex matching
+ */
+function isRegexMetacharacter(character: string): boolean {
+  return (
+    character == '.' ||
+    character == '*' ||
+    character == '+' ||
+    character == '?' ||
+    character == '^' ||
+    character == '$' ||
+    character == '{' ||
+    character == '}' ||
+    character == '(' ||
+    character == ')' ||
+    character == '|' ||
+    character == '[' ||
+    character == ']' ||
+    character == '\\'
+  )
 }
 
 /**
@@ -153,11 +259,11 @@ function getContextSingleValue(
 /**
  * Get the replacement value for a string
  *
- * @param originalString the original string to replace the value of
- * @param rawString the string to replace the value in
- * @param wildcard the value to replace the wildcard with
- * @param replaceWildcards if the wildcard or raw string should be used
- * @returns
+ * @param original the original IAM token text
+ * @param escaped the regex-escaped literal representation of the token
+ * @param regex the regex wildcard representation of the token
+ * @param options controls wildcard replacement and regex conversion behavior
+ * @returns the token replacement value
  */
 function replacementValue(
   original: string,
