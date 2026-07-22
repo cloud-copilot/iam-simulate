@@ -1,3 +1,10 @@
+## [0.1.160](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.159...v0.1.160) (2026-07-22)
+
+
+### Bug Fixes
+
+* include resource type condition keys ([b987a51](https://github.com/cloud-copilot/iam-simulate/commit/b987a5197949c80601255c4f0393b9b7c2df4218))
+
 ## [0.1.159](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.158...v0.1.159) (2026-07-22)
 
 
