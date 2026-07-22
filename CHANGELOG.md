@@ -1,3 +1,10 @@
+## [0.1.158](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.157...v0.1.158) (2026-07-22)
+
+
+### Bug Fixes
+
+* escape IAM string regex metacharacters ([672f85f](https://github.com/cloud-copilot/iam-simulate/commit/672f85fbffc7efe33c8649229a138e7161dc2214))
+
 ## [0.1.157](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.156...v0.1.157) (2026-07-20)
 
 
