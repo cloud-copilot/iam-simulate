@@ -85,6 +85,48 @@ describe('convertIamString', () => {
     expect(result.pattern.exec('arn:aws:s3:::abcdefg')).toBeTruthy()
   })
 
+  it('should treat regex metacharacters in literal text as literal characters', () => {
+    //Given a string with regex metacharacters that are legal literal IAM string characters
+    const value = 'arn:aws:s3:::my.bucket/path+with[chars](test)|value^end$/{key}'
+    //And a request
+    const request = testRequestWithContext({})
+
+    //When the string is converted to a regex
+    const result = convertIamString(value, request)
+
+    //Then the result should only match those literal metacharacters
+    //And the bare braces should be treated as literals because they are not a ${...} variable
+    expect(
+      result.pattern.exec('arn:aws:s3:::my.bucket/path+with[chars](test)|value^end$/{key}')
+    ).toBeTruthy()
+    expect(
+      result.pattern.exec('arn:aws:s3:::myxbucket/path+with[chars](test)|value^end$/{key}')
+    ).toBeFalsy()
+    expect(
+      result.pattern.exec('arn:aws:s3:::my.bucket/pathhwith[chars](test)|value^end$/{key}')
+    ).toBeFalsy()
+    expect(
+      result.pattern.exec('arn:aws:s3:::my.bucket/path+withc(test)|value^end$/{key}')
+    ).toBeFalsy()
+  })
+
+  it('should preserve IAM wildcard behavior while escaping surrounding literal text', () => {
+    //Given a string with IAM wildcards next to regex metacharacters
+    const value = 'arn:aws:s3:::my.bucket/data[1]/*/file?.txt'
+    //And a request
+    const request = testRequestWithContext({})
+
+    //When the string is converted to a regex
+    const result = convertIamString(value, request)
+
+    //Then only IAM wildcards should have wildcard behavior
+    expect(result.pattern.exec('arn:aws:s3:::my.bucket/data[1]/folder/file1.txt')).toBeTruthy()
+    expect(result.pattern.exec('arn:aws:s3:::myxbucket/data[1]/folder/file1.txt')).toBeFalsy()
+    expect(result.pattern.exec('arn:aws:s3:::my.bucket/data1/folder/file1.txt')).toBeFalsy()
+    expect(result.pattern.exec('arn:aws:s3:::my.bucket/data[1]/folder/file12.txt')).toBeFalsy()
+    expect(result.pattern.exec('arn:aws:s3:::my.bucket/data[1]/folder/file1xtxt')).toBeFalsy()
+  })
+
   describe('variables', () => {
     it('should replace a variable with its value if it exists', () => {
       //Given a string with a variable
