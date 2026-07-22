@@ -99,6 +99,102 @@ describe('allowedContextKeysForRequest', () => {
     )
   })
 
+  it('should include condition keys from the resource type definition when the action resource type entry has none', async () => {
+    //Given a KMS action whose per-action resource type entry has no condition keys
+    const service = 'kms'
+    const action = 'CreateGrant'
+    vi.mocked(iamActionDetails).mockResolvedValue({
+      conditionKeys: ['kms:ViaService'],
+      isWildcardOnly: false,
+      accessLevel: 'Permissions management',
+      dependentActions: [],
+      resourceTypes: [
+        {
+          name: 'key',
+          dependentActions: [],
+          required: true,
+          conditionKeys: []
+        }
+      ],
+      description: 'Adds a grant to a KMS key',
+      name: 'CreateGrant'
+    })
+
+    //And the resolved resource type definition has keys that apply to all key resources
+    vi.mocked(iamResourceTypeDetails).mockResolvedValue({
+      key: 'key',
+      arn: 'arn:${Partition}:kms:${Region}:${Account}:key/${KeyId}',
+      conditionKeys: ['kms:ResourceAliases', 'kms:KeySpec']
+    })
+
+    //When calling allowedContextKeysForRequest
+    const result = await allowedContextKeysForRequest(
+      service,
+      action,
+      'arn:aws:kms:us-east-1:111111111111:key/abcd-1234',
+      false,
+      undefined
+    )
+
+    //Then it should include action, resource type definition, and global keys
+    expect(result).toEqual(
+      expect.arrayContaining([
+        'kms:resourcealiases',
+        'kms:keyspec',
+        'kms:viaservice',
+        ...getAllGlobalConditionKeys().map((k) => k.toLowerCase())
+      ])
+    )
+  })
+
+  it('should include condition keys from a suggested resource type definition', async () => {
+    //Given a KMS action whose per-action resource type entry has no condition keys
+    const service = 'kms'
+    const action = 'CreateGrant'
+    vi.mocked(iamActionDetails).mockResolvedValue({
+      conditionKeys: ['kms:ViaService'],
+      isWildcardOnly: false,
+      accessLevel: 'Permissions management',
+      dependentActions: [],
+      resourceTypes: [
+        {
+          name: 'key',
+          dependentActions: [],
+          required: true,
+          conditionKeys: []
+        }
+      ],
+      description: 'Adds a grant to a KMS key',
+      name: 'CreateGrant'
+    })
+
+    //And the caller has already resolved the resource type definition
+    const suggestedResourceType = {
+      key: 'key',
+      arn: 'arn:${Partition}:kms:${Region}:${Account}:key/${KeyId}',
+      conditionKeys: ['kms:ResourceAliases', 'kms:KeySpec']
+    }
+
+    //When calling allowedContextKeysForRequest with the suggested resource type
+    const result = await allowedContextKeysForRequest(
+      service,
+      action,
+      'arn:aws:kms:us-east-1:111111111111:key/abcd-1234',
+      false,
+      suggestedResourceType
+    )
+
+    //Then it should include action, resource type definition, and global keys
+    expect(result).toEqual(
+      expect.arrayContaining([
+        'kms:resourcealiases',
+        'kms:keyspec',
+        'kms:viaservice',
+        ...getAllGlobalConditionKeys().map((k) => k.toLowerCase())
+      ])
+    )
+  })
+
   it.todo('should search for the specific resource type for an action')
 
   it('should remove s3 ABAC keys if the bucket does not have ABAC enabled', async () => {
