@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isActualContextKey, typeForContextKey } from './contextKeys.js'
+import { isActualContextKey, normalizeContextKeyCase, typeForContextKey } from './contextKeys.js'
 
 describe('isActualContextKey', () => {
   it('should return true for a global context key', async () => {
@@ -112,6 +112,17 @@ describe('isActualContextKey', () => {
     expect(result).toBeTruthy()
   })
 
+  it('should return true for a valid cross-prefix Cognito Identity condition key', async () => {
+    //Given a Cognito Identity condition key whose prefix is not the owning service prefix
+    const key = 'cognito-identity-unauth:IdentityPoolArn'
+
+    //When the key is checked
+    const result = await isActualContextKey(key)
+
+    //Then the result should be true
+    expect(result).toBeTruthy()
+  })
+
   it('should return true for a OIDC key', async () => {
     //For a given set of OIDC keys
     //https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_iam-condition-keys.html#condition-keys-wif
@@ -145,6 +156,19 @@ describe('isActualContextKey', () => {
   })
 })
 
+describe('normalizeContextKeyCase', () => {
+  it('should normalize a valid cross-prefix Cognito Identity condition key', async () => {
+    //Given a Cognito Identity condition key whose prefix is not the owning service prefix
+    const key = 'cognito-identity-UNAUTH:identitypoolarn'
+
+    //When the key case is normalized
+    const result = await normalizeContextKeyCase(key)
+
+    //Then the key should resolve through the owning service condition keys
+    expect(result).toEqual('cognito-identity-unauth:IdentityPoolArn')
+  })
+})
+
 describe('typeForContextKey', () => {
   it('should return a service key with a slash in it', async () => {
     //Given a service key
@@ -155,5 +179,16 @@ describe('typeForContextKey', () => {
 
     //Then the result should be returned
     expect(result).toEqual('String')
+  })
+
+  it('should return the type for a valid cross-prefix Cognito Identity condition key', async () => {
+    //Given a Cognito Identity condition key whose prefix is not the owning service prefix
+    const key = 'cognito-identity-unauth:IdentityPoolArn'
+
+    //When the type is gotten
+    const result = await typeForContextKey(key)
+
+    //Then the key should resolve through the owning service condition keys
+    expect(result).toEqual('ARN')
   })
 })

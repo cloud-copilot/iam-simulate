@@ -1,5 +1,6 @@
 import {
   type ConditionKey,
+  findConditionKey,
   getAllGlobalConditionKeys,
   getGlobalConditionKeyByName,
   getGlobalConditionKeyByPrefix,
@@ -115,6 +116,17 @@ vi.mocked(iamConditionKeyDetails).mockImplementation(async (service, key) => {
 
 vi.mocked(iamConditionKeyExists).mockImplementation(async (service, key) => {
   return mockKeyDetails[key.toLowerCase()] !== undefined
+})
+
+vi.mocked(findConditionKey).mockImplementation(async (key) => {
+  const normalizedKey = key.toLowerCase()
+  if (mockKeyDetails[normalizedKey]) {
+    return mockKeyDetails[normalizedKey]
+  }
+  if (normalizedKey.startsWith('s3:buckettag/')) {
+    return mockKeyDetails['s3:buckettag/${tagkey}']
+  }
+  return undefined
 })
 
 vi.mocked(iamActionExists).mockImplementation(async (service, action) => {

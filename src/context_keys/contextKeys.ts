@@ -1,11 +1,4 @@
-import {
-  type ConditionKey,
-  findConditionKey,
-  iamConditionKeyDetails,
-  iamConditionKeyExists,
-  iamConditionKeysForService,
-  iamServiceExists
-} from '@cloud-copilot/iam-data'
+import { type ConditionKey, findConditionKey } from '@cloud-copilot/iam-data'
 import { getGlobalConditionKeyWithOrWithoutPrefix } from '../global_conditions/globalConditionKeys.js'
 import { type ConditionKeyType } from './contextKeyTypes.js'
 
@@ -55,41 +48,7 @@ export async function isActualContextKey(key: string): Promise<boolean> {
  * @returns The details for the context key if it exists. if the key has variables in it it will return the details for the variable key
  */
 async function serviceContextKeyDetails(contextKey: string): Promise<ConditionKey | undefined> {
-  const [service, key] = contextKeyParts(contextKey.toLowerCase())
-
-  const serviceExists = await iamServiceExists(service)
-  if (!serviceExists) {
-    return undefined
-  }
-
-  if (key.includes('/')) {
-    const prefix = service + ':' + key.slice(0, key.indexOf('/') + 1)
-    const allConditionsKeys = await iamConditionKeysForService(service)
-    const matchingKey = allConditionsKeys.find((k) => k.toLowerCase().startsWith(prefix))
-    if (matchingKey) {
-      return await iamConditionKeyDetails(service, matchingKey)
-    }
-    return undefined
-  }
-
-  const exists = await iamConditionKeyExists(service, contextKey)
-  if (!exists) {
-    return undefined
-  }
-  return iamConditionKeyDetails(service, contextKey)
-}
-
-/**
- * Split a context key into the service and the rest of the key. This has to be a special
- * method because context keys with variables may have a colon in the variable section,
- * because of course they can.
- *
- * @param contextKey The context key to split
- * @returns A tuple with the service and the rest of the key
- */
-export function contextKeyParts(contextKey: string): [string, string] {
-  const colonIndex = contextKey.indexOf(':')
-  return [contextKey.slice(0, colonIndex), contextKey.slice(colonIndex + 1)]
+  return findConditionKey(contextKey)
 }
 
 /**
