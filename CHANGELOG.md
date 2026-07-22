@@ -1,3 +1,10 @@
+## [0.1.159](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.158...v0.1.159) (2026-07-22)
+
+
+### Bug Fixes
+
+* resolve cross-prefix condition keys ([e8edfdc](https://github.com/cloud-copilot/iam-simulate/commit/e8edfdce8ac5fc6b4b2839905968b2d5f55b1283))
+
 ## [0.1.158](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.157...v0.1.158) (2026-07-22)
 
 
