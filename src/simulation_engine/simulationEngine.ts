@@ -551,7 +551,10 @@ export async function runSimulation(
         resourceType: resourceType.key,
         resourcePattern: resourceArn
       })
-    } else {
+    } else if (exactPatternResult.result !== 'ImplicitlyDenied') {
+      // If the requested pattern is implicitly denied, narrower overlapping policy patterns cannot
+      // make the overall request allowed because exact-pattern evaluation already considers any
+      // overlapping identity, resource, and guardrail policy statements.
       let resourceStrings = [simulation.request.resource.resource]
       const identityResourceStrings = getMatchingResourceStringsForPolicies(
         identityPoliciesThatGrantAccess,

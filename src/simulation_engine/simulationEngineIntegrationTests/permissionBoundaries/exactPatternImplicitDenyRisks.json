@@ -1,20 +1,17 @@
 [
   {
-    "name": "permission boundary blocks one pattern",
+    "name": "same-account direct resource policy allow outside permission boundary remains allowed",
     "simulation": {
       "identityPolicies": [
         {
-          "name": "id-allow",
+          "name": "id-allow-unrelated",
           "policy": {
             "Version": "2012-10-17",
             "Statement": [
               {
                 "Effect": "Allow",
                 "Action": "s3:GetObject",
-                "Resource": [
-                  "arn:aws:s3:::examplebucket/public/*",
-                  "arn:aws:s3:::examplebucket/private/*"
-                ]
+                "Resource": "arn:aws:s3:::allowed-example-bucket/*"
               }
             ]
           }
@@ -31,84 +28,27 @@
               {
                 "Effect": "Allow",
                 "Action": "s3:GetObject",
-                "Resource": "arn:aws:s3:::examplebucket/public/*"
+                "Resource": "arn:aws:s3:::allowed-example-bucket/*"
               }
             ]
           }
         }
       ],
-      "resourcePolicy": null,
+      "resourcePolicy": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": "arn:aws:iam::123456789012:user/ExampleUser",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::resource-policy-example-bucket/*"
+          }
+        ]
+      },
       "request": {
         "action": "s3:GetObject",
         "resource": {
-          "resource": "arn:aws:s3:::examplebucket/*",
-          "accountId": "123456789012"
-        },
-        "principal": "arn:aws:iam::123456789012:user/Alice",
-        "contextVariables": {}
-      }
-    },
-    "simulationOptions": {},
-    "expected": {
-      "results": [
-        {
-          "resourceType": "object",
-          "resourcePattern": "arn:aws:s3:::examplebucket/public/*",
-          "result": "Allowed"
-        },
-        {
-          "resourceType": "object",
-          "resourcePattern": "arn:aws:s3:::examplebucket/private/*",
-          "result": "ImplicitlyDenied"
-        }
-      ],
-      "overallResult": "Allowed",
-      "resultType": "wildcard"
-    }
-  },
-  {
-    "name": "permission boundary implicitly denies broad identity allow for requested S3 object pattern outside boundary",
-    "simulation": {
-      "identityPolicies": [
-        {
-          "name": "id-allow",
-          "policy": {
-            "Version": "2012-10-17",
-            "Statement": [
-              {
-                "Effect": "Allow",
-                "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
-                "Resource": "*"
-              }
-            ]
-          }
-        }
-      ],
-      "serviceControlPolicies": [],
-      "resourceControlPolicies": [],
-      "permissionBoundaryPolicies": [
-        {
-          "name": "boundary",
-          "policy": {
-            "Version": "2012-10-17",
-            "Statement": [
-              {
-                "Effect": "Allow",
-                "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:ListBucket"],
-                "Resource": [
-                  "arn:aws:s3:::allowed-example-bucket",
-                  "arn:aws:s3:::allowed-example-bucket/*"
-                ]
-              }
-            ]
-          }
-        }
-      ],
-      "resourcePolicy": null,
-      "request": {
-        "action": "s3:GetObject",
-        "resource": {
-          "resource": "arn:aws:s3:::blocked-example-bucket/*",
+          "resource": "arn:aws:s3:::resource-policy-example-bucket/*",
           "accountId": "123456789012"
         },
         "principal": "arn:aws:iam::123456789012:user/ExampleUser",
@@ -117,8 +57,81 @@
     },
     "simulationOptions": {},
     "expected": {
-      "results": [],
-      "overallResult": "ImplicitlyDenied",
+      "results": [
+        {
+          "resourceType": "object",
+          "resourcePattern": "arn:aws:s3:::resource-policy-example-bucket/*",
+          "result": "Allowed"
+        }
+      ],
+      "overallResult": "Allowed",
+      "resultType": "wildcard"
+    }
+  },
+  {
+    "name": "narrow identity allow is still evaluated when another policy pattern is implicitly denied",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "id-allow-mixed",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:GetObject",
+                "Resource": [
+                  "arn:aws:s3:::mixed-example-bucket/public/*",
+                  "arn:aws:s3:::mixed-example-bucket/private/*"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "permissionBoundaryPolicies": [
+        {
+          "name": "boundary",
+          "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::mixed-example-bucket/public/*"
+              }
+            ]
+          }
+        }
+      ],
+      "resourcePolicy": null,
+      "request": {
+        "action": "s3:GetObject",
+        "resource": {
+          "resource": "arn:aws:s3:::mixed-example-bucket/*",
+          "accountId": "123456789012"
+        },
+        "principal": "arn:aws:iam::123456789012:user/ExampleUser",
+        "contextVariables": {}
+      }
+    },
+    "simulationOptions": {},
+    "expected": {
+      "results": [
+        {
+          "resourceType": "object",
+          "resourcePattern": "arn:aws:s3:::mixed-example-bucket/public/*",
+          "result": "Allowed"
+        },
+        {
+          "resourceType": "object",
+          "resourcePattern": "arn:aws:s3:::mixed-example-bucket/private/*",
+          "result": "ImplicitlyDenied"
+        }
+      ],
+      "overallResult": "Allowed",
       "resultType": "wildcard"
     }
   }
