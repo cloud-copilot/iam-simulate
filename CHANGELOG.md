@@ -1,3 +1,10 @@
+## [0.1.161](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.160...v0.1.161) (2026-07-24)
+
+
+### Bug Fixes
+
+* handle boundary implicit deny in resource pattern mode ([b211304](https://github.com/cloud-copilot/iam-simulate/commit/b211304224c2a1d1f2d59abcf7a5fa0843e0ddb3))
+
 ## [0.1.160](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.159...v0.1.160) (2026-07-22)
 
 
