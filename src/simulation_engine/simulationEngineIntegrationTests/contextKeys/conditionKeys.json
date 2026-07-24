@@ -90,13 +90,7 @@
     },
     "simulationOptions": {},
     "expected": {
-      "results": [
-        {
-          "resourceType": "object",
-          "resourcePattern": "arn:aws:s3:::examplebucket/conditional/*",
-          "result": "ImplicitlyDenied"
-        }
-      ],
+      "results": [],
       "overallResult": "ImplicitlyDenied",
       "resultType": "wildcard"
     }

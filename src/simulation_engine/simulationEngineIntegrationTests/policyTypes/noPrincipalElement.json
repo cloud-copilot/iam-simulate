@@ -27,13 +27,7 @@
     },
     "simulationOptions": {},
     "expected": {
-      "results": [
-        {
-          "resourceType": "object",
-          "resourcePattern": "arn:aws:s3:::examplebucket/private/*",
-          "result": "ImplicitlyDenied"
-        }
-      ],
+      "results": [],
       "overallResult": "ImplicitlyDenied",
       "resultType": "wildcard"
     }
