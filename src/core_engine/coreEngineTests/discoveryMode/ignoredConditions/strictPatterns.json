@@ -95,6 +95,20 @@
             }
           ]
         }
+      },
+      "conditions": {
+        "conditionType": "condition",
+        "op": "StringEquals",
+        "key": "aws:PrincipalTag/Team",
+        "values": ["Accounting"],
+        "sources": [
+          {
+            "effect": "Allow",
+            "policyIdentifier": "0",
+            "policyType": "identity",
+            "statementIndex": 1
+          }
+        ]
       }
     }
   }

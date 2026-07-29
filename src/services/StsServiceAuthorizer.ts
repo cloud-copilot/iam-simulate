@@ -1,6 +1,6 @@
 import { type RequestAnalysis, type ResourceAnalysis } from '../evaluate.js'
 import { type RequestResource } from '../request/requestResource.js'
-import { DefaultServiceAuthorizer } from './DefaultServiceAuthorizer.js'
+import { DefaultServiceAuthorizer, type PrincipalAccountTrust } from './DefaultServiceAuthorizer.js'
 import { type ServiceAuthorizationRequest } from './ServiceAuthorizer.js'
 
 /**
@@ -14,7 +14,8 @@ export class StsServiceAuthorizer extends DefaultServiceAuthorizer {
     ) {
       return {
         result: 'Allowed',
-        sameAccount: true
+        sameAccount: true,
+        conditions: undefined
       }
     }
     return super.authorize(request)
@@ -25,16 +26,16 @@ export class StsServiceAuthorizer extends DefaultServiceAuthorizer {
    *
    * @param sameAccount - If the principal and resource are in the same account
    * @param resourceAnalysis - The resource policy analysis
-   * @returns true if the service trusts the principal's account IAM policies
+   * @returns how the service trusts the principal's account IAM policies
    */
   override serviceTrustsPrincipalAccount(
     sameAccount: boolean,
     resourceAnalysis: ResourceAnalysis,
     resource: RequestResource
-  ): boolean {
+  ): PrincipalAccountTrust {
     //If there is no resource policy, the service trusts the principal's account IAM policies
     if (sameAccount && resourceAnalysis.result === 'NotApplicable') {
-      return true
+      return { trustType: 'Implicit' }
     }
 
     /*
@@ -42,8 +43,11 @@ export class StsServiceAuthorizer extends DefaultServiceAuthorizer {
       the trust policy must explicitly allow the principal's account,
       even if the principal and resource are in the same account.
     */
-    return resourceAnalysis.allowStatements.some(
-      (statement) => statement.principalMatch === 'AccountLevelMatch'
-    )
+    const accountLevelStatements = this.accountLevelResourceAllowStatements(resourceAnalysis)
+    if (accountLevelStatements.length > 0) {
+      return { trustType: 'Explicit', statements: accountLevelStatements }
+    }
+
+    return { trustType: 'None' }
   }
 }

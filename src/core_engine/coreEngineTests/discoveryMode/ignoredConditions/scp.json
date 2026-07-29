@@ -71,6 +71,22 @@
             }
           ]
         }
+      },
+      "conditions": {
+        "conditionType": "condition",
+        "op": "StringNotEquals",
+        "key": "aws:Username",
+        "values": ["test-user"],
+        "sources": [
+          {
+            "effect": "Deny",
+            "policyIdentifier": "1",
+            "policyType": "scp",
+            "statementIndex": 1,
+            "orgIdentifier": "ou-1"
+          }
+        ],
+        "inverted": true
       }
     }
   },

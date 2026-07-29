@@ -3,9 +3,14 @@
     "name": "Allow condition with known presence and unknown value is ignored",
     "request": {
       "action": "s3:ListBucket",
-      "resource": { "resource": "*", "accountId": "123456789012" },
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
       "principal": "arn:aws:iam::123456789012:user/Alice",
-      "context": { "aws:SourceAccount": "000000000000" }
+      "context": {
+        "aws:SourceAccount": "000000000000"
+      }
     },
     "identityPolicies": [
       {
@@ -15,7 +20,11 @@
             "Effect": "Allow",
             "Action": "s3:ListBucket",
             "Resource": "*",
-            "Condition": { "StringEquals": { "aws:SourceAccount": "111111111111" } }
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceAccount": "111111111111"
+              }
+            }
           }
         ]
       }
@@ -23,7 +32,11 @@
     "simulation": {
       "mode": "Discovery",
       "discoveryContextKeyConstraints": [
-        { "keyName": "aws:SourceAccount", "presenceIsKnown": true, "valueIsKnown": false }
+        {
+          "keyName": "aws:SourceAccount",
+          "presenceIsKnown": true,
+          "valueIsKnown": false
+        }
       ]
     },
     "expected": {
@@ -31,9 +44,27 @@
       "ignoredConditions": {
         "identity": {
           "allow": [
-            { "key": "aws:SourceAccount", "op": "StringEquals", "values": ["111111111111"] }
+            {
+              "key": "aws:SourceAccount",
+              "op": "StringEquals",
+              "values": ["111111111111"]
+            }
           ]
         }
+      },
+      "conditions": {
+        "conditionType": "condition",
+        "op": "StringEquals",
+        "key": "aws:SourceAccount",
+        "values": ["111111111111"],
+        "sources": [
+          {
+            "effect": "Allow",
+            "policyIdentifier": "0",
+            "policyType": "identity",
+            "statementIndex": 1
+          }
+        ]
       }
     }
   },
@@ -41,20 +72,33 @@
     "name": "Deny condition with known presence and unknown value is ignored",
     "request": {
       "action": "s3:ListBucket",
-      "resource": { "resource": "*", "accountId": "123456789012" },
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
       "principal": "arn:aws:iam::123456789012:user/Alice",
-      "context": { "aws:SourceAccount": "000000000000" }
+      "context": {
+        "aws:SourceAccount": "000000000000"
+      }
     },
     "identityPolicies": [
       {
         "Version": "2012-10-17",
         "Statement": [
-          { "Effect": "Allow", "Action": "s3:ListBucket", "Resource": "*" },
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "*"
+          },
           {
             "Effect": "Deny",
             "Action": "s3:ListBucket",
             "Resource": "*",
-            "Condition": { "StringEquals": { "aws:SourceAccount": "111111111111" } }
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceAccount": "111111111111"
+              }
+            }
           }
         ]
       }
@@ -62,15 +106,40 @@
     "simulation": {
       "mode": "Discovery",
       "discoveryContextKeyConstraints": [
-        { "keyName": "aws:SourceAccount", "presenceIsKnown": true, "valueIsKnown": false }
+        {
+          "keyName": "aws:SourceAccount",
+          "presenceIsKnown": true,
+          "valueIsKnown": false
+        }
       ]
     },
     "expected": {
       "response": "Allowed",
       "ignoredConditions": {
         "identity": {
-          "deny": [{ "key": "aws:SourceAccount", "op": "StringEquals", "values": ["111111111111"] }]
+          "deny": [
+            {
+              "key": "aws:SourceAccount",
+              "op": "StringEquals",
+              "values": ["111111111111"]
+            }
+          ]
         }
+      },
+      "conditions": {
+        "conditionType": "condition",
+        "op": "StringNotEquals",
+        "key": "aws:SourceAccount",
+        "values": ["111111111111"],
+        "sources": [
+          {
+            "effect": "Deny",
+            "policyIdentifier": "0",
+            "policyType": "identity",
+            "statementIndex": 2
+          }
+        ],
+        "inverted": true
       }
     }
   },
@@ -78,9 +147,14 @@
     "name": "Null false matches when presence is known and value is unknown",
     "request": {
       "action": "s3:ListBucket",
-      "resource": { "resource": "*", "accountId": "123456789012" },
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
       "principal": "arn:aws:iam::123456789012:user/Alice",
-      "context": { "aws:SourceAccount": "000000000000" }
+      "context": {
+        "aws:SourceAccount": "000000000000"
+      }
     },
     "identityPolicies": [
       {
@@ -90,7 +164,11 @@
             "Effect": "Allow",
             "Action": "s3:ListBucket",
             "Resource": "*",
-            "Condition": { "Null": { "aws:SourceAccount": "false" } }
+            "Condition": {
+              "Null": {
+                "aws:SourceAccount": "false"
+              }
+            }
           }
         ]
       }
@@ -98,18 +176,29 @@
     "simulation": {
       "mode": "Discovery",
       "discoveryContextKeyConstraints": [
-        { "keyName": "aws:SourceAccount", "presenceIsKnown": true, "valueIsKnown": false }
+        {
+          "keyName": "aws:SourceAccount",
+          "presenceIsKnown": true,
+          "valueIsKnown": false
+        }
       ]
     },
-    "expected": { "response": "Allowed" }
+    "expected": {
+      "response": "Allowed"
+    }
   },
   {
     "name": "Null true does not match when presence is known and key is present",
     "request": {
       "action": "s3:ListBucket",
-      "resource": { "resource": "*", "accountId": "123456789012" },
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
       "principal": "arn:aws:iam::123456789012:user/Alice",
-      "context": { "aws:SourceAccount": "000000000000" }
+      "context": {
+        "aws:SourceAccount": "000000000000"
+      }
     },
     "identityPolicies": [
       {
@@ -119,7 +208,11 @@
             "Effect": "Allow",
             "Action": "s3:ListBucket",
             "Resource": "*",
-            "Condition": { "Null": { "aws:SourceAccount": "true" } }
+            "Condition": {
+              "Null": {
+                "aws:SourceAccount": "true"
+              }
+            }
           }
         ]
       }
@@ -127,9 +220,15 @@
     "simulation": {
       "mode": "Discovery",
       "discoveryContextKeyConstraints": [
-        { "keyName": "aws:SourceAccount", "presenceIsKnown": true, "valueIsKnown": false }
+        {
+          "keyName": "aws:SourceAccount",
+          "presenceIsKnown": true,
+          "valueIsKnown": false
+        }
       ]
     },
-    "expected": { "response": "ImplicitlyDenied" }
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
   }
 ]

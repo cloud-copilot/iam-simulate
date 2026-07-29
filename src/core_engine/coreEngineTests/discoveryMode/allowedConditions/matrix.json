@@ -1,0 +1,2588 @@
+[
+  {
+    "name": "Same-account conditions are identity allow OR direct resource allow",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::matrix-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::matrix-bucket",
+            "Condition": {
+              "IpAddress": {
+                "aws:SourceIp": "203.0.113.0/24"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:ListBucket",
+          "Resource": "arn:aws:s3:::matrix-bucket",
+          "Principal": {
+            "AWS": "arn:aws:iam::123456789012:user/test-user"
+          },
+          "Condition": {
+            "StringEquals": {
+              "aws:SourceVpc": "vpc-resource"
+            }
+          }
+        }
+      ]
+    },
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "allow": [
+            {
+              "key": "aws:SourceIp",
+              "op": "IpAddress",
+              "values": ["203.0.113.0/24"]
+            }
+          ]
+        },
+        "resource": {
+          "allow": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEquals",
+              "values": ["vpc-resource"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "group",
+        "operator": "or",
+        "conditions": [
+          {
+            "conditionType": "condition",
+            "op": "StringEquals",
+            "key": "aws:SourceVpc",
+            "values": ["vpc-resource"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "ResourcePolicy",
+                "policyType": "resource",
+                "statementIndex": 1
+              }
+            ]
+          },
+          {
+            "conditionType": "condition",
+            "op": "IpAddress",
+            "key": "aws:SourceIp",
+            "values": ["203.0.113.0/24"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "0",
+                "policyType": "identity",
+                "statementIndex": 1
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "KMS same-account account trust conditions are ANDed with identity conditions",
+    "request": {
+      "action": "kms:DescribeKey",
+      "resource": {
+        "resource": "arn:aws:kms:us-east-1:123456789012:key/1234",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "kms:DescribeKey",
+            "Resource": "arn:aws:kms:us-east-1:123456789012:key/1234",
+            "Condition": {
+              "StringEquals": {
+                "aws:RequestTag/Env": "prod"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "kms:DescribeKey",
+          "Resource": "*",
+          "Principal": {
+            "AWS": "arn:aws:iam::123456789012:root"
+          },
+          "Condition": {
+            "StringEquals": {
+              "kms:ViaService": "ec2.us-east-1.amazonaws.com"
+            }
+          }
+        }
+      ]
+    },
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "conditions": {
+        "conditionType": "group",
+        "operator": "and",
+        "conditions": [
+          {
+            "conditionType": "condition",
+            "op": "StringEquals",
+            "key": "kms:ViaService",
+            "values": ["ec2.us-east-1.amazonaws.com"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "ResourcePolicy",
+                "policyType": "resource",
+                "statementIndex": 1
+              }
+            ]
+          },
+          {
+            "conditionType": "condition",
+            "op": "StringEquals",
+            "key": "aws:RequestTag/Env",
+            "values": ["prod"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "0",
+                "policyType": "identity",
+                "statementIndex": 1
+              }
+            ]
+          }
+        ]
+      },
+      "ignoredConditions": {
+        "identity": {
+          "allow": [
+            {
+              "key": "aws:RequestTag/Env",
+              "op": "StringEquals",
+              "values": ["prod"]
+            }
+          ]
+        },
+        "resource": {
+          "allow": [
+            {
+              "key": "kms:ViaService",
+              "op": "StringEquals",
+              "values": ["ec2.us-east-1.amazonaws.com"]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "SCP conditions combine OU allows with escaped deny",
+    "request": {
+      "action": "s3:ListAllMyBuckets",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:RequestedRegion": "us-west-2"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "serviceControlPolicies": [
+      {
+        "orgIdentifier": "ou-a",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*",
+                "Condition": {
+                  "StringEquals": {
+                    "aws:PrincipalOrgID": "o-a"
+                  }
+                }
+              },
+              {
+                "Effect": "Deny",
+                "Action": "s3:ListAllMyBuckets",
+                "Resource": "*",
+                "Condition": {
+                  "StringEquals": {
+                    "aws:RequestedRegion": "us-west-2"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "orgIdentifier": "ou-b",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*",
+                "Condition": {
+                  "StringEquals": {
+                    "aws:ResourceOrgID": "o-b"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "conditions": {
+        "conditionType": "group",
+        "operator": "and",
+        "conditions": [
+          {
+            "conditionType": "condition",
+            "op": "StringEquals",
+            "key": "aws:PrincipalOrgID",
+            "values": ["o-a"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "0",
+                "policyType": "scp",
+                "statementIndex": 1,
+                "orgIdentifier": "ou-a"
+              }
+            ]
+          },
+          {
+            "conditionType": "condition",
+            "op": "StringEquals",
+            "key": "aws:ResourceOrgID",
+            "values": ["o-b"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "0",
+                "policyType": "scp",
+                "statementIndex": 1,
+                "orgIdentifier": "ou-b"
+              }
+            ]
+          },
+          {
+            "conditionType": "condition",
+            "op": "StringNotEquals",
+            "key": "aws:RequestedRegion",
+            "values": ["us-west-2"],
+            "sources": [
+              {
+                "effect": "Deny",
+                "policyIdentifier": "0",
+                "policyType": "scp",
+                "statementIndex": 2,
+                "orgIdentifier": "ou-a"
+              }
+            ],
+            "inverted": true
+          }
+        ]
+      },
+      "ignoredConditions": {
+        "scp": {
+          "allow": [
+            {
+              "key": "aws:PrincipalOrgID",
+              "op": "StringEquals",
+              "values": ["o-a"]
+            },
+            {
+              "key": "aws:ResourceOrgID",
+              "op": "StringEquals",
+              "values": ["o-b"]
+            }
+          ],
+          "deny": [
+            {
+              "key": "aws:RequestedRegion",
+              "op": "StringEquals",
+              "values": ["us-west-2"]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "RCP deny escapes from multiple org levels are ANDed",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::matrix-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:RequestedRegion": "us-east-1",
+        "aws:SourceVpc": "vpc-deny"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::matrix-bucket"
+          }
+        ]
+      }
+    ],
+    "resourceControlPolicies": [
+      {
+        "orgIdentifier": "ou-a",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Deny",
+                "Action": "s3:ListBucket",
+                "Resource": "*",
+                "Principal": "*",
+                "Condition": {
+                  "StringEquals": {
+                    "aws:RequestedRegion": "us-east-1"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "orgIdentifier": "ou-b",
+        "policies": [
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Deny",
+                "Action": "s3:ListBucket",
+                "Resource": "*",
+                "Principal": "*",
+                "Condition": {
+                  "StringEquals": {
+                    "aws:SourceVpc": "vpc-deny"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "rcp": {
+          "deny": [
+            {
+              "key": "aws:RequestedRegion",
+              "op": "StringEquals",
+              "values": ["us-east-1"]
+            },
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEquals",
+              "values": ["vpc-deny"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "group",
+        "operator": "and",
+        "conditions": [
+          {
+            "conditionType": "condition",
+            "op": "StringNotEquals",
+            "key": "aws:RequestedRegion",
+            "values": ["us-east-1"],
+            "sources": [
+              {
+                "effect": "Deny",
+                "policyIdentifier": "0",
+                "policyType": "rcp",
+                "statementIndex": 1,
+                "orgIdentifier": "ou-a"
+              }
+            ],
+            "inverted": true
+          },
+          {
+            "conditionType": "condition",
+            "op": "StringNotEquals",
+            "key": "aws:SourceVpc",
+            "values": ["vpc-deny"],
+            "sources": [
+              {
+                "effect": "Deny",
+                "policyIdentifier": "1",
+                "policyType": "rcp",
+                "statementIndex": 1,
+                "orgIdentifier": "ou-b"
+              }
+            ],
+            "inverted": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "Multiple conditions in one allow statement are ANDed",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::matrix-bucket/key",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::matrix-bucket/key",
+          "Principal": {
+            "AWS": "arn:aws:iam::123456789012:user/test-user"
+          },
+          "Condition": {
+            "Bool": {
+              "aws:SecureTransport": "true"
+            },
+            "NumericGreaterThanEquals": {
+              "s3:TlsVersion": "1.2"
+            }
+          }
+        }
+      ]
+    },
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "conditions": {
+        "conditionType": "group",
+        "operator": "and",
+        "conditions": [
+          {
+            "conditionType": "condition",
+            "op": "Bool",
+            "key": "aws:SecureTransport",
+            "values": ["true"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "ResourcePolicy",
+                "policyType": "resource",
+                "statementIndex": 1
+              }
+            ]
+          },
+          {
+            "conditionType": "condition",
+            "op": "NumericGreaterThanEquals",
+            "key": "s3:TlsVersion",
+            "values": ["1.2"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "ResourcePolicy",
+                "policyType": "resource",
+                "statementIndex": 1
+              }
+            ]
+          }
+        ]
+      },
+      "ignoredConditions": {
+        "resource": {
+          "allow": [
+            {
+              "key": "aws:SecureTransport",
+              "op": "Bool",
+              "values": ["true"]
+            },
+            {
+              "key": "s3:TlsVersion",
+              "op": "NumericGreaterThanEquals",
+              "values": ["1.2"]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "Known matching condition in allow statement is not returned in conditions",
+    "request": {
+      "action": "s3:GetObject",
+      "resource": {
+        "resource": "arn:aws:s3:::matrix-bucket/key",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:SecureTransport": "true"
+      }
+    },
+    "identityPolicies": [],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::matrix-bucket/key",
+          "Principal": {
+            "AWS": "arn:aws:iam::123456789012:user/test-user"
+          },
+          "Condition": {
+            "Bool": {
+              "aws:SecureTransport": "true"
+            },
+            "NumericGreaterThanEquals": {
+              "s3:TlsVersion": "1.2"
+            }
+          }
+        }
+      ]
+    },
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "resource": {
+          "allow": [
+            {
+              "key": "s3:TlsVersion",
+              "op": "NumericGreaterThanEquals",
+              "values": ["1.2"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "condition",
+        "op": "NumericGreaterThanEquals",
+        "key": "s3:TlsVersion",
+        "values": ["1.2"],
+        "sources": [
+          {
+            "effect": "Allow",
+            "policyIdentifier": "ResourcePolicy",
+            "policyType": "resource",
+            "statementIndex": 1
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "Permission boundary allow conditions do not constrain unconditional same-account direct resource path",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::matrix-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::matrix-bucket",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpc": "vpc-identity"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:ListBucket",
+          "Resource": "arn:aws:s3:::matrix-bucket",
+          "Principal": {
+            "AWS": "arn:aws:iam::123456789012:user/test-user"
+          }
+        }
+      ]
+    },
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "*",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpce": "vpce-boundary"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "allow": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEquals",
+              "values": ["vpc-identity"]
+            }
+          ]
+        },
+        "permissionBoundary": {
+          "allow": [
+            {
+              "key": "aws:SourceVpce",
+              "op": "StringEquals",
+              "values": ["vpce-boundary"]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "Permission boundary implicit deny recalculates conditions from bypassing resource statements only",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::matrix-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::matrix-bucket",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpc": "vpc-identity"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:ListBucket",
+          "Resource": "arn:aws:s3:::matrix-bucket",
+          "Principal": {
+            "AWS": "arn:aws:iam::123456789012:user/test-user"
+          },
+          "Condition": {
+            "StringEquals": {
+              "aws:SourceVpc": "vpc-resource"
+            }
+          }
+        }
+      ]
+    },
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "ec2:*",
+            "Resource": "*"
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "conditions": {
+        "conditionType": "condition",
+        "op": "StringEquals",
+        "key": "aws:SourceVpc",
+        "values": ["vpc-resource"],
+        "sources": [
+          {
+            "effect": "Allow",
+            "policyIdentifier": "ResourcePolicy",
+            "policyType": "resource",
+            "statementIndex": 1
+          }
+        ]
+      },
+      "ignoredConditions": {
+        "identity": {
+          "allow": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEquals",
+              "values": ["vpc-identity"]
+            }
+          ]
+        },
+        "resource": {
+          "allow": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEquals",
+              "values": ["vpc-resource"]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "IfExists deny inversion is represented in end-to-end conditions",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::matrix-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::matrix-bucket"
+          },
+          {
+            "Effect": "Deny",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::matrix-bucket",
+            "Condition": {
+              "StringEqualsIfExists": {
+                "aws:SourceVpc": "vpc-deny"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "conditions": {
+        "conditionType": "group",
+        "operator": "and",
+        "conditions": [
+          {
+            "conditionType": "condition",
+            "op": "Null",
+            "key": "aws:SourceVpc",
+            "values": ["false"],
+            "sources": [
+              {
+                "effect": "Deny",
+                "policyIdentifier": "0",
+                "policyType": "identity",
+                "statementIndex": 2
+              }
+            ],
+            "inverted": true
+          },
+          {
+            "conditionType": "condition",
+            "op": "StringNotEquals",
+            "key": "aws:SourceVpc",
+            "values": ["vpc-deny"],
+            "sources": [
+              {
+                "effect": "Deny",
+                "policyIdentifier": "0",
+                "policyType": "identity",
+                "statementIndex": 2
+              }
+            ],
+            "inverted": true
+          }
+        ]
+      },
+      "ignoredConditions": {
+        "identity": {
+          "deny": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEqualsIfExists",
+              "values": ["vpc-deny"]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "Separate conditional resource allow statements are ORed",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::matrix-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:ListBucket",
+          "Resource": "arn:aws:s3:::matrix-bucket",
+          "Principal": {
+            "AWS": "arn:aws:iam::123456789012:user/test-user"
+          },
+          "Condition": {
+            "StringEquals": {
+              "aws:SourceVpc": "vpc-one"
+            }
+          }
+        },
+        {
+          "Effect": "Allow",
+          "Action": "s3:ListBucket",
+          "Resource": "arn:aws:s3:::matrix-bucket",
+          "Principal": {
+            "AWS": "arn:aws:iam::123456789012:user/test-user"
+          },
+          "Condition": {
+            "IpAddress": {
+              "aws:SourceIp": "198.51.100.0/24"
+            }
+          }
+        }
+      ]
+    },
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "resource": {
+          "allow": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEquals",
+              "values": ["vpc-one"]
+            },
+            {
+              "key": "aws:SourceIp",
+              "op": "IpAddress",
+              "values": ["198.51.100.0/24"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "group",
+        "operator": "or",
+        "conditions": [
+          {
+            "conditionType": "condition",
+            "op": "StringEquals",
+            "key": "aws:SourceVpc",
+            "values": ["vpc-one"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "ResourcePolicy",
+                "policyType": "resource",
+                "statementIndex": 1
+              }
+            ]
+          },
+          {
+            "conditionType": "condition",
+            "op": "IpAddress",
+            "key": "aws:SourceIp",
+            "values": ["198.51.100.0/24"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "ResourcePolicy",
+                "policyType": "resource",
+                "statementIndex": 2
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "Unconditional explicit deny omits conditions because final result is denied",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::matrix-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::matrix-bucket",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpc": "vpc-allow"
+              }
+            }
+          },
+          {
+            "Effect": "Deny",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::matrix-bucket"
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "ExplicitlyDenied",
+      "ignoredConditions": {
+        "identity": {
+          "allow": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEquals",
+              "values": ["vpc-allow"]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "STS same-account trust policy conditions are ANDed with identity conditions",
+    "request": {
+      "action": "sts:AssumeRole",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/test-role",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "sts:AssumeRole",
+            "Resource": "arn:aws:iam::123456789012:role/test-role",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceIdentity": "source-id"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "sts:AssumeRole",
+          "Resource": "*",
+          "Principal": {
+            "AWS": "arn:aws:iam::123456789012:root"
+          },
+          "Condition": {
+            "StringEquals": {
+              "sts:ExternalId": "external-id"
+            }
+          }
+        }
+      ]
+    },
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "allow": [
+            {
+              "key": "aws:SourceIdentity",
+              "op": "StringEquals",
+              "values": ["source-id"]
+            }
+          ]
+        },
+        "resource": {
+          "allow": [
+            {
+              "key": "sts:ExternalId",
+              "op": "StringEquals",
+              "values": ["external-id"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "group",
+        "operator": "and",
+        "conditions": [
+          {
+            "conditionType": "condition",
+            "op": "StringEquals",
+            "key": "sts:ExternalId",
+            "values": ["external-id"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "ResourcePolicy",
+                "policyType": "resource",
+                "statementIndex": 1
+              }
+            ]
+          },
+          {
+            "conditionType": "condition",
+            "op": "StringEquals",
+            "key": "aws:SourceIdentity",
+            "values": ["source-id"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "0",
+                "policyType": "identity",
+                "statementIndex": 1
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "IAM service-specific implicit deny omits conditions after conditional core allow",
+    "request": {
+      "action": "iam:DeletePolicy",
+      "resource": {
+        "resource": "arn:aws:iam::aws:policy/ReadOnlyAccess",
+        "accountId": "aws"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "iam:DeletePolicy",
+            "Resource": "arn:aws:iam::aws:policy/ReadOnlyAccess",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpc": "vpc-iam"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "ImplicitlyDenied",
+      "ignoredConditions": {
+        "identity": {
+          "allow": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEquals",
+              "values": ["vpc-iam"]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "Cross-account direct resource conditions are ANDed with identity conditions",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::cross-bucket",
+        "accountId": "222222222222"
+      },
+      "principal": "arn:aws:iam::111111111111:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::cross-bucket",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpc": "vpc-identity"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:ListBucket",
+          "Resource": "arn:aws:s3:::cross-bucket",
+          "Principal": {
+            "AWS": "arn:aws:iam::111111111111:user/test-user"
+          },
+          "Condition": {
+            "StringEquals": {
+              "aws:PrincipalOrgID": "o-direct"
+            }
+          }
+        }
+      ]
+    },
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "allow": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEquals",
+              "values": ["vpc-identity"]
+            }
+          ]
+        },
+        "resource": {
+          "allow": [
+            {
+              "key": "aws:PrincipalOrgID",
+              "op": "StringEquals",
+              "values": ["o-direct"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "group",
+        "operator": "and",
+        "conditions": [
+          {
+            "conditionType": "condition",
+            "op": "StringEquals",
+            "key": "aws:PrincipalOrgID",
+            "values": ["o-direct"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "ResourcePolicy",
+                "policyType": "resource",
+                "statementIndex": 1
+              }
+            ]
+          },
+          {
+            "conditionType": "condition",
+            "op": "StringEquals",
+            "key": "aws:SourceVpc",
+            "values": ["vpc-identity"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "0",
+                "policyType": "identity",
+                "statementIndex": 1
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "Cross-account account-level resource conditions are ANDed with identity conditions",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::cross-bucket",
+        "accountId": "222222222222"
+      },
+      "principal": "arn:aws:iam::111111111111:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::cross-bucket",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpc": "vpc-identity"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:ListBucket",
+          "Resource": "arn:aws:s3:::cross-bucket",
+          "Principal": {
+            "AWS": "arn:aws:iam::111111111111:root"
+          },
+          "Condition": {
+            "StringEquals": {
+              "aws:PrincipalOrgID": "o-account"
+            }
+          }
+        }
+      ]
+    },
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "allow": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEquals",
+              "values": ["vpc-identity"]
+            }
+          ]
+        },
+        "resource": {
+          "allow": [
+            {
+              "key": "aws:PrincipalOrgID",
+              "op": "StringEquals",
+              "values": ["o-account"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "group",
+        "operator": "and",
+        "conditions": [
+          {
+            "conditionType": "condition",
+            "op": "StringEquals",
+            "key": "aws:PrincipalOrgID",
+            "values": ["o-account"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "ResourcePolicy",
+                "policyType": "resource",
+                "statementIndex": 1
+              }
+            ]
+          },
+          {
+            "conditionType": "condition",
+            "op": "StringEquals",
+            "key": "aws:SourceVpc",
+            "values": ["vpc-identity"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "0",
+                "policyType": "identity",
+                "statementIndex": 1
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "Deny with multiple condition keys becomes OR of inverted leaves in final conditions",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::matrix-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:RequestedRegion": "us-east-1",
+        "aws:SourceIp": "10.1.2.3"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::matrix-bucket",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpc": "vpc-allow"
+              }
+            }
+          },
+          {
+            "Effect": "Deny",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::matrix-bucket",
+            "Condition": {
+              "StringEquals": {
+                "aws:RequestedRegion": "us-east-1"
+              },
+              "IpAddress": {
+                "aws:SourceIp": "10.0.0.0/8"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "allow": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEquals",
+              "values": ["vpc-allow"]
+            }
+          ],
+          "deny": [
+            {
+              "key": "aws:RequestedRegion",
+              "op": "StringEquals",
+              "values": ["us-east-1"]
+            },
+            {
+              "key": "aws:SourceIp",
+              "op": "IpAddress",
+              "values": ["10.0.0.0/8"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "group",
+        "operator": "and",
+        "conditions": [
+          {
+            "conditionType": "condition",
+            "op": "StringEquals",
+            "key": "aws:SourceVpc",
+            "values": ["vpc-allow"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "0",
+                "policyType": "identity",
+                "statementIndex": 1
+              }
+            ]
+          },
+          {
+            "conditionType": "group",
+            "operator": "or",
+            "conditions": [
+              {
+                "conditionType": "condition",
+                "op": "StringNotEquals",
+                "key": "aws:RequestedRegion",
+                "values": ["us-east-1"],
+                "sources": [
+                  {
+                    "effect": "Deny",
+                    "policyIdentifier": "0",
+                    "policyType": "identity",
+                    "statementIndex": 2
+                  }
+                ],
+                "inverted": true
+              },
+              {
+                "conditionType": "condition",
+                "op": "NotIpAddress",
+                "key": "aws:SourceIp",
+                "values": ["10.0.0.0/8"],
+                "sources": [
+                  {
+                    "effect": "Deny",
+                    "policyIdentifier": "0",
+                    "policyType": "identity",
+                    "statementIndex": 2
+                  }
+                ],
+                "inverted": true
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "Permission boundary allow conditions are ANDed with identity allow conditions",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::matrix-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::matrix-bucket",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpc": "vpc-identity"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "*",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpce": "vpce-boundary"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "allow": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEquals",
+              "values": ["vpc-identity"]
+            }
+          ]
+        },
+        "permissionBoundary": {
+          "allow": [
+            {
+              "key": "aws:SourceVpce",
+              "op": "StringEquals",
+              "values": ["vpce-boundary"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "group",
+        "operator": "and",
+        "conditions": [
+          {
+            "conditionType": "condition",
+            "op": "StringEquals",
+            "key": "aws:SourceVpc",
+            "values": ["vpc-identity"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "0",
+                "policyType": "identity",
+                "statementIndex": 1
+              }
+            ]
+          },
+          {
+            "conditionType": "condition",
+            "op": "StringEquals",
+            "key": "aws:SourceVpce",
+            "values": ["vpce-boundary"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "0",
+                "policyType": "permissionBoundary",
+                "statementIndex": 1
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "Permission boundary allow preserves direct resource path OR identity boundary path",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::matrix-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::matrix-bucket",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpc": "vpc-identity"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:ListBucket",
+          "Resource": "arn:aws:s3:::matrix-bucket",
+          "Principal": {
+            "AWS": "arn:aws:iam::123456789012:user/test-user"
+          },
+          "Condition": {
+            "StringEquals": {
+              "aws:SourceVpc": "vpc-resource"
+            }
+          }
+        }
+      ]
+    },
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "*",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpce": "vpce-boundary"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "allow": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEquals",
+              "values": ["vpc-identity"]
+            }
+          ]
+        },
+        "resource": {
+          "allow": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEquals",
+              "values": ["vpc-resource"]
+            }
+          ]
+        },
+        "permissionBoundary": {
+          "allow": [
+            {
+              "key": "aws:SourceVpce",
+              "op": "StringEquals",
+              "values": ["vpce-boundary"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "group",
+        "operator": "or",
+        "conditions": [
+          {
+            "conditionType": "condition",
+            "op": "StringEquals",
+            "key": "aws:SourceVpc",
+            "values": ["vpc-resource"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "ResourcePolicy",
+                "policyType": "resource",
+                "statementIndex": 1
+              }
+            ]
+          },
+          {
+            "conditionType": "group",
+            "operator": "and",
+            "conditions": [
+              {
+                "conditionType": "condition",
+                "op": "StringEquals",
+                "key": "aws:SourceVpc",
+                "values": ["vpc-identity"],
+                "sources": [
+                  {
+                    "effect": "Allow",
+                    "policyIdentifier": "0",
+                    "policyType": "identity",
+                    "statementIndex": 1
+                  }
+                ]
+              },
+              {
+                "conditionType": "condition",
+                "op": "StringEquals",
+                "key": "aws:SourceVpce",
+                "values": ["vpce-boundary"],
+                "sources": [
+                  {
+                    "effect": "Allow",
+                    "policyIdentifier": "0",
+                    "policyType": "permissionBoundary",
+                    "statementIndex": 1
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "Explicit account trust permission boundary allow preserves direct resource path OR trusted identity boundary path",
+    "request": {
+      "action": "sts:AssumeRole",
+      "resource": {
+        "resource": "arn:aws:iam::123456789012:role/test-role",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "sts:AssumeRole",
+            "Resource": "arn:aws:iam::123456789012:role/test-role",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceIdentity": "source-id"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "sts:AssumeRole",
+          "Resource": "*",
+          "Principal": {
+            "AWS": "arn:aws:iam::123456789012:user/test-user"
+          },
+          "Condition": {
+            "StringEquals": {
+              "aws:SourceVpc": "vpc-resource"
+            }
+          }
+        },
+        {
+          "Effect": "Allow",
+          "Action": "sts:AssumeRole",
+          "Resource": "*",
+          "Principal": {
+            "AWS": "arn:aws:iam::123456789012:root"
+          },
+          "Condition": {
+            "StringEquals": {
+              "sts:ExternalId": "external-id"
+            }
+          }
+        }
+      ]
+    },
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "sts:AssumeRole",
+            "Resource": "*",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpce": "vpce-boundary"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "allow": [
+            {
+              "key": "aws:SourceIdentity",
+              "op": "StringEquals",
+              "values": ["source-id"]
+            }
+          ]
+        },
+        "resource": {
+          "allow": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEquals",
+              "values": ["vpc-resource"]
+            },
+            {
+              "key": "sts:ExternalId",
+              "op": "StringEquals",
+              "values": ["external-id"]
+            }
+          ]
+        },
+        "permissionBoundary": {
+          "allow": [
+            {
+              "key": "aws:SourceVpce",
+              "op": "StringEquals",
+              "values": ["vpce-boundary"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "group",
+        "operator": "or",
+        "conditions": [
+          {
+            "conditionType": "condition",
+            "op": "StringEquals",
+            "key": "aws:SourceVpc",
+            "values": ["vpc-resource"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "ResourcePolicy",
+                "policyType": "resource",
+                "statementIndex": 1
+              }
+            ]
+          },
+          {
+            "conditionType": "group",
+            "operator": "and",
+            "conditions": [
+              {
+                "conditionType": "condition",
+                "op": "StringEquals",
+                "key": "sts:ExternalId",
+                "values": ["external-id"],
+                "sources": [
+                  {
+                    "effect": "Allow",
+                    "policyIdentifier": "ResourcePolicy",
+                    "policyType": "resource",
+                    "statementIndex": 2
+                  }
+                ]
+              },
+              {
+                "conditionType": "condition",
+                "op": "StringEquals",
+                "key": "aws:SourceIdentity",
+                "values": ["source-id"],
+                "sources": [
+                  {
+                    "effect": "Allow",
+                    "policyIdentifier": "0",
+                    "policyType": "identity",
+                    "statementIndex": 1
+                  }
+                ]
+              },
+              {
+                "conditionType": "condition",
+                "op": "StringEquals",
+                "key": "aws:SourceVpce",
+                "values": ["vpce-boundary"],
+                "sources": [
+                  {
+                    "effect": "Allow",
+                    "policyIdentifier": "0",
+                    "policyType": "permissionBoundary",
+                    "statementIndex": 1
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "STS GetCallerIdentity discovery short-circuit omits conditions",
+    "request": {
+      "action": "sts:GetCallerIdentity",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "sts:GetCallerIdentity",
+            "Resource": "*",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpc": "vpc-sts"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "allow": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEquals",
+              "values": ["vpc-sts"]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "ForAllValues deny inversion is represented in end-to-end conditions",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::matrix-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:SourceOrgPaths": ["o-abc/r-root/ou-team/app"]
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::matrix-bucket"
+          },
+          {
+            "Effect": "Deny",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::matrix-bucket",
+            "Condition": {
+              "ForAllValues:StringEquals": {
+                "aws:SourceOrgPaths": ["o-abc/r-root/ou-team/app"]
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "deny": [
+            {
+              "key": "aws:SourceOrgPaths",
+              "op": "ForAllValues:StringEquals",
+              "values": ["o-abc/r-root/ou-team/app"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "group",
+        "operator": "and",
+        "conditions": [
+          {
+            "conditionType": "condition",
+            "op": "Null",
+            "key": "aws:SourceOrgPaths",
+            "values": ["false"],
+            "sources": [
+              {
+                "effect": "Deny",
+                "policyIdentifier": "0",
+                "policyType": "identity",
+                "statementIndex": 2
+              }
+            ],
+            "inverted": true
+          },
+          {
+            "conditionType": "condition",
+            "op": "ForAnyValue:StringNotEquals",
+            "key": "aws:SourceOrgPaths",
+            "values": ["o-abc/r-root/ou-team/app"],
+            "sources": [
+              {
+                "effect": "Deny",
+                "policyIdentifier": "0",
+                "policyType": "identity",
+                "statementIndex": 2
+              }
+            ],
+            "inverted": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "ForAllValues IfExists deny inversion is represented in end-to-end conditions",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::matrix-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:SourceOrgPaths": ["o-abc/r-root/ou-team/app"]
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::matrix-bucket"
+          },
+          {
+            "Effect": "Deny",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::matrix-bucket",
+            "Condition": {
+              "ForAllValues:StringEqualsIfExists": {
+                "aws:SourceOrgPaths": ["o-abc/r-root/ou-team/app"]
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "deny": [
+            {
+              "key": "aws:SourceOrgPaths",
+              "op": "ForAllValues:StringEqualsIfExists",
+              "values": ["o-abc/r-root/ou-team/app"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "group",
+        "operator": "and",
+        "conditions": [
+          {
+            "conditionType": "condition",
+            "op": "Null",
+            "key": "aws:SourceOrgPaths",
+            "values": ["false"],
+            "sources": [
+              {
+                "effect": "Deny",
+                "policyIdentifier": "0",
+                "policyType": "identity",
+                "statementIndex": 2
+              }
+            ],
+            "inverted": true
+          },
+          {
+            "conditionType": "condition",
+            "op": "ForAnyValue:StringNotEquals",
+            "key": "aws:SourceOrgPaths",
+            "values": ["o-abc/r-root/ou-team/app"],
+            "sources": [
+              {
+                "effect": "Deny",
+                "policyIdentifier": "0",
+                "policyType": "identity",
+                "statementIndex": 2
+              }
+            ],
+            "inverted": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "ForAnyValue deny inversion is represented in end-to-end conditions",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::matrix-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:SourceOrgPaths": ["o-abc/r-root/ou-team/app"]
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::matrix-bucket"
+          },
+          {
+            "Effect": "Deny",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::matrix-bucket",
+            "Condition": {
+              "ForAnyValue:StringEquals": {
+                "aws:SourceOrgPaths": ["o-abc/r-root/ou-team/app"]
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "deny": [
+            {
+              "key": "aws:SourceOrgPaths",
+              "op": "ForAnyValue:StringEquals",
+              "values": ["o-abc/r-root/ou-team/app"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "group",
+        "operator": "or",
+        "conditions": [
+          {
+            "conditionType": "condition",
+            "op": "Null",
+            "key": "aws:SourceOrgPaths",
+            "values": ["true"],
+            "sources": [
+              {
+                "effect": "Deny",
+                "policyIdentifier": "0",
+                "policyType": "identity",
+                "statementIndex": 2
+              }
+            ],
+            "inverted": true
+          },
+          {
+            "conditionType": "condition",
+            "op": "ForAllValues:StringNotEquals",
+            "key": "aws:SourceOrgPaths",
+            "values": ["o-abc/r-root/ou-team/app"],
+            "sources": [
+              {
+                "effect": "Deny",
+                "policyIdentifier": "0",
+                "policyType": "identity",
+                "statementIndex": 2
+              }
+            ],
+            "inverted": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "Multiple identity allows are ORed before deny escapes are ANDed",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::matrix-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:RequestedRegion": "us-east-1"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::matrix-bucket",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpc": "vpc-one"
+              }
+            }
+          },
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::matrix-bucket",
+            "Condition": {
+              "IpAddress": {
+                "aws:SourceIp": "203.0.113.0/24"
+              }
+            }
+          },
+          {
+            "Effect": "Deny",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::matrix-bucket",
+            "Condition": {
+              "StringEquals": {
+                "aws:RequestedRegion": "us-east-1"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "allow": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEquals",
+              "values": ["vpc-one"]
+            },
+            {
+              "key": "aws:SourceIp",
+              "op": "IpAddress",
+              "values": ["203.0.113.0/24"]
+            }
+          ],
+          "deny": [
+            {
+              "key": "aws:RequestedRegion",
+              "op": "StringEquals",
+              "values": ["us-east-1"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "group",
+        "operator": "and",
+        "conditions": [
+          {
+            "conditionType": "group",
+            "operator": "or",
+            "conditions": [
+              {
+                "conditionType": "condition",
+                "op": "StringEquals",
+                "key": "aws:SourceVpc",
+                "values": ["vpc-one"],
+                "sources": [
+                  {
+                    "effect": "Allow",
+                    "policyIdentifier": "0",
+                    "policyType": "identity",
+                    "statementIndex": 1
+                  }
+                ]
+              },
+              {
+                "conditionType": "condition",
+                "op": "IpAddress",
+                "key": "aws:SourceIp",
+                "values": ["203.0.113.0/24"],
+                "sources": [
+                  {
+                    "effect": "Allow",
+                    "policyIdentifier": "0",
+                    "policyType": "identity",
+                    "statementIndex": 2
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "conditionType": "condition",
+            "op": "StringNotEquals",
+            "key": "aws:RequestedRegion",
+            "values": ["us-east-1"],
+            "sources": [
+              {
+                "effect": "Deny",
+                "policyIdentifier": "0",
+                "policyType": "identity",
+                "statementIndex": 3
+              }
+            ],
+            "inverted": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "Permission boundary explicit deny escape is ANDed with identity allow conditions",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::matrix-bucket",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {
+        "aws:SourceVpc": "vpc-denied"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::matrix-bucket",
+            "Condition": {
+              "StringEquals": {
+                "aws:PrincipalTag/team": "blue"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "permissionBoundaries": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "*"
+          },
+          {
+            "Effect": "Deny",
+            "Action": "s3:ListBucket",
+            "Resource": "*",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpc": "vpc-denied"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "allow": [
+            {
+              "key": "aws:PrincipalTag/team",
+              "op": "StringEquals",
+              "values": ["blue"]
+            }
+          ]
+        },
+        "permissionBoundary": {
+          "deny": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEquals",
+              "values": ["vpc-denied"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "group",
+        "operator": "and",
+        "conditions": [
+          {
+            "conditionType": "condition",
+            "op": "StringEquals",
+            "key": "aws:PrincipalTag/team",
+            "values": ["blue"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "0",
+                "policyType": "identity",
+                "statementIndex": 1
+              }
+            ]
+          },
+          {
+            "conditionType": "condition",
+            "op": "StringNotEquals",
+            "key": "aws:SourceVpc",
+            "values": ["vpc-denied"],
+            "sources": [
+              {
+                "effect": "Deny",
+                "policyIdentifier": "0",
+                "policyType": "permissionBoundary",
+                "statementIndex": 2
+              }
+            ],
+            "inverted": true
+          }
+        ]
+      }
+    }
+  }
+]

@@ -3,21 +3,33 @@
     "name": "anonymous implicit deny without resource policy or RCP",
     "request": {
       "action": "s3:GetObject",
-      "resource": { "resource": "arn:aws:s3:::public-bucket/key.txt", "accountId": "123456789012" },
-      "principal": { "type": "Anonymous" },
+      "resource": {
+        "resource": "arn:aws:s3:::public-bucket/key.txt",
+        "accountId": "123456789012"
+      },
+      "principal": {
+        "type": "Anonymous"
+      },
       "context": {}
     },
     "identityPolicies": [],
     "serviceControlPolicies": [],
     "resourceControlPolicies": [],
-    "expected": { "response": "ImplicitlyDenied" }
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
   },
   {
     "name": "anonymous allowed by public resource policy without RCP",
     "request": {
       "action": "s3:GetObject",
-      "resource": { "resource": "arn:aws:s3:::public-bucket/key.txt", "accountId": "123456789012" },
-      "principal": { "type": "Anonymous" },
+      "resource": {
+        "resource": "arn:aws:s3:::public-bucket/key.txt",
+        "accountId": "123456789012"
+      },
+      "principal": {
+        "type": "Anonymous"
+      },
       "context": {}
     },
     "identityPolicies": [],
@@ -34,19 +46,31 @@
         }
       ]
     },
-    "expected": { "response": "Allowed" }
+    "expected": {
+      "response": "Allowed"
+    }
   },
   {
     "name": "anonymous allowed by public resource policy with default RCP",
     "request": {
       "action": "s3:GetObject",
-      "resource": { "resource": "arn:aws:s3:::public-bucket/key.txt", "accountId": "123456789012" },
-      "principal": { "type": "Anonymous" },
+      "resource": {
+        "resource": "arn:aws:s3:::public-bucket/key.txt",
+        "accountId": "123456789012"
+      },
+      "principal": {
+        "type": "Anonymous"
+      },
       "context": {}
     },
     "identityPolicies": [],
     "serviceControlPolicies": [],
-    "resourceControlPolicies": [{ "orgIdentifier": "o-123", "policies": [] }],
+    "resourceControlPolicies": [
+      {
+        "orgIdentifier": "o-123",
+        "policies": []
+      }
+    ],
     "resourcePolicy": {
       "Version": "2012-10-17",
       "Statement": [
@@ -58,14 +82,21 @@
         }
       ]
     },
-    "expected": { "response": "Allowed" }
+    "expected": {
+      "response": "Allowed"
+    }
   },
   {
     "name": "anonymous blocked by RCP deny",
     "request": {
       "action": "s3:GetObject",
-      "resource": { "resource": "arn:aws:s3:::public-bucket/key.txt", "accountId": "123456789012" },
-      "principal": { "type": "Anonymous" },
+      "resource": {
+        "resource": "arn:aws:s3:::public-bucket/key.txt",
+        "accountId": "123456789012"
+      },
+      "principal": {
+        "type": "Anonymous"
+      },
       "context": {}
     },
     "identityPolicies": [],
@@ -99,14 +130,22 @@
         }
       ]
     },
-    "expected": { "response": "ExplicitlyDenied", "blockedBy": ["rcp"] }
+    "expected": {
+      "response": "ExplicitlyDenied",
+      "blockedBy": ["rcp"]
+    }
   },
   {
     "name": "anonymous ignores SCP explicit deny",
     "request": {
       "action": "s3:GetObject",
-      "resource": { "resource": "arn:aws:s3:::public-bucket/key.txt", "accountId": "123456789012" },
-      "principal": { "type": "Anonymous" },
+      "resource": {
+        "resource": "arn:aws:s3:::public-bucket/key.txt",
+        "accountId": "123456789012"
+      },
+      "principal": {
+        "type": "Anonymous"
+      },
       "context": {}
     },
     "identityPolicies": [],
@@ -139,14 +178,21 @@
         }
       ]
     },
-    "expected": { "response": "Allowed" }
+    "expected": {
+      "response": "Allowed"
+    }
   },
   {
     "name": "anonymous denied when resource policy allows only specific principal",
     "request": {
       "action": "s3:GetObject",
-      "resource": { "resource": "arn:aws:s3:::public-bucket/key.txt", "accountId": "123456789012" },
-      "principal": { "type": "Anonymous" },
+      "resource": {
+        "resource": "arn:aws:s3:::public-bucket/key.txt",
+        "accountId": "123456789012"
+      },
+      "principal": {
+        "type": "Anonymous"
+      },
       "context": {}
     },
     "identityPolicies": [],
@@ -157,20 +203,29 @@
       "Statement": [
         {
           "Effect": "Allow",
-          "Principal": { "AWS": "arn:aws:iam::123456789012:user/Alice" },
+          "Principal": {
+            "AWS": "arn:aws:iam::123456789012:user/Alice"
+          },
           "Action": "s3:GetObject",
           "Resource": "arn:aws:s3:::public-bucket/*"
         }
       ]
     },
-    "expected": { "response": "ImplicitlyDenied" }
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
   },
   {
     "name": "anonymous denied when resource policy allows only account principal",
     "request": {
       "action": "s3:GetObject",
-      "resource": { "resource": "arn:aws:s3:::public-bucket/key.txt", "accountId": "123456789012" },
-      "principal": { "type": "Anonymous" },
+      "resource": {
+        "resource": "arn:aws:s3:::public-bucket/key.txt",
+        "accountId": "123456789012"
+      },
+      "principal": {
+        "type": "Anonymous"
+      },
       "context": {}
     },
     "identityPolicies": [],
@@ -181,20 +236,29 @@
       "Statement": [
         {
           "Effect": "Allow",
-          "Principal": { "AWS": "arn:aws:iam::123456789012:root" },
+          "Principal": {
+            "AWS": "arn:aws:iam::123456789012:root"
+          },
           "Action": "s3:GetObject",
           "Resource": "arn:aws:s3:::public-bucket/*"
         }
       ]
     },
-    "expected": { "response": "ImplicitlyDenied" }
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
   },
   {
     "name": "anonymous denied when resource policy allows only service principal",
     "request": {
       "action": "s3:GetObject",
-      "resource": { "resource": "arn:aws:s3:::public-bucket/key.txt", "accountId": "123456789012" },
-      "principal": { "type": "Anonymous" },
+      "resource": {
+        "resource": "arn:aws:s3:::public-bucket/key.txt",
+        "accountId": "123456789012"
+      },
+      "principal": {
+        "type": "Anonymous"
+      },
       "context": {}
     },
     "identityPolicies": [],
@@ -205,20 +269,29 @@
       "Statement": [
         {
           "Effect": "Allow",
-          "Principal": { "Service": "ec2.amazonaws.com" },
+          "Principal": {
+            "Service": "ec2.amazonaws.com"
+          },
           "Action": "s3:GetObject",
           "Resource": "arn:aws:s3:::public-bucket/*"
         }
       ]
     },
-    "expected": { "response": "ImplicitlyDenied" }
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
   },
   {
     "name": "anonymous allowed by not principal excluding signed principal",
     "request": {
       "action": "s3:GetObject",
-      "resource": { "resource": "arn:aws:s3:::public-bucket/key.txt", "accountId": "123456789012" },
-      "principal": { "type": "Anonymous" },
+      "resource": {
+        "resource": "arn:aws:s3:::public-bucket/key.txt",
+        "accountId": "123456789012"
+      },
+      "principal": {
+        "type": "Anonymous"
+      },
       "context": {}
     },
     "identityPolicies": [],
@@ -229,20 +302,29 @@
       "Statement": [
         {
           "Effect": "Allow",
-          "NotPrincipal": { "AWS": "arn:aws:iam::123456789012:user/Alice" },
+          "NotPrincipal": {
+            "AWS": "arn:aws:iam::123456789012:user/Alice"
+          },
           "Action": "s3:GetObject",
           "Resource": "arn:aws:s3:::public-bucket/*"
         }
       ]
     },
-    "expected": { "response": "Allowed" }
+    "expected": {
+      "response": "Allowed"
+    }
   },
   {
     "name": "anonymous denied by wildcard not principal",
     "request": {
       "action": "s3:GetObject",
-      "resource": { "resource": "arn:aws:s3:::public-bucket/key.txt", "accountId": "123456789012" },
-      "principal": { "type": "Anonymous" },
+      "resource": {
+        "resource": "arn:aws:s3:::public-bucket/key.txt",
+        "accountId": "123456789012"
+      },
+      "principal": {
+        "type": "Anonymous"
+      },
       "context": {}
     },
     "identityPolicies": [],
@@ -259,15 +341,24 @@
         }
       ]
     },
-    "expected": { "response": "ImplicitlyDenied" }
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
   },
   {
     "name": "anonymous condition key must match when present in resource policy",
     "request": {
       "action": "s3:GetObject",
-      "resource": { "resource": "arn:aws:s3:::public-bucket/key.txt", "accountId": "123456789012" },
-      "principal": { "type": "Anonymous" },
-      "context": { "aws:SecureTransport": "true" }
+      "resource": {
+        "resource": "arn:aws:s3:::public-bucket/key.txt",
+        "accountId": "123456789012"
+      },
+      "principal": {
+        "type": "Anonymous"
+      },
+      "context": {
+        "aws:SecureTransport": "true"
+      }
     },
     "identityPolicies": [],
     "serviceControlPolicies": [],
@@ -280,18 +371,29 @@
           "Principal": "*",
           "Action": "s3:GetObject",
           "Resource": "arn:aws:s3:::public-bucket/*",
-          "Condition": { "Bool": { "aws:SecureTransport": "true" } }
+          "Condition": {
+            "Bool": {
+              "aws:SecureTransport": "true"
+            }
+          }
         }
       ]
     },
-    "expected": { "response": "Allowed" }
+    "expected": {
+      "response": "Allowed"
+    }
   },
   {
     "name": "anonymous condition key missing prevents resource policy allow",
     "request": {
       "action": "s3:GetObject",
-      "resource": { "resource": "arn:aws:s3:::public-bucket/key.txt", "accountId": "123456789012" },
-      "principal": { "type": "Anonymous" },
+      "resource": {
+        "resource": "arn:aws:s3:::public-bucket/key.txt",
+        "accountId": "123456789012"
+      },
+      "principal": {
+        "type": "Anonymous"
+      },
       "context": {}
     },
     "identityPolicies": [],
@@ -305,18 +407,29 @@
           "Principal": "*",
           "Action": "s3:GetObject",
           "Resource": "arn:aws:s3:::public-bucket/*",
-          "Condition": { "Bool": { "aws:SecureTransport": "true" } }
+          "Condition": {
+            "Bool": {
+              "aws:SecureTransport": "true"
+            }
+          }
         }
       ]
     },
-    "expected": { "response": "ImplicitlyDenied" }
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
   },
   {
     "name": "anonymous discovery mode only ignores conditions from supplied constraints",
     "request": {
       "action": "s3:GetObject",
-      "resource": { "resource": "arn:aws:s3:::public-bucket/key.txt", "accountId": "123456789012" },
-      "principal": { "type": "Anonymous" },
+      "resource": {
+        "resource": "arn:aws:s3:::public-bucket/key.txt",
+        "accountId": "123456789012"
+      },
+      "principal": {
+        "type": "Anonymous"
+      },
       "context": {}
     },
     "identityPolicies": [],
@@ -330,22 +443,50 @@
           "Principal": "*",
           "Action": "s3:GetObject",
           "Resource": "arn:aws:s3:::public-bucket/*",
-          "Condition": { "Bool": { "aws:SecureTransport": "true" } }
+          "Condition": {
+            "Bool": {
+              "aws:SecureTransport": "true"
+            }
+          }
         }
       ]
     },
     "simulation": {
       "mode": "Discovery",
       "discoveryContextKeyConstraints": [
-        { "keyName": "aws:SecureTransport", "presenceIsKnown": false, "valueIsKnown": false }
+        {
+          "keyName": "aws:SecureTransport",
+          "presenceIsKnown": false,
+          "valueIsKnown": false
+        }
       ]
     },
     "expected": {
       "response": "Allowed",
       "ignoredConditions": {
         "resource": {
-          "allow": [{ "op": "Bool", "key": "aws:SecureTransport", "values": ["true"] }]
+          "allow": [
+            {
+              "op": "Bool",
+              "key": "aws:SecureTransport",
+              "values": ["true"]
+            }
+          ]
         }
+      },
+      "conditions": {
+        "conditionType": "condition",
+        "op": "Bool",
+        "key": "aws:SecureTransport",
+        "values": ["true"],
+        "sources": [
+          {
+            "effect": "Allow",
+            "policyIdentifier": "ResourcePolicy",
+            "policyType": "resource",
+            "statementIndex": 1
+          }
+        ]
       }
     }
   }

@@ -31,6 +31,7 @@ export interface OuScpAnalysis {
   denyStatements: StatementAnalysis[]
   allowStatements: StatementAnalysis[]
   unmatchedStatements: StatementAnalysis[]
+  conditions: AllowedConditionExpression
 }
 
 export interface ScpAnalysis {
@@ -39,6 +40,7 @@ export interface ScpAnalysis {
    */
   result: EvaluationResult
   ouAnalysis: OuScpAnalysis[]
+  conditions: AllowedConditionExpression
 }
 
 export interface OuRcpAnalysis {
@@ -47,6 +49,7 @@ export interface OuRcpAnalysis {
   denyStatements: StatementAnalysis[]
   allowStatements: StatementAnalysis[]
   unmatchedStatements: StatementAnalysis[]
+  conditions: AllowedConditionExpression
 }
 
 export interface RcpAnalysis {
@@ -55,6 +58,7 @@ export interface RcpAnalysis {
    */
   result: EvaluationResult
   ouAnalysis: OuRcpAnalysis[]
+  conditions: AllowedConditionExpression
 }
 
 export interface IgnoredCondition {
@@ -66,6 +70,59 @@ export interface IgnoredCondition {
 /**
  * Conditions that were ignored during discovery mode.
  */
+export type AllowedConditionExpression =
+  | AlwaysAllowedCondition
+  | NeverAllowedCondition
+  | AllowedConditionGroup
+  | AllowedConditionLeaf
+  | AllowedSessionNameCondition
+
+/** A condition expression that is always satisfied. */
+export interface AlwaysAllowedCondition {
+  conditionType: 'always'
+}
+
+/** A condition expression that cannot be satisfied. */
+export interface NeverAllowedCondition {
+  conditionType: 'never'
+  reason: 'explicitDenyWithoutConditions' | 'noApplicableAllow'
+}
+
+/** A boolean grouping of allowed-condition expressions. */
+export interface AllowedConditionGroup {
+  conditionType: 'group'
+  operator: 'and' | 'or'
+  conditions: AllowedConditionExpression[]
+}
+
+/** A policy condition that must hold for access to be allowed. */
+export interface AllowedConditionLeaf {
+  conditionType: 'condition'
+  op: string
+  key: string
+  values: string[]
+  sources: AllowedConditionSource[]
+  inverted?: true
+}
+
+/** A role session-name constraint that must hold for access to be allowed. */
+export interface AllowedSessionNameCondition {
+  conditionType: 'sessionName'
+  sessionName: string[]
+  sources: AllowedConditionSource[]
+}
+
+/** Metadata for the statement that contributed an allowed condition. */
+export interface AllowedConditionSource {
+  policyType:
+    'session' | 'identity' | 'resource' | 'scp' | 'rcp' | 'permissionBoundary' | 'endpointPolicy'
+  effect: 'Allow' | 'Deny'
+  policyIdentifier?: string
+  orgIdentifier?: string
+  statementId?: string
+  statementIndex: number
+}
+
 export interface IgnoredConditions {
   session?: {
     allow?: IgnoredCondition[]
@@ -145,6 +202,14 @@ export interface RequestAnalysis {
    * The result of the evaluation of the VPC endpoint policies, if any.
    */
   endpointAnalysis?: IdentityAnalysis | undefined
+
+  /**
+   * The conditions under which a Discovery-mode request is allowed.
+   *
+   * This is only present for final Allowed results when access depends on conditions
+   * ignored because their request-context presence or value was unknown.
+   */
+  conditions?: AllowedConditionExpression
 
   /**
    * Any conditions that were ignored during discovery mode.

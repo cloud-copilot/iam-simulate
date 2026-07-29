@@ -1,6 +1,6 @@
 import { type ResourceAnalysis } from '../evaluate.js'
 import { type RequestResource } from '../request/requestResource.js'
-import { DefaultServiceAuthorizer } from './DefaultServiceAuthorizer.js'
+import { DefaultServiceAuthorizer, type PrincipalAccountTrust } from './DefaultServiceAuthorizer.js'
 
 /**
  * The default authorizer for services.
@@ -11,18 +11,22 @@ export class KmsServiceAuthorizer extends DefaultServiceAuthorizer {
    *
    * @param sameAccount - If the principal and resource are in the same account
    * @param resourceAnalysis - The resource policy analysis
-   * @returns true if the service trusts the principal's account IAM policies
+   * @returns how the service trusts the principal's account IAM policies
    */
   override serviceTrustsPrincipalAccount(
     sameAccount: boolean,
     resourceAnalysis: ResourceAnalysis,
     resource: RequestResource
-  ): boolean {
+  ): PrincipalAccountTrust {
     if (sameAccount && resource.value() == '*') {
-      return true
+      return { trustType: 'Implicit' }
     }
-    return resourceAnalysis.allowStatements.some(
-      (statement) => statement.principalMatch === 'AccountLevelMatch'
-    )
+
+    const accountLevelStatements = this.accountLevelResourceAllowStatements(resourceAnalysis)
+    if (accountLevelStatements.length > 0) {
+      return { trustType: 'Explicit', statements: accountLevelStatements }
+    }
+
+    return { trustType: 'None' }
   }
 }

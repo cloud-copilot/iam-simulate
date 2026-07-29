@@ -36,8 +36,28 @@
       "response": "Allowed",
       "ignoredConditions": {
         "resource": {
-          "allow": [{ "key": "aws:SourceVpc", "op": "StringEquals", "values": ["vpc-123456"] }]
+          "allow": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEquals",
+              "values": ["vpc-123456"]
+            }
+          ]
         }
+      },
+      "conditions": {
+        "conditionType": "condition",
+        "op": "StringEquals",
+        "key": "aws:SourceVpc",
+        "values": ["vpc-123456"],
+        "sources": [
+          {
+            "effect": "Allow",
+            "policyIdentifier": "ResourcePolicy",
+            "policyType": "resource",
+            "statementIndex": 1
+          }
+        ]
       }
     }
   },
@@ -87,8 +107,29 @@
       "response": "Allowed",
       "ignoredConditions": {
         "resource": {
-          "deny": [{ "key": "aws:SourceVpc", "op": "StringNotEquals", "values": ["vpc-123456"] }]
+          "deny": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringNotEquals",
+              "values": ["vpc-123456"]
+            }
+          ]
         }
+      },
+      "conditions": {
+        "conditionType": "condition",
+        "op": "StringEquals",
+        "key": "aws:SourceVpc",
+        "values": ["vpc-123456"],
+        "sources": [
+          {
+            "effect": "Deny",
+            "policyIdentifier": "ResourcePolicy",
+            "policyType": "resource",
+            "statementIndex": 1
+          }
+        ],
+        "inverted": true
       }
     }
   },
@@ -136,6 +177,117 @@
     },
     "expected": {
       "response": "Allowed"
+    }
+  },
+  {
+    "name": "Cross-account resource conditions include direct and account-level allow paths",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "arn:aws:s3:::mybucket",
+        "accountId": "222222222222"
+      },
+      "principal": "arn:aws:iam::111111111111:role/test-role",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::mybucket"
+          }
+        ]
+      }
+    ],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:ListBucket",
+          "Resource": "arn:aws:s3:::mybucket",
+          "Principal": {
+            "AWS": "arn:aws:iam::111111111111:role/test-role"
+          },
+          "Condition": {
+            "StringEquals": {
+              "aws:SourceVpc": "vpc-direct"
+            }
+          }
+        },
+        {
+          "Effect": "Allow",
+          "Action": "s3:ListBucket",
+          "Resource": "arn:aws:s3:::mybucket",
+          "Principal": {
+            "AWS": "arn:aws:iam::111111111111:root"
+          },
+          "Condition": {
+            "StringEquals": {
+              "aws:SourceVpc": "vpc-account"
+            }
+          }
+        }
+      ]
+    },
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "resource": {
+          "allow": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEquals",
+              "values": ["vpc-direct"]
+            },
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEquals",
+              "values": ["vpc-account"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "group",
+        "operator": "or",
+        "conditions": [
+          {
+            "conditionType": "condition",
+            "op": "StringEquals",
+            "key": "aws:SourceVpc",
+            "values": ["vpc-direct"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "ResourcePolicy",
+                "policyType": "resource",
+                "statementIndex": 1
+              }
+            ]
+          },
+          {
+            "conditionType": "condition",
+            "op": "StringEquals",
+            "key": "aws:SourceVpc",
+            "values": ["vpc-account"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "ResourcePolicy",
+                "policyType": "resource",
+                "statementIndex": 2
+              }
+            ]
+          }
+        ]
+      }
     }
   }
 ]

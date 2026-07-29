@@ -15,10 +15,17 @@ export type { DiscoveryContextKeyConstraint } from './context_keys/discoveryCont
 export { findContextKeys } from './context_keys/findContextKeys.js'
 export type { SimulationMode } from './core_engine/CoreSimulatorEngine.js'
 export type {
+  AllowedConditionExpression,
+  AllowedConditionGroup,
+  AllowedConditionLeaf,
+  AllowedConditionSource,
+  AllowedSessionNameCondition,
+  AlwaysAllowedCondition,
   BlockedReason,
   EvaluationResult,
   IgnoredCondition,
   IgnoredConditions,
+  NeverAllowedCondition,
   RequestAnalysis
 } from './evaluate.js'
 export type {
