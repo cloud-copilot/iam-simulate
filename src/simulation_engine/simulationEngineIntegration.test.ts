@@ -10,6 +10,7 @@ interface ExpectedResult {
   resourceType?: string
   resourcePattern?: string
   result?: string
+  conditions?: unknown
 }
 
 interface IntegrationTestCase {
@@ -76,11 +77,22 @@ describe('simulationEngineIntegration', () => {
             )
           }
 
+          if (response.resultType === 'single') {
+            if (testCase.expected.results[0]?.conditions) {
+              expect(response.result.analysis.conditions).toEqual(
+                testCase.expected.results[0].conditions
+              )
+            } else {
+              expect(response.result.analysis.conditions, 'unexpected conditions').toBeUndefined()
+            }
+          }
+
           if (response.resultType === 'wildcard') {
             const normalizedResults: ExpectedResult[] = response.results.map((result) => ({
               resourceType: result.resourceType,
               resourcePattern: result.resourcePattern,
-              result: result.analysis?.result
+              result: result.analysis?.result,
+              ...(result.analysis.conditions ? { conditions: result.analysis.conditions } : {})
             }))
 
             const expectedResults = [...testCase.expected.results]

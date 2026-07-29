@@ -48,8 +48,28 @@
       "response": "Allowed",
       "ignoredConditions": {
         "permissionBoundary": {
-          "allow": [{ "key": "aws:SourceVpc", "op": "StringEquals", "values": ["vpc-123456"] }]
+          "allow": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEquals",
+              "values": ["vpc-123456"]
+            }
+          ]
         }
+      },
+      "conditions": {
+        "conditionType": "condition",
+        "op": "StringEquals",
+        "key": "aws:SourceVpc",
+        "values": ["vpc-123456"],
+        "sources": [
+          {
+            "effect": "Allow",
+            "policyIdentifier": "0",
+            "policyType": "permissionBoundary",
+            "statementIndex": 1
+          }
+        ]
       }
     }
   },
@@ -107,8 +127,29 @@
       "response": "Allowed",
       "ignoredConditions": {
         "permissionBoundary": {
-          "deny": [{ "key": "aws:SourceVpc", "op": "StringNotEquals", "values": ["vpc-123456"] }]
+          "deny": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringNotEquals",
+              "values": ["vpc-123456"]
+            }
+          ]
         }
+      },
+      "conditions": {
+        "conditionType": "condition",
+        "op": "StringEquals",
+        "key": "aws:SourceVpc",
+        "values": ["vpc-123456"],
+        "sources": [
+          {
+            "effect": "Deny",
+            "policyIdentifier": "0",
+            "policyType": "permissionBoundary",
+            "statementIndex": 2
+          }
+        ],
+        "inverted": true
       }
     }
   },

@@ -161,6 +161,12 @@ describe('coreSimulatorEngine', () => {
             expect(analysis.ignoredRoleSessionName).toBeFalsy()
           }
 
+          if (expected.conditions) {
+            expect(analysis.conditions).toEqual(expected.conditions)
+          } else {
+            expect(analysis.conditions, 'unexpected conditions').toBeUndefined()
+          }
+
           if (expected.ignoredConditions) {
             for (const key of conditionKeysToVerify) {
               const actualAllow = (analysis.ignoredConditions as any)?.[key]?.allow

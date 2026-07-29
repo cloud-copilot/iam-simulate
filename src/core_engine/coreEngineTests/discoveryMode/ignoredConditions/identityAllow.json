@@ -36,12 +36,31 @@
       "response": "Allowed",
       "ignoredConditions": {
         "identity": {
-          "allow": [{ "key": "aws:SourceVpc", "op": "StringEquals", "values": ["vpc-123456"] }]
+          "allow": [
+            {
+              "key": "aws:SourceVpc",
+              "op": "StringEquals",
+              "values": ["vpc-123456"]
+            }
+          ]
         }
+      },
+      "conditions": {
+        "conditionType": "condition",
+        "op": "StringEquals",
+        "key": "aws:SourceVpc",
+        "values": ["vpc-123456"],
+        "sources": [
+          {
+            "effect": "Allow",
+            "policyIdentifier": "0",
+            "policyType": "identity",
+            "statementIndex": 1
+          }
+        ]
       }
     }
   },
-
   {
     "name": "Does not report ignored conditions when the statement does not apply",
     "request": {

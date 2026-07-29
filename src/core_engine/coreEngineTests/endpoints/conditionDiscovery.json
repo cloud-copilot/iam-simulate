@@ -45,8 +45,28 @@
       "response": "Allowed",
       "ignoredConditions": {
         "endpointPolicy": {
-          "allow": [{ "op": "StringEquals", "key": "aws:SourceVpce", "values": ["vpce-12345678"] }]
+          "allow": [
+            {
+              "op": "StringEquals",
+              "key": "aws:SourceVpce",
+              "values": ["vpce-12345678"]
+            }
+          ]
         }
+      },
+      "conditions": {
+        "conditionType": "condition",
+        "op": "StringEquals",
+        "key": "aws:SourceVpce",
+        "values": ["vpce-12345678"],
+        "sources": [
+          {
+            "effect": "Allow",
+            "policyIdentifier": "0",
+            "policyType": "endpointPolicy",
+            "statementIndex": 1
+          }
+        ]
       }
     }
   }

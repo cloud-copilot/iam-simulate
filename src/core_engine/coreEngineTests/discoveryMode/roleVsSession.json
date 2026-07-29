@@ -29,7 +29,19 @@
     },
     "expected": {
       "response": "Allowed",
-      "ignoredRoleSessionName": true
+      "ignoredRoleSessionName": true,
+      "conditions": {
+        "conditionType": "sessionName",
+        "sessionName": ["session-name"],
+        "sources": [
+          {
+            "effect": "Allow",
+            "policyIdentifier": "ResourcePolicy",
+            "policyType": "resource",
+            "statementIndex": 1
+          }
+        ]
+      }
     }
   },
   {
@@ -62,7 +74,19 @@
     },
     "expected": {
       "response": "Allowed",
-      "ignoredRoleSessionName": true
+      "ignoredRoleSessionName": true,
+      "conditions": {
+        "conditionType": "sessionName",
+        "sessionName": ["session-name"],
+        "sources": [
+          {
+            "effect": "Allow",
+            "policyIdentifier": "ResourcePolicy",
+            "policyType": "resource",
+            "statementIndex": 1
+          }
+        ]
+      }
     }
   },
   {
@@ -95,7 +119,19 @@
     },
     "expected": {
       "response": "Allowed",
-      "ignoredRoleSessionName": true
+      "ignoredRoleSessionName": true,
+      "conditions": {
+        "conditionType": "sessionName",
+        "sessionName": ["session-name"],
+        "sources": [
+          {
+            "effect": "Allow",
+            "policyIdentifier": "ResourcePolicy",
+            "policyType": "resource",
+            "statementIndex": 1
+          }
+        ]
+      }
     }
   },
   {
@@ -128,7 +164,19 @@
     },
     "expected": {
       "response": "Allowed",
-      "ignoredRoleSessionName": true
+      "ignoredRoleSessionName": true,
+      "conditions": {
+        "conditionType": "sessionName",
+        "sessionName": ["session-name"],
+        "sources": [
+          {
+            "effect": "Allow",
+            "policyIdentifier": "ResourcePolicy",
+            "policyType": "resource",
+            "statementIndex": 1
+          }
+        ]
+      }
     }
   },
   {
@@ -173,7 +221,19 @@
     },
     "expected": {
       "response": "Allowed",
-      "ignoredRoleSessionName": true
+      "ignoredRoleSessionName": true,
+      "conditions": {
+        "conditionType": "sessionName",
+        "sessionName": ["session-name"],
+        "sources": [
+          {
+            "effect": "Allow",
+            "policyIdentifier": "ResourcePolicy",
+            "policyType": "resource",
+            "statementIndex": 1
+          }
+        ]
+      }
     }
   },
   {
@@ -218,7 +278,19 @@
     },
     "expected": {
       "response": "Allowed",
-      "ignoredRoleSessionName": true
+      "ignoredRoleSessionName": true,
+      "conditions": {
+        "conditionType": "sessionName",
+        "sessionName": ["session-name"],
+        "sources": [
+          {
+            "effect": "Allow",
+            "policyIdentifier": "ResourcePolicy",
+            "policyType": "resource",
+            "statementIndex": 1
+          }
+        ]
+      }
     }
   },
   {

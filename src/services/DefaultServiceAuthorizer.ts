@@ -1,4 +1,15 @@
 import {
+  allDenyEscapeExpressions,
+  allowedConditionOutput,
+  and,
+  endpointPolicyExpression,
+  identityPolicyExpression,
+  or,
+  permissionBoundaryExpression,
+  resourceAllowStatementsExpression,
+  sessionPolicyExpression
+} from '../analysis/allowedConditions.js'
+import {
   isAssumedRoleArn,
   isFederatedUserArn,
   isIamRoleArn,
@@ -6,6 +17,7 @@ import {
   isServicePrincipal
 } from '@cloud-copilot/iam-utils'
 import {
+  type AllowedConditionExpression,
   type BlockedReason,
   type EvaluationResult,
   type RequestAnalysis,
@@ -13,6 +25,7 @@ import {
 } from '../evaluate.js'
 import { assertAuthenticatedRequestPrincipal } from '../request/requestPrincipal.js'
 import { type RequestResource } from '../request/requestResource.js'
+import { type StatementAnalysis } from '../StatementAnalysis.js'
 import { type ServiceAuthorizationRequest, type ServiceAuthorizer } from './ServiceAuthorizer.js'
 
 /**
@@ -84,6 +97,21 @@ class BlockedByLog {
   }
 }
 
+interface InitialEvaluation {
+  result: EvaluationResult
+  conditions: AllowedConditionExpression
+}
+
+interface PermissionBoundaryMutation {
+  result?: EvaluationResult
+  conditions: AllowedConditionExpression
+}
+
+export type PrincipalAccountTrust =
+  | { trustType: 'Implicit' }
+  | { trustType: 'Explicit'; statements: StatementAnalysis[] }
+  | { trustType: 'None' }
+
 /**
  * The default authorizer for services.
  */
@@ -99,7 +127,6 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     const rcpResult = request.rcpAnalysis.result
     const identityStatementResult = request.identityAnalysis.result
     const resourcePolicyResult = request.resourceAnalysis?.result
-    const permissionBoundaryResult = request.permissionBoundaryAnalysis?.result
     const endpointPolicyResult = request.endpointAnalysis?.result
 
     const requestPrincipal = request.request.principal
@@ -136,8 +163,9 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     }
     assertAuthenticatedRequestPrincipal(requestPrincipal)
 
-    const coreResult = this.initialEvaluationResult(request)
-    const blockedByLog = new BlockedByLog(coreResult)
+    const initialEvaluation = this.initialEvaluationResult(request)
+    let coreConditions = initialEvaluation.conditions
+    const blockedByLog = new BlockedByLog(initialEvaluation.result)
 
     blockedByLog.add('scp', scpResult)
     blockedByLog.add('rcp', rcpResult)
@@ -160,66 +188,14 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
       blockedByLog.add('identity', 'ExplicitlyDenied')
     }
 
-    if (permissionBoundaryResult === 'ExplicitlyDenied') {
-      blockedByLog.add('pb', 'ExplicitlyDenied')
-    }
-
-    //Same Account
-    if (sameAccount) {
-      if (permissionBoundaryResult === 'ImplicitlyDenied') {
-        /**
-         * If the permission boundary is an implicit deny
-         *
-         * If the request is from an assumed role ARN AND the resource policy allows the assumed role (session) ARN = ALLOW
-         * If the request is from an IAM user ARN AND the resource policy allows the IAM user ARN = ALLOW
-         * If the request is from a federated user ARN AND the resource policy allows the federated user ARN = ALLOW
-         * The request is allowed: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html
-         */
-        if (resourcePolicyResult === 'Allowed') {
-          const principal = requestPrincipal.value()
-          if (
-            isAssumedRoleArn(principal) ||
-            isIamUserArn(principal) ||
-            isFederatedUserArn(principal)
-          ) {
-            // If the resource policy allows the principal directly (including via a wildcard Principal),
-            // the permission boundary implicit deny does not apply for same-account requests.
-            if (
-              !request.resourceAnalysis.allowStatements.some(
-                (statement) => statement.principalMatch === 'Match'
-              )
-            ) {
-              blockedByLog.add('pb', 'ImplicitlyDenied')
-            }
-          } else if (isIamRoleArn(principal)) {
-            // For IAM role ARNs, the permission boundary implicit deny is bypassed if
-            // * The resource policy grants access via a wildcard principal ("*"), or
-            // * In discovery mode when a session ARN in the resource policy was matched by ignoring the session name.
-            if (
-              !request.resourceAnalysis.allowStatements.some(
-                (statement) =>
-                  statement.principalMatch === 'Match' &&
-                  (statement.ignoredRoleSessionName ||
-                    (statement.statement.isPrincipalStatement() &&
-                      statement.statement.principals().some((p) => p.isWildcardPrincipal())))
-              )
-            ) {
-              blockedByLog.add('pb', 'ImplicitlyDenied')
-            }
-          } else {
-            // Service principals or other principal types: permission boundary implicit deny applies.
-            blockedByLog.add('pb', 'ImplicitlyDenied')
-          }
-        } else {
-          // Resource policy doesn't allow the principal, so the permission boundary implicit deny applies.
-          blockedByLog.add('pb', 'ImplicitlyDenied')
-        }
-      }
-    } else {
-      //Cross Account
-      if (permissionBoundaryResult === 'ImplicitlyDenied') {
-        blockedByLog.add('pb', 'ImplicitlyDenied')
-      }
+    const permissionBoundaryMutation = this.applyPermissionBoundaryToCoreConditions(
+      request,
+      sameAccount,
+      coreConditions
+    )
+    coreConditions = permissionBoundaryMutation.conditions
+    if (permissionBoundaryMutation.result) {
+      blockedByLog.add('pb', permissionBoundaryMutation.result)
     }
 
     const blockedReasons = blockedByLog.getBlockedBy()
@@ -227,9 +203,11 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
       baseResult.blockedBy = blockedReasons
     }
 
+    const finalResult = blockedByLog.getResult()
     return {
-      result: blockedByLog.getResult(),
-      ...baseResult
+      result: finalResult,
+      ...baseResult,
+      conditions: this.conditionsForAllowedResult(request, coreConditions, finalResult)
     }
 
     /**
@@ -262,8 +240,8 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     >
   ): RequestAnalysis {
     const endpointPolicyResult = request.endpointAnalysis?.result
-    const coreResult = this.anonymousInitialEvaluationResult(request)
-    const blockedByLog = new BlockedByLog(coreResult)
+    const initialEvaluation = this.anonymousInitialEvaluationResult(request)
+    const blockedByLog = new BlockedByLog(initialEvaluation.result)
 
     if (request.rcpAnalysis.ouAnalysis.length > 0) {
       blockedByLog.add('rcp', request.rcpAnalysis.result)
@@ -281,10 +259,16 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
       baseResult.blockedBy = blockedReasons
     }
 
+    const finalResult = blockedByLog.getResult()
     return {
-      result: blockedByLog.getResult(),
+      result: finalResult,
       ...baseResult,
-      sameAccount: false
+      sameAccount: false,
+      conditions: this.conditionsForAllowedResult(
+        request,
+        initialEvaluation.conditions,
+        finalResult
+      )
     }
   }
 
@@ -294,18 +278,29 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
    * @param request the service authorization request containing all analyses.
    * @returns the core anonymous result before applicable resource-side guardrails are applied.
    */
-  private anonymousInitialEvaluationResult(request: ServiceAuthorizationRequest): EvaluationResult {
+  private anonymousInitialEvaluationResult(
+    request: ServiceAuthorizationRequest
+  ): InitialEvaluation {
     const resourcePolicyResult = request.resourceAnalysis?.result
     if (resourcePolicyResult === 'Allowed') {
-      return 'Allowed'
+      return {
+        result: 'Allowed',
+        conditions: resourceAllowStatementsExpression(request.resourceAnalysis.allowStatements)
+      }
     }
     if (
       resourcePolicyResult === 'ExplicitlyDenied' ||
       resourcePolicyResult === 'DeniedForAccount'
     ) {
-      return 'ExplicitlyDenied'
+      return {
+        result: 'ExplicitlyDenied',
+        conditions: { conditionType: 'never', reason: 'noApplicableAllow' }
+      }
     }
-    return 'ImplicitlyDenied'
+    return {
+      result: 'ImplicitlyDenied',
+      conditions: { conditionType: 'never', reason: 'noApplicableAllow' }
+    }
   }
 
   /**
@@ -319,14 +314,467 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     sameAccount: boolean,
     resourceAnalysis: ResourceAnalysis,
     resource: RequestResource
-  ): boolean {
+  ): PrincipalAccountTrust {
     if (sameAccount) {
-      return true
+      return { trustType: 'Implicit' }
     }
 
-    return resourceAnalysis.allowStatements.some(
+    const accountLevelStatements = this.accountLevelResourceAllowStatements(resourceAnalysis)
+    if (accountLevelStatements.length > 0) {
+      return { trustType: 'Explicit', statements: accountLevelStatements }
+    }
+
+    return { trustType: 'None' }
+  }
+
+  /**
+   * Combine core authorization conditions with guardrail conditions for a final allowed result.
+   *
+   * @param request the service authorization request containing all analyses
+   * @param coreConditions the conditions for the core service authorization decision after permission-boundary mutation
+   * @param finalResult the final authorization result after guardrails
+   * @returns the public conditions expression, or undefined when none should be emitted
+   */
+  protected conditionsForAllowedResult(
+    request: ServiceAuthorizationRequest,
+    coreConditions: AllowedConditionExpression,
+    finalResult: EvaluationResult
+  ): AllowedConditionExpression | undefined {
+    const expressions = [
+      sessionPolicyExpression(request.sessionAnalysis, request.sessionAnalysis !== undefined),
+      coreConditions,
+      request.scpAnalysis.conditions,
+      request.rcpAnalysis.conditions
+    ]
+
+    if (request.endpointAnalysis?.result === 'Allowed') {
+      expressions.push(endpointPolicyExpression(request.endpointAnalysis))
+    }
+
+    expressions.push(
+      ...allDenyEscapeExpressions({
+        sessionAnalysis: request.sessionAnalysis,
+        scpAnalysis: request.scpAnalysis,
+        rcpAnalysis: request.rcpAnalysis,
+        identityAnalysis: request.identityAnalysis,
+        resourceAnalysis: request.resourceAnalysis,
+        permissionBoundaryAnalysis: request.permissionBoundaryAnalysis,
+        endpointAnalysis: request.endpointAnalysis
+      })
+    )
+
+    return allowedConditionOutput(
+      and(expressions),
+      request.simulationParameters.simulationMode,
+      finalResult
+    )
+  }
+
+  /**
+   * Apply permission-boundary effects to the core authorization conditions.
+   *
+   * Permission boundaries are not part of the core service authorization result. This function lives
+   * with the permission-boundary authorization checks and recalculates the affected condition paths
+   * only when permission-boundary behavior changes which core path can be used.
+   *
+   * @param request the service authorization request containing all analyses
+   * @param sameAccount whether the principal and resource are in the same account
+   * @param coreConditions the unmodified core authorization conditions
+   * @returns the permission-boundary block result, if any, and updated core conditions
+   */
+  private applyPermissionBoundaryToCoreConditions(
+    request: ServiceAuthorizationRequest,
+    sameAccount: boolean,
+    coreConditions: AllowedConditionExpression
+  ): PermissionBoundaryMutation {
+    const permissionBoundaryResult = request.permissionBoundaryAnalysis?.result
+    if (!permissionBoundaryResult) {
+      return { conditions: coreConditions }
+    }
+
+    if (permissionBoundaryResult === 'ExplicitlyDenied') {
+      return { result: 'ExplicitlyDenied', conditions: coreConditions }
+    }
+
+    if (permissionBoundaryResult === 'Allowed') {
+      return {
+        conditions: this.coreConditionsWithAllowedPermissionBoundary(request, sameAccount)
+      }
+    }
+
+    if (permissionBoundaryResult === 'ImplicitlyDenied') {
+      if (!sameAccount) {
+        return { result: 'ImplicitlyDenied', conditions: coreConditions }
+      }
+
+      const bypassStatements = this.permissionBoundaryBypassResourceAllowStatements(request)
+      if (bypassStatements.length === 0) {
+        return { result: 'ImplicitlyDenied', conditions: coreConditions }
+      }
+
+      return { conditions: resourceAllowStatementsExpression(bypassStatements) }
+    }
+
+    return { conditions: coreConditions }
+  }
+
+  /**
+   * Recalculate core conditions when an allowed permission boundary constrains identity-policy paths.
+   *
+   * @param request the service authorization request containing all analyses
+   * @param sameAccount whether the principal and resource are in the same account
+   * @returns core conditions with permission-boundary allow conditions applied to identity paths
+   */
+  private coreConditionsWithAllowedPermissionBoundary(
+    request: ServiceAuthorizationRequest,
+    sameAccount: boolean
+  ): AllowedConditionExpression {
+    const principal = request.request.principal
+    if (principal.isAnonymous()) {
+      return resourceAllowStatementsExpression(request.resourceAnalysis.allowStatements)
+    }
+    assertAuthenticatedRequestPrincipal(principal)
+
+    if (isServicePrincipal(principal.value())) {
+      return resourceAllowStatementsExpression(request.resourceAnalysis.allowStatements)
+    }
+
+    if (sameAccount) {
+      const trustedAccount = this.serviceTrustsPrincipalAccount(
+        sameAccount,
+        request.resourceAnalysis,
+        request.request.resource
+      )
+      return this.sameAccountConditionsWithAllowedPermissionBoundary(request, trustedAccount)
+    }
+
+    if (
+      (request.resourceAnalysis.result === 'Allowed' ||
+        request.resourceAnalysis.result === 'AllowedForAccount') &&
+      request.identityAnalysis.result === 'Allowed'
+    ) {
+      return and([
+        this.crossAccountResourcePolicyConditions(request),
+        identityPolicyExpression(request.identityAnalysis),
+        permissionBoundaryExpression(request.permissionBoundaryAnalysis)
+      ])
+    }
+
+    return { conditionType: 'never', reason: 'noApplicableAllow' }
+  }
+
+  /**
+   * Recalculate same-account conditions when an allowed permission boundary constrains identity paths.
+   *
+   * @param request the service authorization request containing all analyses
+   * @param trustedAccount how the service trusts the principal account for this request
+   * @returns same-account core conditions with permission-boundary allow conditions applied to identity paths
+   */
+  private sameAccountConditionsWithAllowedPermissionBoundary(
+    request: ServiceAuthorizationRequest,
+    trustedAccount: PrincipalAccountTrust
+  ): AllowedConditionExpression {
+    switch (trustedAccount.trustType) {
+      case 'Implicit':
+        return this.sameAccountImplicitTrustConditionsWithAllowedPermissionBoundary(request)
+      case 'Explicit':
+        return this.sameAccountExplicitTrustConditionsWithAllowedPermissionBoundary(
+          request,
+          trustedAccount
+        )
+      case 'None':
+        return request.resourceAnalysis.result === 'Allowed'
+          ? this.sameAccountResourcePolicyConditions(request)
+          : { conditionType: 'never', reason: 'noApplicableAllow' }
+      default:
+        throw new Error(
+          `Unrecognized principal account trust type: ${String((trustedAccount as { trustType: unknown }).trustType)}`
+        )
+    }
+  }
+
+  /**
+   * Recalculate same-account implicit trust conditions when permission-boundary allow constrains identity paths.
+   *
+   * @param request the service authorization request containing all analyses
+   * @returns same-account implicit trust conditions with permission-boundary allow conditions applied to identity paths
+   */
+  private sameAccountImplicitTrustConditionsWithAllowedPermissionBoundary(
+    request: ServiceAuthorizationRequest
+  ): AllowedConditionExpression {
+    const resourceConditions =
+      request.resourceAnalysis.result === 'Allowed'
+        ? this.sameAccountResourcePolicyConditions(request)
+        : { conditionType: 'never' as const, reason: 'noApplicableAllow' as const }
+    const identityConditions =
+      request.identityAnalysis.result === 'Allowed'
+        ? and([
+            identityPolicyExpression(request.identityAnalysis),
+            permissionBoundaryExpression(request.permissionBoundaryAnalysis)
+          ])
+        : { conditionType: 'never' as const, reason: 'noApplicableAllow' as const }
+
+    return or([resourceConditions, identityConditions])
+  }
+
+  /**
+   * Recalculate same-account explicit trust conditions when permission-boundary allow constrains identity paths.
+   *
+   * @param request the service authorization request containing all analyses
+   * @param trustedAccount explicit account-trust statements selected by the service authorizer
+   * @returns same-account explicit trust conditions with permission-boundary allow conditions applied to identity paths
+   */
+  private sameAccountExplicitTrustConditionsWithAllowedPermissionBoundary(
+    request: ServiceAuthorizationRequest,
+    trustedAccount: Extract<PrincipalAccountTrust, { trustType: 'Explicit' }>
+  ): AllowedConditionExpression {
+    const resourceConditions =
+      request.resourceAnalysis.result === 'Allowed'
+        ? this.sameAccountResourcePolicyConditions(request)
+        : { conditionType: 'never' as const, reason: 'noApplicableAllow' as const }
+    const identityConditions =
+      request.identityAnalysis.result === 'Allowed'
+        ? and([
+            resourceAllowStatementsExpression(trustedAccount.statements),
+            identityPolicyExpression(request.identityAnalysis),
+            permissionBoundaryExpression(request.permissionBoundaryAnalysis)
+          ])
+        : { conditionType: 'never' as const, reason: 'noApplicableAllow' as const }
+
+    return or([resourceConditions, identityConditions])
+  }
+
+  /**
+   * Get resource-policy allow statements that matched the principal directly.
+   *
+   * @param resourceAnalysis resource-policy analysis containing already-matched allow statements
+   * @returns direct principal-match resource allow statements
+   */
+  private directResourceAllowStatements(resourceAnalysis: ResourceAnalysis): StatementAnalysis[] {
+    return resourceAnalysis.allowStatements.filter((statement) =>
+      ['Match', 'SessionRoleMatch', 'SessionUserMatch'].includes(statement.principalMatch)
+    )
+  }
+
+  /**
+   * Get resource-policy allow statements that matched at the principal-account level.
+   *
+   * @param resourceAnalysis resource-policy analysis containing already-matched allow statements
+   * @returns account-level resource allow statements
+   */
+  protected accountLevelResourceAllowStatements(
+    resourceAnalysis: ResourceAnalysis
+  ): StatementAnalysis[] {
+    return resourceAnalysis.allowStatements.filter(
       (statement) => statement.principalMatch === 'AccountLevelMatch'
     )
+  }
+
+  /**
+   * Get same-account resource-policy conditions for paths that can satisfy core authorization.
+   *
+   * @param request the service authorization request containing all analyses
+   * @returns resource-policy conditions for the allowed same-account branch
+   */
+  private sameAccountResourcePolicyConditions(
+    request: ServiceAuthorizationRequest
+  ): AllowedConditionExpression {
+    return resourceAllowStatementsExpression(
+      this.directResourceAllowStatements(request.resourceAnalysis)
+    )
+  }
+
+  /**
+   * Evaluate same-account core authorization and conditions based on principal-account trust.
+   *
+   * @param request the service authorization request containing all analyses
+   * @param trustedAccount how the service trusts the principal account for this request
+   * @returns the same-account core authorization result and conditions
+   */
+  private sameAccountInitialEvaluation(
+    request: ServiceAuthorizationRequest,
+    trustedAccount: PrincipalAccountTrust
+  ): InitialEvaluation {
+    switch (trustedAccount.trustType) {
+      case 'Implicit':
+        return this.sameAccountImplicitTrustEvaluation(request)
+      case 'Explicit':
+        return this.sameAccountExplicitTrustEvaluation(request, trustedAccount)
+      case 'None':
+        return this.sameAccountNoTrustEvaluation(request)
+      default:
+        throw new Error(
+          `Unrecognized principal account trust type: ${String((trustedAccount as { trustType: unknown }).trustType)}`
+        )
+    }
+  }
+
+  /**
+   * Evaluate same-account authorization when the service implicitly trusts identity policies.
+   *
+   * @param request the service authorization request containing all analyses
+   * @returns the same-account authorization result and conditions
+   */
+  private sameAccountImplicitTrustEvaluation(
+    request: ServiceAuthorizationRequest
+  ): InitialEvaluation {
+    const resourcePolicyResult = request.resourceAnalysis.result
+    const identityStatementResult = request.identityAnalysis.result
+
+    if (resourcePolicyResult === 'Allowed' && identityStatementResult === 'Allowed') {
+      return {
+        result: 'Allowed',
+        conditions: or([
+          this.sameAccountResourcePolicyConditions(request),
+          identityPolicyExpression(request.identityAnalysis)
+        ])
+      }
+    }
+
+    if (resourcePolicyResult === 'Allowed') {
+      return {
+        result: 'Allowed',
+        conditions: this.sameAccountResourcePolicyConditions(request)
+      }
+    }
+
+    if (identityStatementResult === 'Allowed') {
+      return {
+        result: 'Allowed',
+        conditions: identityPolicyExpression(request.identityAnalysis)
+      }
+    }
+
+    return {
+      result: 'ImplicitlyDenied',
+      conditions: { conditionType: 'never', reason: 'noApplicableAllow' }
+    }
+  }
+
+  /**
+   * Evaluate same-account authorization when the service requires explicit resource-policy account trust.
+   *
+   * @param request the service authorization request containing all analyses
+   * @param trustedAccount explicit account-trust statements selected by the service authorizer
+   * @returns the same-account authorization result and conditions
+   */
+  private sameAccountExplicitTrustEvaluation(
+    request: ServiceAuthorizationRequest,
+    trustedAccount: Extract<PrincipalAccountTrust, { trustType: 'Explicit' }>
+  ): InitialEvaluation {
+    const resourcePolicyResult = request.resourceAnalysis.result
+    const identityStatementResult = request.identityAnalysis.result
+    const resourceConditions =
+      resourcePolicyResult === 'Allowed'
+        ? this.sameAccountResourcePolicyConditions(request)
+        : { conditionType: 'never' as const, reason: 'noApplicableAllow' as const }
+
+    if (identityStatementResult === 'Allowed') {
+      const identityConditions = and([
+        resourceAllowStatementsExpression(trustedAccount.statements),
+        identityPolicyExpression(request.identityAnalysis)
+      ])
+      return {
+        result: 'Allowed',
+        conditions: or([resourceConditions, identityConditions])
+      }
+    }
+
+    if (resourcePolicyResult === 'Allowed') {
+      return {
+        result: 'Allowed',
+        conditions: resourceConditions
+      }
+    }
+
+    return {
+      result: 'ImplicitlyDenied',
+      conditions: { conditionType: 'never', reason: 'noApplicableAllow' }
+    }
+  }
+
+  /**
+   * Evaluate same-account authorization when the service does not trust identity policies.
+   *
+   * @param request the service authorization request containing all analyses
+   * @returns the same-account authorization result and conditions
+   */
+  private sameAccountNoTrustEvaluation(request: ServiceAuthorizationRequest): InitialEvaluation {
+    if (request.resourceAnalysis.result === 'Allowed') {
+      return {
+        result: 'Allowed',
+        conditions: this.sameAccountResourcePolicyConditions(request)
+      }
+    }
+
+    return {
+      result: 'ImplicitlyDenied',
+      conditions: { conditionType: 'never', reason: 'noApplicableAllow' }
+    }
+  }
+
+  /**
+   * Get resource-policy conditions for a cross-account request's resource-policy side.
+   *
+   * @param request the service authorization request containing all analyses
+   * @returns resource-policy conditions for the matching cross-account resource-policy statements
+   */
+  private crossAccountResourcePolicyConditions(
+    request: ServiceAuthorizationRequest
+  ): AllowedConditionExpression {
+    if (
+      request.resourceAnalysis.result !== 'Allowed' &&
+      request.resourceAnalysis.result !== 'AllowedForAccount'
+    ) {
+      return { conditionType: 'never', reason: 'noApplicableAllow' }
+    }
+
+    return resourceAllowStatementsExpression([
+      ...this.directResourceAllowStatements(request.resourceAnalysis),
+      ...this.accountLevelResourceAllowStatements(request.resourceAnalysis)
+    ])
+  }
+
+  /**
+   * Get same-account resource-policy allow statements that bypass an implicit permission-boundary deny.
+   *
+   * @param request the service authorization request containing all analyses
+   * @returns resource-policy allow statements that bypass the implicit permission-boundary deny
+   */
+  private permissionBoundaryBypassResourceAllowStatements(
+    request: ServiceAuthorizationRequest
+  ): StatementAnalysis[] {
+    if (request.resourceAnalysis.result !== 'Allowed') {
+      return []
+    }
+
+    const principal = request.request.principal
+    if (!principal.isAuthenticated()) {
+      return []
+    }
+    const principalValue = principal.value()
+
+    if (
+      isAssumedRoleArn(principalValue) ||
+      isIamUserArn(principalValue) ||
+      isFederatedUserArn(principalValue)
+    ) {
+      return request.resourceAnalysis.allowStatements.filter(
+        (statement) => statement.principalMatch === 'Match'
+      )
+    }
+
+    if (isIamRoleArn(principalValue)) {
+      return request.resourceAnalysis.allowStatements.filter(
+        (statement) =>
+          statement.principalMatch === 'Match' &&
+          (statement.ignoredRoleSessionName ||
+            (statement.statement.isPrincipalStatement() &&
+              statement.statement.principals().some((p) => p.isWildcardPrincipal())))
+      )
+    }
+
+    return []
   }
 
   /**
@@ -344,7 +792,7 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
    * @param request the service authorization request containing all analyses
    * @returns 'Allowed' if the core policies allow the request, otherwise may return 'ImplicitlyDenied' or 'ExplicitlyDenied' depending on the analyses
    */
-  private initialEvaluationResult(request: ServiceAuthorizationRequest): EvaluationResult {
+  private initialEvaluationResult(request: ServiceAuthorizationRequest): InitialEvaluation {
     const sessionResult = request.sessionAnalysis?.result
     const identityStatementResult = request.identityAnalysis.result
     const resourcePolicyResult = request.resourceAnalysis?.result
@@ -355,23 +803,31 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
       : undefined
     const resourceAccount = request.request.resource?.accountId()
     const sameAccount = principalAccount !== undefined && principalAccount === resourceAccount
-
     if (requestPrincipal.isAnonymous()) {
       return this.anonymousInitialEvaluationResult(request)
     }
     assertAuthenticatedRequestPrincipal(requestPrincipal)
 
     if (sessionResult && sessionResult !== 'Allowed') {
-      return sessionResult
+      return {
+        result: sessionResult,
+        conditions: sessionPolicyExpression(request.sessionAnalysis, true)
+      }
     }
 
     // Service Principals
     if (isServicePrincipal(requestPrincipal.value())) {
       // Service principals are allowed if the resource policy allows them
       if (resourcePolicyResult === 'Allowed') {
-        return 'Allowed'
+        return {
+          result: 'Allowed',
+          conditions: resourceAllowStatementsExpression(request.resourceAnalysis.allowStatements)
+        }
       }
-      return 'ImplicitlyDenied'
+      return {
+        result: 'ImplicitlyDenied',
+        conditions: { conditionType: 'never', reason: 'noApplicableAllow' }
+      }
     }
 
     //Same Account
@@ -381,22 +837,26 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
         request.resourceAnalysis,
         request.request.resource
       )
-      if (
-        resourcePolicyResult === 'Allowed' ||
-        (trustedAccount && identityStatementResult === 'Allowed')
-      ) {
-        return 'Allowed'
-      }
-      return 'ImplicitlyDenied'
+      return this.sameAccountInitialEvaluation(request, trustedAccount)
     }
 
     //Cross Account
     if (resourcePolicyResult === 'Allowed' || resourcePolicyResult === 'AllowedForAccount') {
       if (identityStatementResult === 'Allowed') {
-        return 'Allowed'
+        const coreConditions = and([
+          this.crossAccountResourcePolicyConditions(request),
+          identityPolicyExpression(request.identityAnalysis)
+        ])
+        return {
+          result: 'Allowed',
+          conditions: coreConditions
+        }
       }
     }
 
-    return 'ImplicitlyDenied'
+    return {
+      result: 'ImplicitlyDenied',
+      conditions: { conditionType: 'never', reason: 'noApplicableAllow' }
+    }
   }
 }

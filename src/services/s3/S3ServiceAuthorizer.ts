@@ -52,7 +52,8 @@ export class S3ServiceAuthorizer extends DefaultServiceAuthorizer {
     return {
       ...baseResult,
       result: 'ExplicitlyDenied',
-      blockedBy: ['s3-bpa']
+      blockedBy: ['s3-bpa'],
+      conditions: undefined
     }
   }
 }

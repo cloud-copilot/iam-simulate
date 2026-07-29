@@ -1,6 +1,7 @@
 import { type Policy, type Statement } from '@cloud-copilot/iam-policy'
 import { requestMatchesStatementActions } from '../action/action.js'
 import { type ConditionMatchResult, requestMatchesConditions } from '../condition/condition.js'
+import { allowStatementExpression, always, and, never, or } from '../analysis/allowedConditions.js'
 import { DiscoveryContextKeyConstraints } from '../context_keys/discoveryContextKeyConstraints.js'
 import {
   type EvaluationResult,
@@ -370,7 +371,8 @@ export function analyzeControlPolicies(
       result: 'ImplicitlyDenied',
       allowStatements: [],
       denyStatements: [],
-      unmatchedStatements: []
+      unmatchedStatements: [],
+      conditions: never('noApplicableAllow')
     }
     for (const policy of controlPolicy.policies) {
       for (const statement of policy.statements()) {
@@ -439,6 +441,18 @@ export function analyzeControlPolicies(
     } else if (ouAnalysis.allowStatements.length > 0) {
       ouAnalysis.result = 'Allowed'
     }
+
+    if (ouAnalysis.result === 'Allowed') {
+      ouAnalysis.conditions = or(
+        ouAnalysis.allowStatements.map((statement) =>
+          allowStatementExpression(
+            statement,
+            policyType as 'scp' | 'rcp',
+            controlPolicy.orgIdentifier
+          )
+        )
+      )
+    }
     analysis.push(ouAnalysis)
   }
 
@@ -453,7 +467,13 @@ export function analyzeControlPolicies(
 
   return {
     result: overallResult,
-    ouAnalysis: analysis
+    ouAnalysis: analysis,
+    conditions:
+      analysis.length === 0
+        ? always()
+        : overallResult === 'Allowed'
+          ? and(analysis.map((ou) => ou.conditions))
+          : never('noApplicableAllow')
   }
 }
 

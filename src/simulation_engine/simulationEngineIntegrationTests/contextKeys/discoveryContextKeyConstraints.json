@@ -11,7 +11,11 @@
                 "Effect": "Allow",
                 "Action": "s3:GetObject",
                 "Resource": "arn:aws:s3:::example-bucket/object.txt",
-                "Condition": { "StringEquals": { "aws:SourceAccount": "111111111111" } }
+                "Condition": {
+                  "StringEquals": {
+                    "aws:SourceAccount": "111111111111"
+                  }
+                }
               }
             ]
           }
@@ -26,19 +30,42 @@
           "accountId": "123456789012"
         },
         "principal": "arn:aws:iam::123456789012:user/Alice",
-        "contextVariables": { "aws:SourceAccount": "000000000000" }
+        "contextVariables": {
+          "aws:SourceAccount": "000000000000"
+        }
       }
     },
     "simulationOptions": {
       "simulationMode": "Discovery",
       "discoveryContextKeyConstraints": [
-        { "keyName": "aws:SourceAccount", "presenceIsKnown": true, "valueIsKnown": false }
+        {
+          "keyName": "aws:SourceAccount",
+          "presenceIsKnown": true,
+          "valueIsKnown": false
+        }
       ]
     },
     "expected": {
       "resultType": "single",
       "overallResult": "Allowed",
-      "results": []
+      "results": [
+        {
+          "conditions": {
+            "conditionType": "condition",
+            "op": "StringEquals",
+            "key": "aws:SourceAccount",
+            "values": ["111111111111"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "source-account-allow",
+                "policyType": "identity",
+                "statementIndex": 1
+              }
+            ]
+          }
+        }
+      ]
     }
   },
   {
@@ -58,7 +85,11 @@
                 "Effect": "Deny",
                 "Action": "s3:GetObject",
                 "Resource": "arn:aws:s3:::example-bucket/*",
-                "Condition": { "StringEquals": { "aws:SourceAccount": "111111111111" } }
+                "Condition": {
+                  "StringEquals": {
+                    "aws:SourceAccount": "111111111111"
+                  }
+                }
               }
             ]
           }
@@ -68,15 +99,24 @@
       "resourceControlPolicies": [],
       "request": {
         "action": "s3:GetObject",
-        "resource": { "resource": "arn:aws:s3:::example-bucket/*", "accountId": "123456789012" },
+        "resource": {
+          "resource": "arn:aws:s3:::example-bucket/*",
+          "accountId": "123456789012"
+        },
         "principal": "arn:aws:iam::123456789012:user/Alice",
-        "contextVariables": { "aws:SourceAccount": "000000000000" }
+        "contextVariables": {
+          "aws:SourceAccount": "000000000000"
+        }
       }
     },
     "simulationOptions": {
       "simulationMode": "Discovery",
       "discoveryContextKeyConstraints": [
-        { "keyName": "aws:SourceAccount", "presenceIsKnown": true, "valueIsKnown": false }
+        {
+          "keyName": "aws:SourceAccount",
+          "presenceIsKnown": true,
+          "valueIsKnown": false
+        }
       ]
     },
     "expected": {
@@ -86,7 +126,118 @@
         {
           "resourceType": "object",
           "resourcePattern": "arn:aws:s3:::example-bucket/*",
-          "result": "Allowed"
+          "result": "Allowed",
+          "conditions": {
+            "conditionType": "condition",
+            "op": "StringNotEquals",
+            "key": "aws:SourceAccount",
+            "values": ["111111111111"],
+            "sources": [
+              {
+                "effect": "Deny",
+                "policyIdentifier": "source-account-deny",
+                "policyType": "identity",
+                "statementIndex": 2
+              }
+            ],
+            "inverted": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "single resource inverts ForAllValues deny condition with known presence and unknown value",
+    "simulation": {
+      "identityPolicies": [
+        {
+          "name": "source-orgpaths-deny",
+          "policy": {
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::example-bucket/object.txt"
+              },
+              {
+                "Effect": "Deny",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::example-bucket/object.txt",
+                "Condition": {
+                  "ForAllValues:StringEquals": {
+                    "aws:SourceOrgPaths": ["o-abc/r-root/ou-team/*"]
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "serviceControlPolicies": [],
+      "resourceControlPolicies": [],
+      "request": {
+        "action": "s3:GetObject",
+        "resource": {
+          "resource": "arn:aws:s3:::example-bucket/object.txt",
+          "accountId": "123456789012"
+        },
+        "principal": "arn:aws:iam::123456789012:user/Alice",
+        "contextVariables": {
+          "aws:SourceOrgPaths": ["o-abc/r-root/ou-team/app"]
+        }
+      }
+    },
+    "simulationOptions": {
+      "simulationMode": "Discovery",
+      "discoveryContextKeyConstraints": [
+        {
+          "keyName": "aws:SourceOrgPaths",
+          "presenceIsKnown": true,
+          "valueIsKnown": false
+        }
+      ]
+    },
+    "expected": {
+      "resultType": "single",
+      "overallResult": "Allowed",
+      "results": [
+        {
+          "conditions": {
+            "conditionType": "group",
+            "operator": "and",
+            "conditions": [
+              {
+                "conditionType": "condition",
+                "op": "Null",
+                "key": "aws:SourceOrgPaths",
+                "values": ["false"],
+                "sources": [
+                  {
+                    "effect": "Deny",
+                    "policyIdentifier": "source-orgpaths-deny",
+                    "policyType": "identity",
+                    "statementIndex": 2
+                  }
+                ],
+                "inverted": true
+              },
+              {
+                "conditionType": "condition",
+                "op": "ForAnyValue:StringNotEquals",
+                "key": "aws:SourceOrgPaths",
+                "values": ["o-abc/r-root/ou-team/*"],
+                "sources": [
+                  {
+                    "effect": "Deny",
+                    "policyIdentifier": "source-orgpaths-deny",
+                    "policyType": "identity",
+                    "statementIndex": 2
+                  }
+                ],
+                "inverted": true
+              }
+            ]
+          }
         }
       ]
     }
