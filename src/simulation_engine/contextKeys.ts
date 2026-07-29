@@ -43,7 +43,7 @@ export async function allowedContextKeysForRequest(
   }
 
   const resourceTypeConditions = [
-    ...resourceType.conditionKeys,
+    ...(resourceType.conditionKeys ?? []),
     ...(actionDetails.resourceTypes.find((rt) => rt.name === resourceType!.key)?.conditionKeys ??
       [])
   ]
