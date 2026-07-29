@@ -1,7 +1,8 @@
 import {
   getAllGlobalConditionKeys,
   iamActionDetails,
-  iamResourceTypeDetails
+  iamResourceTypeDetails,
+  type ResourceType
 } from '@cloud-copilot/iam-data'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { allowedContextKeysForRequest } from './contextKeys.js'
@@ -193,6 +194,90 @@ describe('allowedContextKeysForRequest', () => {
         ...getAllGlobalConditionKeys().map((k) => k.toLowerCase())
       ])
     )
+  })
+
+  it('should treat missing resource type condition keys as empty', async () => {
+    //Given IAM data returns a resource type definition without conditionKeys
+    const service = 'iam'
+    const action = 'TagGroup'
+    vi.mocked(iamActionDetails).mockResolvedValue({
+      conditionKeys: ['iam:PermissionsBoundary'],
+      isWildcardOnly: false,
+      accessLevel: 'Tagging',
+      dependentActions: [],
+      resourceTypes: [
+        {
+          name: 'group',
+          dependentActions: [],
+          required: true,
+          conditionKeys: ['iam:ResourceTag/${TagKey}']
+        }
+      ],
+      description: 'Adds tags to an IAM group',
+      name: 'TagGroup'
+    })
+    vi.mocked(iamResourceTypeDetails).mockResolvedValue({
+      key: 'group',
+      arn: 'arn:${Partition}:iam::${Account}:group/${GroupName}'
+    } as ResourceType)
+
+    //When calling allowedContextKeysForRequest
+    const result = await allowedContextKeysForRequest(
+      service,
+      action,
+      'arn:aws:iam::111111111111:group/example',
+      false,
+      undefined
+    )
+
+    //Then missing resource type condition keys do not prevent action and per-action resource keys from being returned
+    expect(result).toEqual([
+      'iam:resourcetag/${tagkey}',
+      'iam:permissionsboundary',
+      ...getAllGlobalConditionKeys().map((k) => k.toLowerCase())
+    ])
+  })
+
+  it('should treat missing suggested resource type condition keys as empty', async () => {
+    //Given a suggested resource type definition without conditionKeys
+    const service = 'iam'
+    const action = 'TagGroup'
+    vi.mocked(iamActionDetails).mockResolvedValue({
+      conditionKeys: ['iam:PermissionsBoundary'],
+      isWildcardOnly: false,
+      accessLevel: 'Tagging',
+      dependentActions: [],
+      resourceTypes: [
+        {
+          name: 'group',
+          dependentActions: [],
+          required: true,
+          conditionKeys: ['iam:ResourceTag/${TagKey}']
+        }
+      ],
+      description: 'Adds tags to an IAM group',
+      name: 'TagGroup'
+    })
+    const suggestedResourceType = {
+      key: 'group',
+      arn: 'arn:${Partition}:iam::${Account}:group/${GroupName}'
+    } as ResourceType
+
+    //When calling allowedContextKeysForRequest with the suggested resource type
+    const result = await allowedContextKeysForRequest(
+      service,
+      action,
+      'arn:aws:iam::111111111111:group/example',
+      false,
+      suggestedResourceType
+    )
+
+    //Then action and per-action resource keys are returned without requiring resource type condition keys
+    expect(result).toEqual([
+      'iam:resourcetag/${tagkey}',
+      'iam:permissionsboundary',
+      ...getAllGlobalConditionKeys().map((k) => k.toLowerCase())
+    ])
   })
 
   it.todo('should search for the specific resource type for an action')
