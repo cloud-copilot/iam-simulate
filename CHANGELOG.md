@@ -1,3 +1,10 @@
+## [0.1.163](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.162...v0.1.163) (2026-07-29)
+
+
+### Features
+
+* add discovery allowed condition expressions ([ce3003b](https://github.com/cloud-copilot/iam-simulate/commit/ce3003be75d75917b35ccdb7397444d558574798))
+
 ## [0.1.162](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.161...v0.1.162) (2026-07-29)
 
 
