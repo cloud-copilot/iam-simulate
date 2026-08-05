@@ -34,5 +34,50 @@ export async function getResourceTypesForAction(
     }
   }
 
-  return matchingResourceTypes
+  // A wildcard resource can genuinely match multiple resource types, such as a
+  // DynamoDB `table/*` resource matching tables and streams alike. Preserve all
+  // matches so the simulation engine can evaluate each candidate type.
+  if (resource.includes('*')) {
+    return matchingResourceTypes
+  }
+
+  return dropSupersededResourceTypes(matchingResourceTypes)
+}
+
+/**
+ * Drop resource type matches that are refined by a more specific matched type.
+ *
+ * Resource type matching allows a trailing variable segment to span delimiters
+ * so S3 object keys can contain `/`. That also means a concrete sub-resource ARN
+ * can match its parent type, such as a DynamoDB stream matching both `stream` and
+ * `table`. When both parent and child patterns match, only the child pattern
+ * describes the concrete resource.
+ *
+ * @param matches the resource types whose ARN patterns matched the resource
+ * @returns the matching resource types that are not superseded by a child pattern
+ */
+function dropSupersededResourceTypes(matches: ResourceType[]): ResourceType[] {
+  return matches.filter(
+    (candidate) => !matches.some((other) => patternRefines(other.arn, candidate.arn))
+  )
+}
+
+/**
+ * Determine whether one resource type pattern extends another pattern.
+ *
+ * Sub-resources and qualified ARNs can be delimited with either `/` or `:`. Some
+ * parent patterns already end in one of those delimiters, so the candidate
+ * delimiter is normalized before testing the prefix relationship.
+ *
+ * @param other the potentially more specific ARN pattern
+ * @param candidate the potentially superseded ARN pattern
+ * @returns true when `other` extends `candidate` with additional ARN segments
+ */
+function patternRefines(other: string, candidate: string): boolean {
+  if (other === candidate) {
+    return false
+  }
+
+  const candidateBase = candidate.replace(/[/:]$/, '')
+  return other.startsWith(`${candidateBase}/`) || other.startsWith(`${candidateBase}:`)
 }
