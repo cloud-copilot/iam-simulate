@@ -1,3 +1,10 @@
+## [0.1.165](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.164...v0.1.165) (2026-08-05)
+
+
+### Bug Fixes
+
+* resolve sub-resource arns to specific resource type ([2805eed](https://github.com/cloud-copilot/iam-simulate/commit/2805eedc470a89b70c5ac71cb16c5940a0d512c4))
+
 ## [0.1.164](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.163...v0.1.164) (2026-08-01)
 
 ## [0.1.163](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.162...v0.1.163) (2026-07-29)
