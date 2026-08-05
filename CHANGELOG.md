@@ -1,3 +1,10 @@
+## [0.1.166](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.165...v0.1.166) (2026-08-05)
+
+
+### Bug Fixes
+
+* use iam-utils resource type reducer ([d6ff1a3](https://github.com/cloud-copilot/iam-simulate/commit/d6ff1a35ea07e0f46b0affcdd5c4354385d39c0b))
+
 ## [0.1.165](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.164...v0.1.165) (2026-08-05)
 
 
