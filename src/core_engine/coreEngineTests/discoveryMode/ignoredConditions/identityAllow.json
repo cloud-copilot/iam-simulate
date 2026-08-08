@@ -97,5 +97,371 @@
     "expected": {
       "response": "ImplicitlyDenied"
     }
+  },
+  {
+    "name": "Allowed with condition when identity Allow negative condition key is unconstrained and absent",
+    "request": {
+      "action": "s3:GetBucketAcl",
+      "resource": {
+        "resource": "arn:aws:s3:::example-bucket",
+        "accountId": "111111111111"
+      },
+      "principal": "arn:aws:iam::111111111111:role/test-role",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetBucketAcl",
+            "Resource": "*",
+            "Condition": {
+              "StringNotEquals": {
+                "s3:ResourceAccount": "111111111111"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "allow": [
+            {
+              "key": "s3:ResourceAccount",
+              "op": "StringNotEquals",
+              "values": ["111111111111"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "condition",
+        "op": "StringNotEquals",
+        "key": "s3:ResourceAccount",
+        "values": ["111111111111"],
+        "sources": [
+          {
+            "effect": "Allow",
+            "policyIdentifier": "0",
+            "policyType": "identity",
+            "statementIndex": 1
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "Allowed with deny escape when identity Deny negative condition key is unconstrained and absent",
+    "request": {
+      "action": "s3:GetBucketAcl",
+      "resource": {
+        "resource": "arn:aws:s3:::example-bucket",
+        "accountId": "111111111111"
+      },
+      "principal": "arn:aws:iam::111111111111:role/test-role",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetBucketAcl",
+            "Resource": "*"
+          },
+          {
+            "Effect": "Deny",
+            "Action": "s3:GetBucketAcl",
+            "Resource": "*",
+            "Condition": {
+              "StringNotEquals": {
+                "s3:ResourceAccount": "111111111111"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "deny": [
+            {
+              "key": "s3:ResourceAccount",
+              "op": "StringNotEquals",
+              "values": ["111111111111"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "condition",
+        "op": "StringEquals",
+        "key": "s3:ResourceAccount",
+        "values": ["111111111111"],
+        "sources": [
+          {
+            "effect": "Deny",
+            "policyIdentifier": "0",
+            "policyType": "identity",
+            "statementIndex": 2
+          }
+        ],
+        "inverted": true
+      }
+    }
+  },
+  {
+    "name": "Allowed with condition when identity Allow StringEqualsIfExists key presence is unknown and absent",
+    "request": {
+      "action": "s3:GetBucketAcl",
+      "resource": {
+        "resource": "arn:aws:s3:::example-bucket",
+        "accountId": "111111111111"
+      },
+      "principal": "arn:aws:iam::111111111111:role/test-role",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetBucketAcl",
+            "Resource": "*",
+            "Condition": {
+              "StringEqualsIfExists": {
+                "aws:SourceAccount": "111111111111"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "allow": [
+            {
+              "key": "aws:SourceAccount",
+              "op": "StringEqualsIfExists",
+              "values": ["111111111111"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "condition",
+        "op": "StringEqualsIfExists",
+        "key": "aws:SourceAccount",
+        "values": ["111111111111"],
+        "sources": [
+          {
+            "effect": "Allow",
+            "policyIdentifier": "0",
+            "policyType": "identity",
+            "statementIndex": 1
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "Allowed with condition when identity Allow StringNotEqualsIfExists key presence is unknown and absent",
+    "request": {
+      "action": "s3:GetBucketAcl",
+      "resource": {
+        "resource": "arn:aws:s3:::example-bucket",
+        "accountId": "111111111111"
+      },
+      "principal": "arn:aws:iam::111111111111:role/test-role",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetBucketAcl",
+            "Resource": "*",
+            "Condition": {
+              "StringNotEqualsIfExists": {
+                "aws:SourceAccount": "111111111111"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "allow": [
+            {
+              "key": "aws:SourceAccount",
+              "op": "StringNotEqualsIfExists",
+              "values": ["111111111111"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "condition",
+        "op": "StringNotEqualsIfExists",
+        "key": "aws:SourceAccount",
+        "values": ["111111111111"],
+        "sources": [
+          {
+            "effect": "Allow",
+            "policyIdentifier": "0",
+            "policyType": "identity",
+            "statementIndex": 1
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "Allowed with condition when identity Allow ForAllValues StringNotEquals key is unconstrained and absent",
+    "request": {
+      "action": "s3:GetBucketAcl",
+      "resource": {
+        "resource": "arn:aws:s3:::example-bucket",
+        "accountId": "111111111111"
+      },
+      "principal": "arn:aws:iam::111111111111:role/test-role",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetBucketAcl",
+            "Resource": "*",
+            "Condition": {
+              "ForAllValues:StringNotEquals": {
+                "aws:SourceOrgPaths": "o-example/r-root/ou-target/"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "allow": [
+            {
+              "key": "aws:SourceOrgPaths",
+              "op": "ForAllValues:StringNotEquals",
+              "values": ["o-example/r-root/ou-target/"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "condition",
+        "op": "ForAllValues:StringNotEquals",
+        "key": "aws:SourceOrgPaths",
+        "values": ["o-example/r-root/ou-target/"],
+        "sources": [
+          {
+            "effect": "Allow",
+            "policyIdentifier": "0",
+            "policyType": "identity",
+            "statementIndex": 1
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "Allowed with condition when identity Allow ForAnyValue StringNotEquals key is unconstrained and absent",
+    "request": {
+      "action": "s3:GetBucketAcl",
+      "resource": {
+        "resource": "arn:aws:s3:::example-bucket",
+        "accountId": "111111111111"
+      },
+      "principal": "arn:aws:iam::111111111111:role/test-role",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:GetBucketAcl",
+            "Resource": "*",
+            "Condition": {
+              "ForAnyValue:StringNotEquals": {
+                "aws:SourceOrgPaths": "o-example/r-root/ou-target/"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "allow": [
+            {
+              "key": "aws:SourceOrgPaths",
+              "op": "ForAnyValue:StringNotEquals",
+              "values": ["o-example/r-root/ou-target/"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "condition",
+        "op": "ForAnyValue:StringNotEquals",
+        "key": "aws:SourceOrgPaths",
+        "values": ["o-example/r-root/ou-target/"],
+        "sources": [
+          {
+            "effect": "Allow",
+            "policyIdentifier": "0",
+            "policyType": "identity",
+            "statementIndex": 1
+          }
+        ]
+      }
+    }
   }
 ]

@@ -289,5 +289,67 @@
         ]
       }
     }
+  },
+  {
+    "name": "Allow resource policy with condition when negative condition key is unconstrained and absent",
+    "request": {
+      "action": "s3:GetBucketAcl",
+      "resource": {
+        "resource": "arn:aws:s3:::example-bucket",
+        "accountId": "111111111111"
+      },
+      "principal": "arn:aws:iam::111111111111:role/test-role",
+      "context": {}
+    },
+    "identityPolicies": [],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:GetBucketAcl",
+          "Resource": "arn:aws:s3:::example-bucket",
+          "Principal": {
+            "AWS": "arn:aws:iam::111111111111:role/test-role"
+          },
+          "Condition": {
+            "StringNotEquals": {
+              "s3:ResourceAccount": "111111111111"
+            }
+          }
+        }
+      ]
+    },
+    "simulation": {
+      "mode": "Discovery"
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "resource": {
+          "allow": [
+            {
+              "key": "s3:ResourceAccount",
+              "op": "StringNotEquals",
+              "values": ["111111111111"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "condition",
+        "op": "StringNotEquals",
+        "key": "s3:ResourceAccount",
+        "values": ["111111111111"],
+        "sources": [
+          {
+            "effect": "Allow",
+            "policyIdentifier": "ResourcePolicy",
+            "policyType": "resource",
+            "statementIndex": 1
+          }
+        ]
+      }
+    }
   }
 ]

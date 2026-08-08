@@ -161,18 +161,19 @@ export function requestMatchesConditions(
     if (simulationParameters.simulationMode !== 'Discovery') {
       return false
     }
+
+    const constraint = simulationParameters.discoveryContextKeyConstraints.constraintFor(
+      c.condition.conditionKey()
+    )
     if (c.knowledge.conditionResult !== 'known') {
       if (normalizedStatementType === 'allow') {
-        return !c.explain.matches
+        return !c.explain.matches || allowMatchedOnlyByUnknownMissingKey(c)
       }
       if (normalizedStatementType === 'deny') {
         return true
       }
     }
 
-    const constraint = simulationParameters.discoveryContextKeyConstraints.constraintFor(
-      c.condition.conditionKey()
-    )
     if (constraint.explicitlyConfigured) {
       return false
     }
@@ -336,7 +337,7 @@ function discoveryKnowledgeForConditionKey(
 
   const constraint = simulationParameters.discoveryContextKeyConstraints.constraintFor(key)
   if (!constraint.explicitlyConfigured) {
-    return requestContextKeyKnowledge(keyExists)
+    return keyExists ? requestContextKeyKnowledge(keyExists) : unknownContextKeyKnowledge()
   }
 
   const contextKeyPresence: DiscoveryKnowledgeState = constraint.presenceIsKnown
@@ -416,6 +417,51 @@ function requestContextKeyKnowledge(keyExists: boolean): DiscoveryContextKeyKnow
     contextKeyPresence: 'known',
     contextKeyValue: keyExists ? 'known' : 'not-applicable'
   }
+}
+
+/**
+ * Builds context-key knowledge for an absent unconstrained Discovery key.
+ *
+ * In Discovery mode, an absent synthetic request-context value does not prove
+ * that the real request context lacks an unconstrained key.
+ *
+ * @returns context-key knowledge with unknown presence and value
+ */
+function unknownContextKeyKnowledge(): DiscoveryContextKeyKnowledge {
+  return {
+    contextKeyPresence: 'unknown',
+    contextKeyValue: 'unknown'
+  }
+}
+
+/**
+ * Checks whether an Allow condition should be reported because it matched only
+ * by missing-key semantics while the key's presence is unknown.
+ *
+ * `IfExists` and `ForAllValues` operators can match missing keys. Bare negative
+ * operators such as `StringNotEquals` can also match missing keys. When key
+ * presence is unknown, those matches are conditional on the real request also
+ * lacking the key. `ForAnyValue` missing-key evaluations do not match, so they
+ * are reported through the normal non-matching Allow condition path instead.
+ *
+ * @param conditionAndExplain the evaluated condition and its Discovery knowledge
+ * @returns true when the condition should be surfaced as an ignored Allow condition
+ */
+function allowMatchedOnlyByUnknownMissingKey(conditionAndExplain: ConditionAndExplain): boolean {
+  if (conditionAndExplain.explain.matchedBecauseMissing !== true) {
+    return false
+  }
+
+  const operation = conditionAndExplain.condition.operation()
+  if (operation.isIfExists()) {
+    return true
+  }
+  if (operation.setOperator() === 'ForAnyValue') {
+    return false
+  }
+
+  const baseOperation = baseOperations[operation.baseOperator().toLowerCase()]
+  return !!baseOperation?.isNegative
 }
 
 /**
