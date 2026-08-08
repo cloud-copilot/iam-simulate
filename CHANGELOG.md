@@ -1,3 +1,10 @@
+## [0.1.168](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.167...v0.1.168) (2026-08-08)
+
+
+### Bug Fixes
+
+* report discovery missing-key allow conditions ([2fb98bc](https://github.com/cloud-copilot/iam-simulate/commit/2fb98bc2b9bcee823d2ab95caac6edb7cf133b8a))
+
 ## [0.1.167](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.166...v0.1.167) (2026-08-08)
 
 ## [0.1.166](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.165...v0.1.166) (2026-08-05)
