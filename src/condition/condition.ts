@@ -167,7 +167,11 @@ export function requestMatchesConditions(
     )
     if (c.knowledge.conditionResult !== 'known') {
       if (normalizedStatementType === 'allow') {
-        return !c.explain.matches || allowMatchedOnlyByUnknownMissingKey(c)
+        return (
+          !c.explain.matches ||
+          allowMatchedOnlyByUnknownMissingKey(c) ||
+          allowHasUnknownValueRequirement(c)
+        )
       }
       if (normalizedStatementType === 'deny') {
         return true
@@ -462,6 +466,26 @@ function allowMatchedOnlyByUnknownMissingKey(conditionAndExplain: ConditionAndEx
 
   const baseOperation = baseOperations[operation.baseOperator().toLowerCase()]
   return !!baseOperation?.isNegative
+}
+
+/**
+ * Checks whether an Allow condition should be reported because Discovery knows
+ * the key is present but not enough value-level facts to trust a placeholder match.
+ *
+ * When `conditionResult` is already unknown, presence is known, and the key has
+ * an applicable value, the uncertainty comes from either the condition key's
+ * concrete value or a policy variable referenced by the condition value. In both
+ * cases a matching placeholder must still be surfaced as an ignored/output
+ * requirement.
+ *
+ * @param conditionAndExplain the evaluated condition and its Discovery knowledge
+ * @returns true when a matched Allow condition still has an unknown value requirement
+ */
+function allowHasUnknownValueRequirement(conditionAndExplain: ConditionAndExplain): boolean {
+  return (
+    conditionAndExplain.knowledge.contextKeyPresence === 'known' &&
+    conditionAndExplain.knowledge.contextKeyValue !== 'not-applicable'
+  )
 }
 
 /**
