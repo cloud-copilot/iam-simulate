@@ -1,3 +1,10 @@
+## [0.1.169](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.168...v0.1.169) (2026-08-11)
+
+
+### Bug Fixes
+
+* report unknown-value conditions in discovery ([3cfdef0](https://github.com/cloud-copilot/iam-simulate/commit/3cfdef010074ca87c08d905df72bccc74de46295))
+
 ## [0.1.168](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.167...v0.1.168) (2026-08-08)
 
 
