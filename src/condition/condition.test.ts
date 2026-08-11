@@ -1919,8 +1919,9 @@ describe('requestMatchesConditions - Discovery context key constraints', () => {
     expect(result.ignoredConditions).toBeUndefined()
   })
 
-  it('should not report Allow value comparisons as ignored when value the same', () => {
-    //Given a present SourceAccount key with a non-authoritative placeholder value
+  it('should report Allow value comparisons as ignored when value is unknown and placeholder matches', () => {
+    //Given a present SourceAccount key with a placeholder matching the policy value
+    //And the Discovery constraint says the real concrete value is not known
     const req = new AwsRequestImpl(
       '',
       { resource: '', accountId: '' },
@@ -1937,9 +1938,9 @@ describe('requestMatchesConditions - Discovery context key constraints', () => {
       discoveryWithConstraint('aws:SourceAccount', true, false)
     )
 
-    //Then the statement should match without any ignored conditions
+    //Then the placeholder match should not hide the unknown-value requirement
     expect(result.matches).toBe('Match')
-    expect(result.ignoredConditions).toBeUndefined()
+    expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:SourceAccount'])
   })
 
   it('should report Allow value comparisons as ignored when value is unknown and different', () => {
@@ -1965,7 +1966,7 @@ describe('requestMatchesConditions - Discovery context key constraints', () => {
     expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:SourceAccount'])
   })
 
-  it('should report Deny value comparisons as ignored when value is unknown', () => {
+  it('should report Deny value comparisons as ignored when value is unknown and different', () => {
     //Given a present SourceAccount key with a non-authoritative placeholder value
     const req = new AwsRequestImpl(
       '',
@@ -1984,6 +1985,30 @@ describe('requestMatchesConditions - Discovery context key constraints', () => {
     )
 
     //Then the possible deny should not definitively match but should be reported
+    expect(result.matches).toBe('NoMatch')
+    expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:SourceAccount'])
+  })
+
+  it('should report Deny value comparisons as ignored when value is unknown and placeholder matches', () => {
+    //Given a present SourceAccount key with a placeholder matching the Deny policy value
+    //And the Discovery constraint says the real concrete value is not known
+    const req = new AwsRequestImpl(
+      '',
+      { resource: '', accountId: '' },
+      '',
+      new RequestContextImpl({ 'aws:SourceAccount': '111111111111' })
+    )
+    const cond = conditionsFor('Deny', { StringEquals: { 'aws:SourceAccount': '111111111111' } })
+
+    //When checking a Deny condition in Discovery mode
+    const result = requestMatchesConditions(
+      req,
+      cond,
+      'Deny',
+      discoveryWithConstraint('aws:SourceAccount', true, false)
+    )
+
+    //Then the placeholder match should not make the Deny definitive
     expect(result.matches).toBe('NoMatch')
     expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:SourceAccount'])
   })
@@ -2034,6 +2059,29 @@ describe('requestMatchesConditions - Discovery context key constraints', () => {
     )
 
     //Then the condition should be reported as ignored instead of using the placeholder value
+    expect(result.matches).toBe('Match')
+    expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['s3:prefix'])
+  })
+
+  it('should report matching policy values that reference unknown-value keys as ignored', () => {
+    //Given a known s3 prefix matching an unknown SourceAccount placeholder used as a policy variable
+    const req = new AwsRequestImpl(
+      '',
+      { resource: '', accountId: '' },
+      '',
+      new RequestContextImpl({ 's3:prefix': '000000000000', 'aws:SourceAccount': '000000000000' })
+    )
+    const cond = conditionsFor('Allow', { StringEquals: { 's3:prefix': '${aws:SourceAccount}' } })
+
+    //When checking the condition in Discovery mode
+    const result = requestMatchesConditions(
+      req,
+      cond,
+      'Allow',
+      discoveryWithConstraint('aws:SourceAccount', true, false)
+    )
+
+    //Then the placeholder match should not hide the unknown policy-variable requirement
     expect(result.matches).toBe('Match')
     expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['s3:prefix'])
   })
@@ -2383,8 +2431,8 @@ describe('requestMatchesConditions - Discovery context key constraints', () => {
       expect(result.details.conditions?.[0].failedBecauseMissing).toBe(true)
     })
 
-    it('should match ForAnyValue when presence is known and the value matches', () => {
-      //Given an absent SourceOrgPaths key whose absence is authoritative
+    it('should report ForAnyValue as ignored when presence is known but the matching value is unknown', () => {
+      //Given a present SourceOrgPaths key with a matching but non-authoritative array value
       const req = requestWithContext({ 'aws:SourceOrgPaths': ['o-example/r-root/ou-target/'] })
       const cond = conditionsFor('Allow', {
         'ForAnyValue:StringEquals': { 'aws:SourceOrgPaths': 'o-example/r-root/ou-target/' }
@@ -2398,9 +2446,9 @@ describe('requestMatchesConditions - Discovery context key constraints', () => {
         discoveryWithConstraint('aws:SourceOrgPaths', true, false)
       )
 
-      //Then ForAnyValue should not match because the key is definitively absent
+      //Then the matching set operator should still be reported as an unknown-value requirement
       expect(result.matches).toBe('Match')
-      expect(result.ignoredConditions).toBeUndefined()
+      expect(result.ignoredConditions?.map((c) => c.conditionKey())).toEqual(['aws:SourceOrgPaths'])
     })
 
     it('should report ForAnyValue as ignored when presence is unknown and the key is absent', () => {

@@ -69,6 +69,180 @@
     }
   },
   {
+    "name": "Allow condition with known presence and unknown value is ignored when placeholder matches",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/Alice",
+      "context": {
+        "aws:SourceAccount": "111111111111"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "*",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceAccount": "111111111111"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery",
+      "discoveryContextKeyConstraints": [
+        {
+          "keyName": "aws:SourceAccount",
+          "presenceIsKnown": true,
+          "valueIsKnown": false
+        }
+      ]
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "allow": [
+            {
+              "key": "aws:SourceAccount",
+              "op": "StringEquals",
+              "values": ["111111111111"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "condition",
+        "op": "StringEquals",
+        "key": "aws:SourceAccount",
+        "values": ["111111111111"],
+        "sources": [
+          {
+            "effect": "Allow",
+            "policyIdentifier": "0",
+            "policyType": "identity",
+            "statementIndex": 1
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "Service principal resource allow reports matching SourceAccount and different SourceArn unknown values",
+    "request": {
+      "action": "sqs:SendMessage",
+      "resource": {
+        "resource": "arn:aws:sqs:us-east-1:111111111111:example-queue",
+        "accountId": "111111111111"
+      },
+      "principal": "s3.amazonaws.com",
+      "context": {
+        "aws:SourceAccount": "111111111111",
+        "aws:SourceArn": "arn:aws:iam::000000000000:role/unknown-source"
+      }
+    },
+    "identityPolicies": [],
+    "resourcePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "sqs:SendMessage",
+          "Resource": "arn:aws:sqs:us-east-1:111111111111:example-queue",
+          "Principal": {
+            "Service": "s3.amazonaws.com"
+          },
+          "Condition": {
+            "StringEquals": {
+              "aws:SourceAccount": "111111111111"
+            },
+            "ArnEquals": {
+              "aws:SourceArn": "arn:aws:s3:::example-source-bucket"
+            }
+          }
+        }
+      ]
+    },
+    "simulation": {
+      "mode": "Discovery",
+      "discoveryContextKeyConstraints": [
+        {
+          "keyName": "aws:SourceAccount",
+          "presenceIsKnown": true,
+          "valueIsKnown": false
+        },
+        {
+          "keyName": "aws:SourceArn",
+          "presenceIsKnown": true,
+          "valueIsKnown": false
+        }
+      ]
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "resource": {
+          "allow": [
+            {
+              "key": "aws:SourceAccount",
+              "op": "StringEquals",
+              "values": ["111111111111"]
+            },
+            {
+              "key": "aws:SourceArn",
+              "op": "ArnEquals",
+              "values": ["arn:aws:s3:::example-source-bucket"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "group",
+        "operator": "and",
+        "conditions": [
+          {
+            "conditionType": "condition",
+            "op": "StringEquals",
+            "key": "aws:SourceAccount",
+            "values": ["111111111111"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "ResourcePolicy",
+                "policyType": "resource",
+                "statementIndex": 1
+              }
+            ]
+          },
+          {
+            "conditionType": "condition",
+            "op": "ArnEquals",
+            "key": "aws:SourceArn",
+            "values": ["arn:aws:s3:::example-source-bucket"],
+            "sources": [
+              {
+                "effect": "Allow",
+                "policyIdentifier": "ResourcePolicy",
+                "policyType": "resource",
+                "statementIndex": 1
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
     "name": "Deny condition with known presence and unknown value is ignored",
     "request": {
       "action": "s3:ListBucket",
@@ -79,6 +253,81 @@
       "principal": "arn:aws:iam::123456789012:user/Alice",
       "context": {
         "aws:SourceAccount": "000000000000"
+      }
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "*"
+          },
+          {
+            "Effect": "Deny",
+            "Action": "s3:ListBucket",
+            "Resource": "*",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceAccount": "111111111111"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "simulation": {
+      "mode": "Discovery",
+      "discoveryContextKeyConstraints": [
+        {
+          "keyName": "aws:SourceAccount",
+          "presenceIsKnown": true,
+          "valueIsKnown": false
+        }
+      ]
+    },
+    "expected": {
+      "response": "Allowed",
+      "ignoredConditions": {
+        "identity": {
+          "deny": [
+            {
+              "key": "aws:SourceAccount",
+              "op": "StringEquals",
+              "values": ["111111111111"]
+            }
+          ]
+        }
+      },
+      "conditions": {
+        "conditionType": "condition",
+        "op": "StringNotEquals",
+        "key": "aws:SourceAccount",
+        "values": ["111111111111"],
+        "sources": [
+          {
+            "effect": "Deny",
+            "policyIdentifier": "0",
+            "policyType": "identity",
+            "statementIndex": 2
+          }
+        ],
+        "inverted": true
+      }
+    }
+  },
+  {
+    "name": "Deny condition with known presence and unknown value is ignored when placeholder matches",
+    "request": {
+      "action": "s3:ListBucket",
+      "resource": {
+        "resource": "*",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/Alice",
+      "context": {
+        "aws:SourceAccount": "111111111111"
       }
     },
     "identityPolicies": [
