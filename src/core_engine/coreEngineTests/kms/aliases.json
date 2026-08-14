@@ -1,0 +1,196 @@
+[
+  {
+    "name": "Allowed for same-account customer alias delete when identity policy allows",
+    "request": {
+      "action": "kms:DeleteAlias",
+      "resource": {
+        "resource": "arn:aws:kms:us-east-1:123456789012:alias/example-key",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "kms:DeleteAlias",
+            "Resource": "arn:aws:kms:us-east-1:123456789012:alias/example-key"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Allowed for same-account customer alias create when identity policy allows",
+    "request": {
+      "action": "kms:CreateAlias",
+      "resource": {
+        "resource": "arn:aws:kms:us-east-1:123456789012:alias/example-key",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "kms:CreateAlias",
+            "Resource": "arn:aws:kms:us-east-1:123456789012:alias/example-key"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Allowed for same-account customer alias update when identity policy allows",
+    "request": {
+      "action": "kms:UpdateAlias",
+      "resource": {
+        "resource": "arn:aws:kms:us-east-1:123456789012:alias/example-key",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "kms:UpdateAlias",
+            "Resource": "arn:aws:kms:us-east-1:123456789012:alias/example-key"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "Allowed"
+    }
+  },
+  {
+    "name": "Implicitly denied for AWS-managed alias delete action",
+    "request": {
+      "action": "kms:DeleteAlias",
+      "resource": {
+        "resource": "arn:aws:kms:us-east-1:123456789012:alias/aws/s3",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "kms:DeleteAlias",
+            "Resource": "arn:aws:kms:us-east-1:123456789012:alias/aws/s3"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Implicitly denied for AWS-managed alias create action",
+    "request": {
+      "action": "kms:CreateAlias",
+      "resource": {
+        "resource": "arn:aws:kms:us-east-1:123456789012:alias/aws/s3",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "kms:CreateAlias",
+            "Resource": "arn:aws:kms:us-east-1:123456789012:alias/aws/s3"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Implicitly denied for AWS-managed alias update action",
+    "request": {
+      "action": "kms:UpdateAlias",
+      "resource": {
+        "resource": "arn:aws:kms:us-east-1:123456789012:alias/aws/s3",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "kms:UpdateAlias",
+            "Resource": "arn:aws:kms:us-east-1:123456789012:alias/aws/s3"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ImplicitlyDenied"
+    }
+  },
+  {
+    "name": "Explicitly denied for AWS-managed alias when identity policy explicitly denies",
+    "request": {
+      "action": "kms:DeleteAlias",
+      "resource": {
+        "resource": "arn:aws:kms:us-east-1:123456789012:alias/aws/s3",
+        "accountId": "123456789012"
+      },
+      "principal": "arn:aws:iam::123456789012:user/test-user",
+      "context": {}
+    },
+    "identityPolicies": [
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "kms:DeleteAlias",
+            "Resource": "arn:aws:kms:us-east-1:123456789012:alias/aws/s3"
+          },
+          {
+            "Effect": "Deny",
+            "Action": "kms:DeleteAlias",
+            "Resource": "arn:aws:kms:us-east-1:123456789012:alias/aws/s3"
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "response": "ExplicitlyDenied"
+    }
+  }
+]
