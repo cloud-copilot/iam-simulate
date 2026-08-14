@@ -1,3 +1,10 @@
+## [0.1.170](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.169...v0.1.170) (2026-08-14)
+
+
+### Bug Fixes
+
+* handle KMS alias authorization ([08f002a](https://github.com/cloud-copilot/iam-simulate/commit/08f002aaa537f13a524f48127cfbbb5f3999c810))
+
 ## [0.1.169](https://github.com/cloud-copilot/iam-simulate/compare/v0.1.168...v0.1.169) (2026-08-11)
 
 
