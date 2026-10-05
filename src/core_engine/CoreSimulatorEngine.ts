@@ -1,4 +1,5 @@
 import { type Policy, type Statement } from '@actsecurity/iam-policy'
+import { isServicePrincipal } from '@actsecurity/iam-utils'
 import { requestMatchesStatementActions } from '../action/action.js'
 import { type ConditionMatchResult, requestMatchesConditions } from '../condition/condition.js'
 import { allowStatementExpression, always, and, never, or } from '../analysis/allowedConditions.js'
@@ -262,7 +263,11 @@ export function getServiceAuthorizer(request: AuthorizationRequest): ServiceAuth
  *
  * @param identityPolicies the identity policies to analyze
  * @param request the request to analyze against
- * @returns an array of statement analysis results
+ * @param simulationParameters the parameters that affect policy evaluation
+ * @param policyType the policy type whose statements are being analyzed
+ * @returns the identity-policy analysis, or NotApplicable for a service principal's identity layer.
+ * Session, permission-boundary, and endpoint analyses remain applicable when this function is called
+ * with their respective policy types.
  */
 export function analyzeIdentityPolicies(
   identityPolicies: PolicyWithName[],
@@ -270,6 +275,19 @@ export function analyzeIdentityPolicies(
   simulationParameters: SimulationParameters,
   policyType: PolicyType
 ): IdentityAnalysis {
+  if (
+    policyType === 'identity' &&
+    request.principal.isAuthenticated() &&
+    isServicePrincipal(request.principal.value())
+  ) {
+    return {
+      result: 'NotApplicable',
+      allowStatements: [],
+      denyStatements: [],
+      unmatchedStatements: []
+    }
+  }
+
   const identityAnalysis: IdentityAnalysis = {
     result: 'ImplicitlyDenied',
     allowStatements: [],
@@ -482,7 +500,9 @@ export function analyzeControlPolicies(
  *
  * @param resourcePolicy the resource policy to analyze
  * @param request the request to analyze against
- * @returns an array of statement analysis results
+ * @param principalHasPermissionBoundary whether the request principal has a permission boundary
+ * @param simulationParameters the parameters that affect policy evaluation
+ * @returns the resource-policy analysis; a missing policy implicitly denies a service principal
  */
 export function analyzeResourcePolicy(
   resourcePolicy: PolicyWithName | undefined,
@@ -498,6 +518,9 @@ export function analyzeResourcePolicy(
   }
 
   if (!resourcePolicy) {
+    if (request.principal.isAuthenticated() && isServicePrincipal(request.principal.value())) {
+      resourceAnalysis.result = 'ImplicitlyDenied'
+    }
     return resourceAnalysis
   }
 

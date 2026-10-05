@@ -25,6 +25,7 @@ export type {
   EvaluationResult,
   IgnoredCondition,
   IgnoredConditions,
+  IdentityEvaluationResult,
   NeverAllowedCondition,
   RequestAnalysis
 } from './evaluate.js'
