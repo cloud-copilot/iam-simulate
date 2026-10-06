@@ -1,3 +1,10 @@
+## [0.1.183](https://github.com/act-security-labs/iam-simulate/compare/v0.1.182...v0.1.183) (2026-10-06)
+
+
+### Bug Fixes
+
+* mark service principal policy layers applicable ([#202](https://github.com/act-security-labs/iam-simulate/issues/202)) ([c0d2f9b](https://github.com/act-security-labs/iam-simulate/commit/c0d2f9bb09611f5e16b526e5abcd53705e5773dd))
+
 ## [0.1.182](https://github.com/act-security-labs/iam-simulate/compare/v0.1.181...v0.1.182) (2026-10-03)
 
 ## [0.1.181](https://github.com/act-security-labs/iam-simulate/compare/v0.1.180...v0.1.181) (2026-09-26)
