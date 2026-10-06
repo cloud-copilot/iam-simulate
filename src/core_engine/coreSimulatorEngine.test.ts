@@ -155,6 +155,13 @@ describe('coreSimulatorEngine', () => {
           const expected = testCase.expected
           expect(analysis.result).toEqual(expected.response)
 
+          if (expected.identityResult !== undefined) {
+            expect(analysis.identityAnalysis?.result).toEqual(expected.identityResult)
+          }
+          if (expected.resourceResult !== undefined) {
+            expect(analysis.resourceAnalysis?.result).toEqual(expected.resourceResult)
+          }
+
           if (expected.ignoredRoleSessionName) {
             expect(analysis.ignoredRoleSessionName).toEqual(expected.ignoredRoleSessionName)
           } else {

@@ -841,7 +841,7 @@ export class DefaultServiceAuthorizer implements ServiceAuthorizer {
     }
     assertAuthenticatedRequestPrincipal(requestPrincipal)
 
-    if (sessionResult && sessionResult !== 'Allowed') {
+    if (sessionResult === 'ExplicitlyDenied' || sessionResult === 'ImplicitlyDenied') {
       return {
         result: sessionResult,
         conditions: sessionPolicyExpression(request.sessionAnalysis, true)

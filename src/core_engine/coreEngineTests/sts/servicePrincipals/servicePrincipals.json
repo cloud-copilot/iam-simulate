@@ -24,7 +24,9 @@
       ]
     },
     "expected": {
-      "response": "Allowed"
+      "response": "Allowed",
+      "identityResult": "NotApplicable",
+      "resourceResult": "Allowed"
     }
   },
   {
@@ -52,7 +54,9 @@
       ]
     },
     "expected": {
-      "response": "ImplicitlyDenied"
+      "response": "ImplicitlyDenied",
+      "identityResult": "NotApplicable",
+      "resourceResult": "ImplicitlyDenied"
     }
   },
   {
@@ -69,7 +73,9 @@
     "identityPolicies": [],
 
     "expected": {
-      "response": "ImplicitlyDenied"
+      "response": "ImplicitlyDenied",
+      "identityResult": "NotApplicable",
+      "resourceResult": "ImplicitlyDenied"
     }
   }
 ]

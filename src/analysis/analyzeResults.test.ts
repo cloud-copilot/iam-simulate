@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import type { IdentityAnalysis, RequestAnalysis } from '../evaluate.js'
+import type {
+  IdentityAnalysis,
+  IdentityEvaluationResult,
+  RequestAnalysis,
+  ResourceEvaluationResult
+} from '../evaluate.js'
 import type { Simulation } from '../simulation_engine/simulation.js'
 import { runSimulation } from '../simulation_engine/simulationEngine.js'
 import {
@@ -50,6 +55,8 @@ const getDenialReasonsTests: {
   only?: true
   simulation: Simulation
   expected: RequestDenial[]
+  expectedIdentityResult?: IdentityEvaluationResult
+  expectedResourceResult?: ResourceEvaluationResult
 }[] = [
   // Identity policy tests
   {
@@ -73,7 +80,8 @@ const getDenialReasonsTests: {
         policyType: 'identity',
         denialType: 'Implicit'
       }
-    ]
+    ],
+    expectedResourceResult: 'NotApplicable'
   },
   {
     name: 'explicit identity denial',
@@ -156,6 +164,67 @@ const getDenialReasonsTests: {
     ]
   },
   // Resource policy tests
+  {
+    name: 'service principal denial from non-matching resource policy',
+    simulation: {
+      request: {
+        principal: 'cloudtrail.amazonaws.com',
+        action: 's3:PutObject',
+        resource: {
+          resource: 'arn:aws:s3:::example-logs-bucket/other/log.gz',
+          accountId: '123456789012'
+        },
+        contextVariables: {}
+      },
+      identityPolicies: [],
+      serviceControlPolicies: [],
+      resourceControlPolicies: [],
+      resourcePolicy: {
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Effect: 'Allow',
+            Principal: { Service: 'cloudtrail.amazonaws.com' },
+            Action: 's3:PutObject',
+            Resource: 'arn:aws:s3:::example-logs-bucket/AWSLogs/*'
+          }
+        ]
+      }
+    },
+    expected: [
+      {
+        policyType: 'resource',
+        denialType: 'Implicit'
+      }
+    ],
+    expectedIdentityResult: 'NotApplicable',
+    expectedResourceResult: 'ImplicitlyDenied'
+  },
+  {
+    name: 'service principal denial without a resource policy',
+    simulation: {
+      request: {
+        principal: 'cloudtrail.amazonaws.com',
+        action: 's3:PutObject',
+        resource: {
+          resource: 'arn:aws:s3:::example-logs-bucket/other/log.gz',
+          accountId: '123456789012'
+        },
+        contextVariables: {}
+      },
+      identityPolicies: [],
+      serviceControlPolicies: [],
+      resourceControlPolicies: []
+    },
+    expected: [
+      {
+        policyType: 'resource',
+        denialType: 'Implicit'
+      }
+    ],
+    expectedIdentityResult: 'NotApplicable',
+    expectedResourceResult: 'ImplicitlyDenied'
+  },
   {
     name: 'implicit resource denial for cross-account request',
     simulation: {
@@ -1209,8 +1278,110 @@ describe('getDenialReasons', () => {
 
       // Then the result should match the expected denying statements
       expect(result.sort(jsonSort)).toEqual(test.expected.sort(jsonSort))
+      if (test.expectedIdentityResult) {
+        expect(requestAnalysis.identityAnalysis?.result).toEqual(test.expectedIdentityResult)
+      }
+      if (test.expectedResourceResult) {
+        expect(requestAnalysis.resourceAnalysis?.result).toEqual(test.expectedResourceResult)
+      }
     })
   }
+
+  it('reports resource grants without identity grants for an allowed service principal', async () => {
+    //Given a service principal allowed by a matching resource policy
+    const response = await runSimulation(
+      {
+        request: {
+          principal: 'cloudtrail.amazonaws.com',
+          action: 's3:PutObject',
+          resource: {
+            resource: 'arn:aws:s3:::example-logs-bucket/AWSLogs/log.gz',
+            accountId: '123456789012'
+          },
+          contextVariables: {}
+        },
+        identityPolicies: [],
+        serviceControlPolicies: [],
+        resourceControlPolicies: [],
+        resourcePolicy: {
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Effect: 'Allow',
+              Principal: { Service: 'cloudtrail.amazonaws.com' },
+              Action: 's3:PutObject',
+              Resource: 'arn:aws:s3:::example-logs-bucket/AWSLogs/*'
+            }
+          ]
+        }
+      },
+      {}
+    )
+    if (response.resultType !== 'single') {
+      throw new Error('Expected a single simulation result')
+    }
+
+    //When we inspect the result analysis and grants
+    const analysis = response.result.analysis!
+    const grants = getGrantReasons(analysis)
+
+    //Then the identity layer is not applicable and the resource policy is the sole grant
+    expect(analysis.identityAnalysis?.result).toEqual('NotApplicable')
+    expect(getDenialReasons(analysis)).toEqual([])
+    expect(grants).toEqual([{ policyType: 'resource', statementIndex: 1 }])
+  })
+
+  it('preserves explicit resource denials for service principals', async () => {
+    //Given a service principal denied by a matching resource-policy statement
+    const response = await runSimulation(
+      {
+        request: {
+          principal: 'cloudtrail.amazonaws.com',
+          action: 's3:PutObject',
+          resource: {
+            resource: 'arn:aws:s3:::example-logs-bucket/AWSLogs/log.gz',
+            accountId: '123456789012'
+          },
+          contextVariables: {}
+        },
+        identityPolicies: [],
+        serviceControlPolicies: [],
+        resourceControlPolicies: [],
+        resourcePolicy: {
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Sid: 'DenyServiceWrite',
+              Effect: 'Deny',
+              Principal: { Service: 'cloudtrail.amazonaws.com' },
+              Action: 's3:PutObject',
+              Resource: 'arn:aws:s3:::example-logs-bucket/AWSLogs/*'
+            }
+          ]
+        }
+      },
+      {}
+    )
+    if (response.resultType !== 'single') {
+      throw new Error('Expected a single simulation result')
+    }
+
+    //When we inspect its denial reasons
+    const analysis = response.result.analysis!
+    const denials = getDenialReasons(analysis)
+
+    //Then the resource statement is the only reported denial
+    expect(analysis.identityAnalysis?.result).toEqual('NotApplicable')
+    expect(denials).toEqual([
+      {
+        policyType: 'resource',
+        policyIdentifier: undefined,
+        statementId: 'DenyServiceWrite',
+        statementIndex: 1,
+        denialType: 'Explicit'
+      }
+    ])
+  })
 })
 
 const getGrantReasonsTests: {

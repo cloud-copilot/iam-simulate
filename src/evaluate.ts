@@ -1,6 +1,16 @@
 import { type StatementAnalysis } from './StatementAnalysis.js'
 
+/**
+ * The result of evaluating policies that can grant or deny a request.
+ */
 export type EvaluationResult = 'Allowed' | 'ExplicitlyDenied' | 'ImplicitlyDenied'
+
+/**
+ * The result of evaluating identity policies. `NotApplicable` means identity policies cannot
+ * apply to the request, such as for an AWS service principal.
+ */
+export type IdentityEvaluationResult = EvaluationResult | 'NotApplicable'
+
 export type ResourceEvaluationResult =
   | 'NotApplicable'
   | 'Allowed'
@@ -12,7 +22,10 @@ export type ResourceEvaluationResult =
 export type BlockedReason = 'scp' | 'rcp' | 'vpce' | 'identity' | 'resource' | 'pb' | 's3-bpa'
 
 export interface IdentityAnalysis {
-  result: EvaluationResult
+  /**
+   * The outcome of evaluating the identity-policy layer.
+   */
+  result: IdentityEvaluationResult
   denyStatements: StatementAnalysis[]
   allowStatements: StatementAnalysis[]
   unmatchedStatements: StatementAnalysis[]
